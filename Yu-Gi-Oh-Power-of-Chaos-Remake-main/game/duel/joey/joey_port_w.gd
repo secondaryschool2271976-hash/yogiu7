@@ -40,9 +40,9 @@ func f59ff00(kind: int) -> int:
 
 func f59ff50(a: int, b: int, c: int) -> int:
 	if c == 14:
-		var gy_cnt: int = f577620(b & 1, 14)
+		var gy_cnt: int = CustomDuelOps.pile_count(self, b & 1, CustomDuelOps.LOC_GRAVE)
 		for gi in range(gy_cnt):
-			var g_idx: int = f5680e0(b & 1, 14, gi) & 0xfff
+			var g_idx: int = CustomDuelOps.pile_idx(self, b & 1, CustomDuelOps.LOC_GRAVE, gi)
 			var g_cid: int = cards.id_of(g_idx) & 0xffff
 			if g_cid in [2507, 2625, 2650, 2653, 2658] and CustomCardEffects.can_activate(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
 				CustomCardEffects.resolve_chain_link(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi})
@@ -56,9 +56,9 @@ func f59ff50(a: int, b: int, c: int) -> int:
 
 func f59ff90(_unused: int, p: int, kind: int) -> int:
 	if kind == 14:
-		var gy_cnt: int = f577620(p & 1, 14)
+		var gy_cnt: int = CustomDuelOps.pile_count(self, p & 1, CustomDuelOps.LOC_GRAVE)
 		for gi in range(gy_cnt):
-			var g_idx: int = f5680e0(p & 1, 14, gi) & 0xfff
+			var g_idx: int = CustomDuelOps.pile_idx(self, p & 1, CustomDuelOps.LOC_GRAVE, gi)
 			var g_cid: int = cards.id_of(g_idx) & 0xffff
 			if g_cid in [2507, 2625, 2650, 2653, 2658] and CustomCardEffects.can_activate(self, p & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
 				return (g_idx & 0xffff) | ((p & 1) << 31) | 0x5f0000

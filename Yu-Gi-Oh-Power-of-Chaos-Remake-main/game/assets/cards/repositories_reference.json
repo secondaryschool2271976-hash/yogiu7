@@ -1,0 +1,95 @@
+{
+  "description": "Permanent registry of external GitHub repositories and card databases referenced for Yu-Gi-Oh! Power of Chaos Remake card data and effect scripting.",
+  "repositories": [
+    {
+      "id": "project_ignis_card_scripts",
+      "name": "Project Ignis / EDOPro CardScripts",
+      "category": "effect_scripts_lua",
+      "url": "https://github.com/ProjectIgnis/CardScripts",
+      "purpose": "Official EDOPro Lua scripts (c<passcode>.lua) defining activation conditions, costs, targets, and operations for 13,000+ cards.",
+      "local_engine_targets": [
+        "game/duel/core/custom_card_effects.gd",
+        "game/duel/core/custom_duel_ops.gd",
+        "game/duel/core/custom_effects_traps.gd",
+        "game/duel/core/custom_effects_spells.gd",
+        "game/duel/core/custom_effects_monsters_1.gd",
+        "game/duel/core/custom_effects_monsters_2.gd",
+        "game/duel/core/extra_card_effects.gd"
+      ]
+    },
+    {
+      "id": "project_ignis_babel_cdb",
+      "name": "Project Ignis BabelCDB",
+      "category": "sqlite_card_database",
+      "url": "https://github.com/ProjectIgnis/BabelCDB",
+      "purpose": "SQLite (.cdb) databases containing card stats, passcodes, names, effect texts, and string tables matching CardScripts.",
+      "local_engine_targets": [
+        "game/assets/cards/extra_cards.json",
+        "game/autoload/card_db.gd",
+        "game/core/card_catalog.gd"
+      ]
+    },
+    {
+      "id": "ygojson",
+      "name": "YGOJSON (Aggregate Card Database)",
+      "category": "json_card_database",
+      "url": "https://github.com/iconmaster5326/YGOJSON",
+      "branch": "aggregate",
+      "purpose": "Aggregated single-file JSON database of Yu-Gi-Oh! card metadata, localized names, stats, and effect texts.",
+      "local_engine_targets": [
+        "game/assets/cards/extra_cards.json",
+        "tools/tests/test_ygojson_and_extra_effects.py"
+      ]
+    },
+    {
+      "id": "ygoprodeck_api_v7",
+      "name": "YGOPRODeck Card Info JSON API v7",
+      "category": "json_api",
+      "url": "https://db.ygoprodeck.com/api/v7/cardinfo.php",
+      "purpose": "Direct JSON dump of 13,000+ Yu-Gi-Oh! cards with full metadata, passcodes, and artwork URLs.",
+      "usage_rules": [
+        "Download and bundle card images locally in the project assets rather than hotlinking YGOPRODeck image URLs at runtime to prevent IP bans and ensure offline functionality.",
+        "Attach aggregated JSON snapshots or Lua script batches directly to workspace when importing new card sets."
+      ],
+      "local_engine_targets": [
+        "game/assets/cards/extra_cards.json"
+      ]
+    }
+  ],
+  "poc_engine_mapping": {
+    "native_card_id_range": [0, 2499],
+    "custom_card_id_range_start": 2500,
+    "attributes": {
+      "LIGHT": 1,
+      "DARK": 2,
+      "WATER": 3,
+      "FIRE": 4,
+      "EARTH": 5,
+      "WIND": 6,
+      "DIVINE": 7
+    },
+    "races": {
+      "Dragon": 1,
+      "Zombie": 2,
+      "Fiend": 3,
+      "Pyro": 4,
+      "Sea Serpent": 5,
+      "Rock": 6,
+      "Machine": 7,
+      "Fish": 8,
+      "Dinosaur": 9,
+      "Insect": 10,
+      "Beast": 11,
+      "Beast-Warrior": 12,
+      "Plant": 13,
+      "Aqua": 14,
+      "Warrior": 15,
+      "Winged Beast": 16,
+      "Fairy": 17,
+      "Spellcaster": 18,
+      "Thunder": 19,
+      "Reptile": 20,
+      "Divine-Beast": 24
+    }
+  }
+}

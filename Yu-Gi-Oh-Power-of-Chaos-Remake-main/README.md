@@ -4,6 +4,15 @@
 
 # Yu-Gi-Oh! Power of Chaos Remake
 
+> **🤖 دليل الشات الجديد للمطور / الذكاء الاصطناعي (AI Assistant Handoff — Read First):**
+> عند بدء أي محادثة جديدة، اقرأ ملف [`/README.md`](../README.md) وملف المرجع الكامل للمستودعات [`docs/EXTERNAL_REPOSITORIES_REFERENCE.md`](docs/EXTERNAL_REPOSITORIES_REFERENCE.md) أولاً:
+> 1. **المستودع الأكثر إفادة والأولوية الأولى:** هو **`ProjectIgnis/CardScripts`** (`https://github.com/ProjectIgnis/CardScripts`) لأنه يحتوي على الكود البرمجي الفعلي (`c<password>.lua`) لكل بطاقة مقترناً بحقل `"password"` الموجود داخل `game/assets/cards/extra_cards.json`، ويُستخدم لمراجعة وإصلاح منطق وشروط تفعيل البطاقات داخل `game/duel/core/custom_effects_*.gd`.
+> 2. **بقية المستودعات المعتمدة والموثقة في المشروع:**
+>    - `ProjectIgnis/BabelCDB`: `https://github.com/ProjectIgnis/BabelCDB` (قاعدة بيانات SQLite للنصوص والأرقام الرسمية).
+>    - `iconmaster5326/YGOJSON`: `https://github.com/iconmaster5326/YGOJSON` (قاعدة بيانات JSON المجمعة للبطاقات).
+>    - `YGOPRODeck API v7`: `https://db.ygoprodeck.com/api/v7/cardinfo.php` (مع الالتزام بتحميل الصور محلياً وعدم ربطها مباشرة أثناء اللعب).
+> 3. **خطوات الفحص الإلزامية بالترتيب:** راجع [`/README.md`](../README.md) للتعرف على هيكل المحركين (`core` و `joey`)، وقواعد Godot 4.7 الصارمة للأنواع، وتشغيل اختبارات `tools/tests/test_ygojson_and_extra_effects.py`.
+
 **English** | [Español](README.es.md)
 
 [![Download EXE for Windows](https://img.shields.io/badge/Download_EXE-Windows-2ea44f?style=for-the-badge)](https://github.com/Johanfer12/Yu-Gi-Oh-Power-of-Chaos-Remake/releases/download/v0.1.0-alpha.43/PowerOfChaos.exe)
