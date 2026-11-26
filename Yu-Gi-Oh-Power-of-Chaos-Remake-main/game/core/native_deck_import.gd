@@ -21,7 +21,7 @@ static func filter(deck: Dictionary, game: String, collection: Dictionary,
 					if alias == id: continue
 					used += accepted.fusion.count(alias) if id in [14, 2014, 68, 2068] else accepted.main.count(alias) + accepted.side.count(alias)
 				break
-			var owned := clampi(int(collection.get(str(id), 0)), 0, 255)
+			var owned = clampi(int(collection.get(str(id), 0)), 0, 255)
 			var usable: bool = not card.is_empty() and (int(card.pack) & mask) != 0 and CardDB.has_card_art(card)
 			if not usable or used >= int(limit.call(id)) or accepted[zone].count(id) >= owned:
 				removed[id] = int(removed.get(id, 0)) + 1

@@ -5,7 +5,7 @@ var _items: Array = []
 func show_card(card: Dictionary) -> void:
 	_items.clear()
 	var race := int(card.get("type_id",0))
-	var attribute := ATTRIBUTES.find(str(card.get("attribute","")))
+	var attribute = ATTRIBUTES.find(str(card.get("attribute","")))
 	if race > 0 and race < 21 and attribute >= 0:
 		_items = [{"atlas":0,"index":attribute,"pos":Vector2(7,512)},
 			{"atlas":1,"index":race-1,"pos":Vector2(23,512)}]

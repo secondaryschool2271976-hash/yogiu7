@@ -73,7 +73,7 @@ func f573fb0(p: int, delta: int) -> int:
 
 
 func _lp_tick(state: Dictionary) -> void:
-	var amount := _s32(int(state["pending"]))
+	var amount = _s32(int(state["pending"]))
 	state["phase"] = (int(state["phase"]) + int(int(state["blink"]) != 0) + 1) & 0x7f
 	var remaining := absi(amount)
 	var before := remaining

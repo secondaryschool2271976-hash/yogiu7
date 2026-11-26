@@ -94,7 +94,7 @@ func _record(duel_flags := 0) -> void:
 		stats["streak"] = 1
 	stats["streak_last"] = 1 if result == 1 else 2
 	if game == "joey":
-		var adjusted := RivalDeckChoice.joey_after_result(int(stats.get("level", 1)),
+		var adjusted = RivalDeckChoice.joey_after_result(int(stats.get("level", 1)),
 			Game.joey_full_cards(), int(stats["streak_last"]), int(stats["streak"]), Game.match_outcome != 0)
 		stats["level"] = adjusted.x
 		stats["streak"] = adjusted.y
@@ -501,7 +501,7 @@ func _build_names() -> void:
 	var ch := _card_h()
 	var compact := _cards.size() >= 4
 	var label_w := 172 if compact else 0x10a
-	var name_center := _card_y() - ch / 2 - int({"joey": 17, "kaiba": 11}.get(game, 16))
+	var name_center = _card_y() - ch / 2 - int({"joey": 17, "kaiba": 11}.get(game, 16))
 	for k in _cards.size():
 		var label := Label.new()
 		label.text = CardDB.name_of(_cards[k]["id"])

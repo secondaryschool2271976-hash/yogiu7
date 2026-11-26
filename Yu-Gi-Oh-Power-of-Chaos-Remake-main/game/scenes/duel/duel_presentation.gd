@@ -107,7 +107,7 @@ func reset(duel: Duel) -> void:
 	for p in 2:
 		# Ka45fa40 inicializa +24 del objeto visual en8000 antes del comando10.
 		# El motor sigue en cero; se respetan LP explicitos de escenarios/reanudacion.
-		var core_lp := duel.m.u16(DuelMem.pl(p))
+		var core_lp = duel.m.u16(DuelMem.pl(p))
 		displayed_lp[p] = 8000 if game == "kaiba" and duel.executed == 0 and core_lp == 0 else core_lp
 	_clear()
 
@@ -257,17 +257,26 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 		displayed_lp[p] = int(e["value"])
 		return
 	if kind == "table_sync":
+		if not active.is_empty() or not pending.is_empty():
+			pending.append({"kind": "table_sync", "mode": "table_sync", "frames": 0})
+			return
 		table.sync_from_memory(duel)
 		for lp_p in 2:
 			displayed_lp[lp_p] = duel.m.u16(DuelMem.pl(lp_p))
 		_render_frame()
 		return
 	if kind == "summon_special":
-		table.sync_from_memory(duel)
 		Audio.play_sfx("%s/voice/internal/reborn.wav" % game)
+		if not active.is_empty() or not pending.is_empty():
+			pending.append({"kind": "table_sync", "mode": "table_sync", "frames": 0})
+			return
+		table.sync_from_memory(duel)
 		_render_frame()
 		return
 	if kind == "zone_clear":
+		if not active.is_empty() or not pending.is_empty():
+			pending.append({"kind": "zone_clear", "mode": "zone_clear", "frames": 0})
+			return
 		table.sync_from_memory(duel)
 		_render_frame()
 		return
@@ -341,7 +350,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 		return
 	if e.get("from_mailbox", false) and e.get("instant", false):
 		# 407cb0/414810 cambia la referencia aunque siga dibujándose otro efecto.
-		var source := _word_loc(int(e["source_word"]))
+		var source = _word_loc(int(e["source_word"]))
 		var word := int(e["destination_word"])
 		var destination := _word_loc(word)
 		var obj := table.take(duel, source[0], source[1], source[2])
@@ -455,7 +464,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 					_sacrifice[fkey] = {"kind": "fusion", "counter": 0, "rot": 0, "release": false,
 							"p": p, "hand": loc == DuelMem.LOC_HAND, "object": material}
 				return
-			var key := "%d:%d" % [p, int(e.get("zone", 0))]
+			var key = "%d:%d" % [p, int(e.get("zone", 0))]
 			if not _sacrifice.has(key):
 				_sacrifice[key] = _new_sacrifice(p, int(e.get("zone", 0)), duel)
 			if int(e.get("type", 0)) == 1:
@@ -494,7 +503,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 			d["dst_defense"] = int(d["dst"][1]) < 5 and (int(e["to"]) & 0x4000) != 0
 		"hand_to_monster", "hand_to_spell":
 			d["mode"] = "move"
-			var count := duel.m.u8(DuelMem.pl(p) + 2)
+			var count = duel.m.u8(DuelMem.pl(p) + 2)
 			var i: int = (e["b"] & 0xff) >> 4
 			d["from_pos"] = hand(p, i, count)
 			d["to_pos"] = d["center"]
@@ -517,7 +526,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 				d["frames"] = 22 # 438c20: +12 hasta contador >0x100.
 				# Banderas de la zona que pondra el comando: bit 9 de b = defensa (solo
 				# monstruos), bit 8 = boca arriba (FUN_005422b0 / FUN_005423a0).
-				var defense := 1 if kind == "hand_to_monster" and (e["b"] & 0x200) else 0
+				var defense = 1 if kind == "hand_to_monster" and (e["b"] & 0x200) else 0
 				d["flags"] = defense | (((e["b"] >> 8) & 1) << 1)
 				d["monster"] = kind == "hand_to_monster"
 				d.erase("hide")
@@ -528,7 +537,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 		"zone_to_grave", "field_to_hand", "field_to_deck", "field_to_banish", "card_to_banish", "zone_to", "zone_lift":
 			d["mode"] = "move"
 			d["from_pos"] = d["center"]
-			var owner := (duel.m.u16(DuelMem.MOVING_CARD) >> 12) & 1
+			var owner = (duel.m.u16(DuelMem.MOVING_CARD) >> 12) & 1
 			d["to_pos"] = DuelGeometry.GRAVE[owner]
 			if kind == "field_to_hand": d["to_pos"] = hand(owner, duel.m.u8(DuelMem.pl(owner) + 2), duel.m.u8(DuelMem.pl(owner) + 2) + 1)
 			if kind == "field_to_deck": d["to_pos"] = DuelGeometry.DECK[owner]
@@ -584,13 +593,13 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 			d["hide"] = []
 			d["frames"] = 24 # 43a970: contador+8 hasta0xc0.
 		"zone_counter":
-			var flags := duel.m.u16(DuelMem.zone(p, e["zone"]) + 6)
+			var flags = duel.m.u16(DuelMem.zone(p, e["zone"]) + 6)
 			d["value"] = (flags >> 2) & 15 if e.get("counter_type", 3) == 3 else (flags >> 6) & 7
 			# El comando espera (0x4138b0) a que el objeto de la carta acabe su estado 3/4:
 			# +0x1c de 0x200 a 0 de 0x10 en 0x10 (32 fotogramas). Lo dibuja DuelCardStats.
 			d["frames"] = 32
 		"flip", "change_position":
-			var at := DuelMem.zone(p, e["zone"])
+			var at = DuelMem.zone(p, e["zone"])
 			d["card"] = duel.cards.id_of(duel.m.u16(at) & 0xfff)
 			d["flags"] = duel.m.u8(at + 6)
 			d["hide"] = [d["center"]]
@@ -618,13 +627,13 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 			d["frames"] = 26 # 439930: explosión hasta contador 0xd0, +8.
 		"card_effect":
 			d["frames"] = 33
-			var index := duel.cards.index_of(e["card"])
+			var index = duel.cards.index_of(e["card"])
 			d["monster"] = duel.cards.type_of(index) < 21
 			d["center"] = Vector2(525, 300)
 		"zone_move":
 			d["mode"] = "move"
 			var a: int = e.get("from", (int(e.get("zone", 0)) << 8) | p)
-			var owner := (duel.m.u16(DuelMem.MOVING_CARD) >> 12) & 1
+			var owner = (duel.m.u16(DuelMem.MOVING_CARD) >> 12) & 1
 			var b: int = e.get("to", (14 << 8) | owner)
 			d["from_pos"] = zone(a & 1, (a >> 8) & 255)
 			d["to_pos"] = DuelGeometry.location(b & 1, (b >> 8) & 255)
@@ -649,7 +658,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 			_field_value = int(e.get("a", -1))
 		"highlight_card":
 			# 0x407190: activaciones simultaneas sobre cada copia boca arriba.
-			var index := duel.cards.index_of(int(e.get("card", 0)))
+			var index = duel.cards.index_of(int(e.get("card", 0)))
 			var subs: Array = []
 			for q in 2:
 				if not e.get("both", 0) and q != p: continue
@@ -793,7 +802,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 						var m: Dictionary = _sacrifice[key]
 						if m.get("kind", "") != "fusion" or int(m["p"]) != p: continue
 						var slot := _fusion_mark_slot(m)
-						var offset := DuelMem.LOC_HAND if m["hand"] else 0
+						var offset = DuelMem.LOC_HAND if m["hand"] else 0
 						if slot >= 0 and slot + offset == int(args[0]) + int(args[1]):
 							m["release"] = true
 					d = {"mode": "marker_wait", "kind": "cmd", "p": p, "frames": 0x7fffffff}
@@ -891,7 +900,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 			d["hide"] = [d["center"]]
 			d["frames"] = 17
 	if d["mode"] == "card_effect" and int(d.get("loc", -1)) == 11 and not d.get("large_activation", true):
-		var count := duel.m.u8(DuelMem.pl(p) + 2)
+		var count = duel.m.u8(DuelMem.pl(p) + 2)
 		d["center"] = hand(p, int(d["hand_slot"]), count)
 		d["hide"] = [d["center"]]
 	if int(d.get("frames", 0)) <= 0: return
@@ -922,10 +931,10 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 func _exodia_hand(p: int, duel: Duel) -> Dictionary:
 	const PIECES := [0x14, 0x12, 0x10, 0x11, 0x13]
 	var q := DuelMem.pl(p) - DuelMem.pl(0)
-	var count := duel.m.u8(DuelMem.pl(p) + 2)
+	var count = duel.m.u8(DuelMem.pl(p) + 2)
 	var ghosts: Array = []
 	for k in PIECES.size():
-		var wanted := duel.cards.index_of(PIECES[k])
+		var wanted = duel.cards.index_of(PIECES[k])
 		for i in count:
 			if (duel.m.u16(0xa11fb8 + q + i * 4) & 0xfff) == wanted:
 				ghosts.append({"start": 16 * k, "slot": i, "card": PIECES[k]})
@@ -943,12 +952,12 @@ func _exodia_hand(p: int, duel: Duel) -> Dictionary:
 func _render_exodia_hand(frame: int) -> void:
 	var p: int = active["p"]
 	for g: Dictionary in active["ghosts"]:
-		var t := frame - int(g["start"])
+		var t = frame - int(g["start"])
 		if t < 0 or t >= 31:
 			continue
 		var c := (t + 1) * 8
-		var pos := hand(p, int(g["slot"]), int(active["count"])) + Vector2(0, c / 4 if p == 1 else -c / 4)
-		var sprite := _card(int(g["card"]), pos, p == 0, DuelGeometry.HAND_SIZE)
+		var pos = hand(p, int(g["slot"]), int(active["count"])) + Vector2(0, c / 4 if p == 1 else -c / 4)
+		var sprite = _card(int(g["card"]), pos, p == 0, DuelGeometry.HAND_SIZE)
 		if sprite != null:
 			sprite.modulate.a = (255 - c) / 255.0
 
@@ -962,7 +971,7 @@ func hides(pos: Vector2) -> bool:
 	for overlay: Dictionary in overlays:
 		if _event_hides(overlay["event"], pos): return true
 	if active.get("mode", "") == "battle_result":
-		var shake_frame := frame - (32 if active.get("reflection", false) else 0)
+		var shake_frame = frame - (32 if active.get("reflection", false) else 0)
 		if shake_frame >= 0 and shake_frame < 16:
 			for card in active.get("shake_cards", []):
 				if pos.distance_to(card["pos"]) < 1: return true
@@ -1118,7 +1127,7 @@ func _render_battle() -> void:
 		if _duel_ref.f571810(p, i, 1) != 0:
 			BasicEffects._asset(self, "atk_icon", zone(p, i), 0x10000, 0xa0, p << 8)
 	if st == 3 and int(_battle["zone"]) >= 0:
-		var at := zone(p, int(_battle["zone"]))
+		var at = zone(p, int(_battle["zone"]))
 		var dir := pointer - at
 		var angle := int(atan2(dir.x, -dir.y) * 256.0 / PI)
 		BasicEffects._asset(self, "atk_icon", at, 0x10000, 256, (angle * mini(int(_battle["counter"]), 0x80)) / 0x80)
@@ -1132,7 +1141,7 @@ func _new_sacrifice(p: int, z: int, duel: Duel) -> Dictionary:
 		var radius: int = (PortraitEffects.visual_rand(duel) & 31) + 16
 		points.append(center + Vector2((DuelVisualMath.cos_fx(index * 64) * radius) >> 16,
 				(DuelVisualMath.cos_fx(index * 64 - 128) * radius) >> 16))
-	var defense := z < 5 and (duel.m.u8(DuelMem.zone(p, z) + 6) & 1) != 0
+	var defense = z < 5 and (duel.m.u8(DuelMem.zone(p, z) + 6) & 1) != 0
 	return {"counter": 0, "rot": 0, "release": false, "center": center, "defense": defense, "points": points}
 
 
@@ -1167,7 +1176,7 @@ func _render_fusion_mark(s: Dictionary) -> void:
 	var p: int = s["p"]
 	var slot := _fusion_mark_slot(s)
 	if slot < 0: return
-	var pos := hand(p, slot, table.hand[p].size()) if s["hand"] else zone(p, slot)
+	var pos = hand(p, slot, table.hand[p].size()) if s["hand"] else zone(p, slot)
 	var c: int = s["counter"]
 	var after := c - 0x80
 	var scale := 0x10000
@@ -1190,7 +1199,7 @@ func _render_fusion_mark(s: Dictionary) -> void:
 func _render_sacrifice(s: Dictionary) -> void:
 	var c: int = s["counter"]
 	var center: Vector2 = s["center"]
-	var def_bit := 1 if s["defense"] else 0
+	var def_bit = 1 if s["defense"] else 0
 	var after := c - 0x80
 	if after > 0:
 		var alpha := mini(DuelVisualMath.cos_fx(c - 0x100) >> 8, 0xff)
@@ -1387,6 +1396,12 @@ static func _word_loc(word: int) -> Array:
 func _begin_objects() -> void:
 	if _duel_ref == null: return
 	var mode: String = active.get("mode", "")
+	if mode == "table_sync" or mode == "zone_clear":
+		table.sync_from_memory(_duel_ref)
+		for lp_p in 2:
+			displayed_lp[lp_p] = _duel_ref.m.u16(DuelMem.pl(lp_p))
+		table.revision += 1
+		return
 	if mode == "joey_field_shuffle_sync":
 		var sp: int = active["p"]
 		for z in active["objects"]:
@@ -1541,7 +1556,7 @@ func _finish_objects() -> void:
 
 	elif mode == "summon" and active.get("kind", "") in ["token", "monster_appear"] and not active.get("defer_object", false):
 		# 0xa5 / 0x77: el objeto se crea en la zona al terminar el efecto (tipo 5).
-		var z := clampi(int(active.get("zone", 0)), 0, 10)
+		var z = clampi(int(active.get("zone", 0)), 0, 10)
 		var face := true
 		var defense := false
 		if active.get("kind", "") == "token":
@@ -1563,7 +1578,7 @@ func _place_special(event: Dictionary) -> void:
 	var source := a & 15
 	var index := (a >> 4) & 15
 	# 405d10/405fd0: desde el cementerio, el bit bajo de ese índice selecciona la pila.
-	var origin := _word_loc(int(event["source_word"])) if event.has("source_word") else [
+	var origin = _word_loc(int(event["source_word"])) if event.has("source_word") else [
 		index & 1 if source == DuelMem.LOC_GRAVE else p, source, 1 if source == DuelMem.LOC_GRAVE else index]
 	var obj := table.take(_duel_ref, origin[0], origin[1], origin[2])
 	obj["card"] = int(event.get("card", obj.get("card", -1)))
@@ -1966,7 +1981,7 @@ func _render() -> void:
 	_prune_lp_numbers()
 	for p in _lp_number:
 		var number: Dictionary = _lp_number[p]
-		var progress := (visual_tick - int(number["start"])) * 16
+		var progress = (visual_tick - int(number["start"])) * 16
 		if progress < 0: continue
 		var z: int = number["zone"]
 		BasicEffects._damage_number(self, number["amount"], zone(p, z) if z >= 0 else zone(p, 7), progress)
@@ -1994,7 +2009,7 @@ func _render() -> void:
 				if node is CanvasItem: (node as CanvasItem).z_index = PORTRAIT_Z
 		return
 	var mode: String = active["mode"]
-	var t := clampf(float(frame) / active["frames"], 0, 1)
+	var t = clampf(float(frame) / active["frames"], 0, 1)
 	var center: Vector2 = active["center"]
 	match mode:
 		"zone_marker_joey":
@@ -2023,12 +2038,12 @@ func _render() -> void:
 				# 410030: con cara distinta en origen y destino, +0x48 = contador (hacia boca
 				# arriba) o 0x100 - contador; 410ca0 dibuja el dorso por debajo de 0x80 y estrecha
 				# la carta en horizontal por T[+0x48].
-				var flip := counter if bool(active["face_to"]) else 0x100 - counter
+				var flip = counter if bool(active["face_to"]) else 0x100 - counter
 				if bool(active["face_from"]) == bool(active["face_to"]): flip = 0x100 if bool(active["face_to"]) else 0
 				face = flip >= 0x80
 				if bool(active["face_from"]) != bool(active["face_to"]):
 					squeeze = absf(DuelVisualMath.cos_fx(flip) / 65536.0)
-			var moving := _card(active.get("card", 0), DuelVisualMath.interpolate_fx(from, to, weight), face, size_from.lerp(size_to, t), _rotation_between(angle_from, angle_to, counter))
+			var moving = _card(active.get("card", 0), DuelVisualMath.interpolate_fx(from, to, weight), face, size_from.lerp(size_to, t), _rotation_between(angle_from, angle_to, counter))
 			if moving:
 				moving.z_index = 20
 				moving.scale.x *= maxf(squeeze, 0.001)
@@ -2055,7 +2070,7 @@ func _render() -> void:
 			if mode == "change_position":
 				_card(active["card"], center, (flags & 2) != 0 or active.get("b", 0) != 0, SIZE, _rotation_between(angle, angle + (PI / 2 if (flags & 1) == 0 else -PI / 2), frame * 32))
 			else:
-				var sprite := _card(active["card"], center, ((flags & 2) != 0) if t < 0.5 else ((flags & 2) == 0), SIZE, angle)
+				var sprite = _card(active["card"], center, ((flags & 2) != 0) if t < 0.5 else ((flags & 2) == 0), SIZE, angle)
 				if sprite: sprite.scale.x *= absf(DuelVisualMath.cos_fx(mini(frame * 32, 256))) / 65536.0
 		"card_blink":
 			_draw_card_blink(active, 0x100 - frame * 16)
@@ -2100,9 +2115,9 @@ func _draw_card_blink(e: Dictionary, counter: int) -> void:
 	var obj: Dictionary = table.field[p][z]
 	if obj.is_empty() or int(obj.get("card", -1)) < 0: return
 	var center := zone(p, z)
-	var defense := z < 5 and bool(obj.get("defense", false))
+	var defense = z < 5 and bool(obj.get("defense", false))
 	var angle := (PI / 2 if defense else 0.0) + (PI if p == 1 else 0.0)
-	var copy := _card(int(obj["card"]), center, bool(obj.get("face", true)), SIZE, angle)
+	var copy = _card(int(obj["card"]), center, bool(obj.get("face", true)), SIZE, angle)
 	if copy:
 		copy.modulate.a = 64.0 / 255.0
 		BasicEffects._additive(copy)

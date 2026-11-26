@@ -88,14 +88,14 @@ static func blocked(duel: Duel, p: int, z: int) -> bool:
 	var at := DuelMem.zone(p, z)
 	for index in duel.m.u16(at + 0x88):
 		if duel.m.u8(at + 0x48 + index * 2) != 2: continue
-		var link := duel.m.u16(at + 8 + index * 2)
+		var link = duel.m.u16(at + 8 + index * 2)
 		var source := DuelMem.zone(link & 1, (link >> 8) & 255)
-		var card := duel.m.u16(source) & 4095
+		var card = duel.m.u16(source) & 4095
 		if card == 0: continue
 		var cid: int = duel.effect_card_id(card) if duel.has_method("effect_card_id") else duel.cards.id_of(card)
 		if cid != 0x528: continue
 		# 569e10: Colapso del terreno boca arriba, sin bits de anulacion1/5.
-		var flags := duel.m.u8(source + 0x90)
+		var flags = duel.m.u8(source + 0x90)
 		if (duel.m.u8(source + 6) & 2) != 0 and (flags & 0x22) == 0: return true
 	return false
 

@@ -85,7 +85,7 @@ static func seal(block: PackedByteArray) -> void:
 ## Devuelve vacio si las copias no caben: no truncar una coleccion ni un mazo al exportar.
 static func from_save(save: Dictionary, by_index: Dictionary, game: String) -> PackedByteArray:
 	var native: Dictionary = save.get("native_system", {})
-	var block := Marshalls.base64_to_raw(str(native.get("block", "")))
+	var block = Marshalls.base64_to_raw(str(native.get("block", "")))
 	if block.size() != BLOCK_SIZE:
 		block.resize(BLOCK_SIZE)
 		for i in 8:
@@ -117,7 +117,7 @@ static func from_save(save: Dictionary, by_index: Dictionary, game: String) -> P
 	block.encode_u16(0xa, total)
 	var options: Dictionary = save.get("options", {})
 	var current: Dictionary = options.get(game, {})
-	var volume := clampi(int(current.get("volume", 15)), 0, 15)
+	var volume = clampi(int(current.get("volume", 15)), 0, 15)
 	if volume != mini(15, block.decode_u16(6) >> 4):
 		block.encode_u16(6, volume << 4)
 	block.encode_u16(8, int(current.get("display", 0)))
@@ -127,9 +127,9 @@ static func from_save(save: Dictionary, by_index: Dictionary, game: String) -> P
 	block[0x10f4] = int(joey_options.get("card_set_full", block[0x10f4] != 0))
 	var stats: Dictionary = save.get("stats", {})
 	var common: Dictionary = stats.get(game, {})
-	var wins := clampi(int(common.get("wins", 0)), 0, 0x7ff)
-	var losses := clampi(int(common.get("losses", 0)), 0, 0x7ff)
-	var draws := clampi(int(common.get("draws", 0)), 0, 0x3ff)
+	var wins = clampi(int(common.get("wins", 0)), 0, 0x7ff)
+	var losses = clampi(int(common.get("losses", 0)), 0, 0x7ff)
+	var draws = clampi(int(common.get("draws", 0)), 0, 0x3ff)
 	block.encode_u32(0x10f8, wins | (losses << 11) | (draws << 22))
 	var old: Dictionary = stats.get("yugi", {})
 	block[0x10f5] = clampi(int(old.get("streak_last", 0)), 0, 255)

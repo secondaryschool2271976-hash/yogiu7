@@ -80,11 +80,14 @@ static func build_core_ctx(duel, e: int, other: int, hand: int) -> Dictionary:
 	var p: int = flags & 1
 	var reason: int = (flags >> 10) & 0x3f
 	var ev: String = map_core_event(reason, other)
-	var ctx: Dictionary = {"event": ev, "other": other, "hand": hand}
+	var ctx: Dictionary = {"event": ev, "other": other, "hand": hand, "target_link": -1, "target_card_id": 0}
 	if other != 0:
 		var oidx: int = duel.m.u16(other) & 0xfff
 		ctx["chain_p"] = duel.m.u8(other + 2) & 1
 		ctx["chain_cid"] = duel.cards.id_of(oidx) & 0xffff
+		ctx["target_card_id"] = ctx["chain_cid"]
+		if other >= 0xa15e80:
+			ctx["target_link"] = int((other - 0xa15e80) / 0x14)
 		var ot: int = CustomDuelOps.ctype(duel, oidx)
 		ctx["is_spell"] = (ot == 0x16)
 		ctx["is_trap"] = (ot == 0x15)
@@ -123,12 +126,15 @@ static func build_joey_ctx(duel, effect: int, target: int, flag: int) -> Diction
 	var p: int = ((bits >> 14) & 1) ^ (bits & 1)
 	var ev_code: int = (bits >> 6) & 0x3f
 	var ev: String = map_joey_event(ev_code, target)
-	var ctx: Dictionary = {"event": ev, "other": target, "hand": flag}
+	var ctx: Dictionary = {"event": ev, "other": target, "hand": flag, "target_link": -1, "target_card_id": 0}
 	if target != 0:
 		var tidx: int = duel.m.u16(target) & 0xfff
 		var tbits: int = duel.m.u16(target + 2)
 		ctx["chain_p"] = ((tbits >> 14) & 1) ^ (tbits & 1)
 		ctx["chain_cid"] = duel.cards.id_of(tidx) & 0xffff
+		ctx["target_card_id"] = ctx["chain_cid"]
+		if target >= 0xa55b40:
+			ctx["target_link"] = int((target - 0xa55b40) / 20)
 		var tt: int = CustomDuelOps.ctype(duel, tidx)
 		ctx["is_spell"] = (tt == 0x16)
 		ctx["is_trap"] = (tt == 0x15)
@@ -180,7 +186,9 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx := {}) ->
 
 static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := {}) -> bool:
 	p &= 1
-	var handled := false
+	if z >= 0 and z <= 10:
+		CustomDuelOps._present(duel, "card_effect", {"p": p, "zone": z, "card": cid, "flags": 2})
+	var handled = false
 	if CustomEffectsTraps.handles(cid):
 		handled = CustomEffectsTraps.resolve(duel, p, cid, loc, z, ctx)
 	elif CustomEffectsSpells.handles(cid):
@@ -223,7 +231,7 @@ static func can_special_summon(duel, p: int, cid: int, loc: int, slot: int) -> b
 
 
 static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
-	var z := -1
+	var z = -1
 	if CustomEffectsMonsters1.handles(cid):
 		z = CustomEffectsMonsters1.special_summon(duel, p, cid, loc, slot)
 	elif CustomEffectsMonsters2.handles(cid):
@@ -241,6 +249,8 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 		CustomDuelOps.zflags(duel, p & 1, z)["tribute_summoned"] = true
 	CustomEffectsMonsters1.on_summon_or_flip(duel, p, z, cid, norm_kind)
 	CustomEffectsMonsters2.on_summon_or_flip(duel, p, z, cid, norm_kind)
+	if norm_kind in ["flip_summon", "flipped"] and cid in [2713, 2716, 2739, 2751, 2765, 2788, 2819, 2823, 2832, 2850, 2982, 3107, 3120]:
+		resolve_chain_link(duel, p, cid, CustomDuelOps.LOC_FIELD_MONSTER, z, {"event": norm_kind})
 	on_continuous_enforce(duel)
 	check_and_apply_win(duel)
 	if handles(cid):
@@ -250,8 +260,8 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
 	if duel == null:
 		return
-	var st := CustomDuelOps.state(duel)
-	var t := CustomDuelOps.turn_number(duel)
+	var st = CustomDuelOps.state(duel)
+	var t = CustomDuelOps.turn_number(duel)
 	var prev_t := int(st.get("last_turn_seen", -1))
 	var prev_ph := int(st.get("last_phase_seen", -1))
 	if prev_t != t or prev_ph != ph:
@@ -285,7 +295,7 @@ static func on_continuous_enforce(duel) -> void:
 
 
 static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: int) -> bool:
-	var cid := CustomDuelOps.zone_id(duel, atk_p, atk_z)
+	var cid = CustomDuelOps.zone_id(duel, atk_p, atk_z)
 	if not can_attack(duel, atk_p, atk_z, cid):
 		return false
 	if not CustomEffectsMonsters1.on_attack_declare(duel, atk_p, atk_z, def_p, def_z):
@@ -336,38 +346,38 @@ static func on_draw(duel, draw_p: int, count: int) -> void:
 
 
 static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
-	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
 	return CustomEffectsMonsters1.can_attack(duel, p, z, id) and CustomEffectsMonsters2.can_attack(duel, p, z, id)
 
 
 static func can_direct_attack(duel, p: int, z: int, cid := -1) -> bool:
-	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
 	return CustomEffectsMonsters1.can_direct_attack(duel, p, z, id) or CustomEffectsMonsters2.can_direct_attack(duel, p, z, id)
 
 
 static func has_pierce(duel, p: int, z: int, cid := -1) -> bool:
-	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
 	return CustomEffectsMonsters1.has_pierce(duel, p, z, id) or CustomEffectsMonsters2.has_pierce(duel, p, z, id)
 
 
 static func max_attacks(duel, p: int, z: int, cid := -1) -> int:
-	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
 	return maxi(CustomEffectsMonsters1.max_attacks(duel, p, z, id), CustomEffectsMonsters2.max_attacks(duel, p, z, id))
 
 
 static func check_win(duel) -> int:
-	var st := CustomDuelOps.state(duel)
+	var st = CustomDuelOps.state(duel)
 	var pending := int(st.get("pending_win", -1))
 	if pending >= 0:
 		return pending
-	var w1 := CustomEffectsMonsters1.check_win(duel)
+	var w1 = CustomEffectsMonsters1.check_win(duel)
 	if w1 >= 0:
 		return w1
 	return -1
 
 
 static func check_and_apply_win(duel) -> int:
-	var w := check_win(duel)
+	var w = check_win(duel)
 	if w == 0 or w == 1:
 		CustomDuelOps.declare_win(duel, w)
 	return w
@@ -375,19 +385,19 @@ static func check_and_apply_win(duel) -> int:
 
 static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) -> Vector2i:
 	p &= 1
-	var cid := CustomDuelOps.zone_id(duel, p, z)
-	var st := CustomDuelOps.state(duel)
-	var k := "%d:%d" % [p, z]
-	var t := CustomDuelOps.turn_number(duel)
-	var atk := cur_atk
-	var df := cur_def
+	var cid = CustomDuelOps.zone_id(duel, p, z)
+	var st = CustomDuelOps.state(duel)
+	var k = "%d:%d" % [p, z]
+	var t = CustomDuelOps.turn_number(duel)
+	var atk = cur_atk
+	var df = cur_def
 
 	if st["trap_monsters"].has(k):
 		var tm: Dictionary = st["trap_monsters"][k]
 		atk = int(tm.get("atk", atk))
 		df = int(tm.get("def", df))
 
-	var mod := {}
+	var mod = {}
 	if CustomEffectsMonsters1.handles(cid) or cid != 0:
 		CustomEffectsMonsters1.modify_continuous(duel, p, z, cid, mod)
 	if CustomEffectsMonsters2.handles(cid):
@@ -448,7 +458,7 @@ static func _expire_temp_stats(st: Dictionary, t: int) -> void:
 
 
 static func _run_delayed_tasks(duel, cur_t: int, cur_ph: int) -> void:
-	var st := CustomDuelOps.state(duel)
+	var st = CustomDuelOps.state(duel)
 	var rem: Array = []
 	for task in st["delayed"]:
 		var tt := int(task.get("turn", 0))
@@ -479,9 +489,9 @@ static func _execute_delayed(duel, task: Dictionary) -> void:
 				CustomDuelOps.change_control(duel, p, sz, orig_p, false)
 		"revive_phoenix", "revive_vampire_lord", "revive_behemoth":
 			if CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var gi := CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, cid)
+				var gi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, cid)
 				if gi >= 0:
-					var nz := CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, true, false)
+					var nz = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, true, false)
 					if nz >= 0:
 						if action == "revive_phoenix" and cid == 2630:
 							for pl in 2:

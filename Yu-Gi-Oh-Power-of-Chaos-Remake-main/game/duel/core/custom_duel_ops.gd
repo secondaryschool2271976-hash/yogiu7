@@ -165,7 +165,7 @@ static func get_lp(duel, p: int) -> int:
 
 static func set_lp(duel, p: int, value: int) -> void:
 	p &= 1
-	var clamped := clampi(value, 0, 65535)
+	var clamped = clampi(value, 0, 65535)
 	if is_joey(duel):
 		duel.m.set_u16(JoeyMem.pl(p) + JoeyMem.P_LP, clamped)
 	else:
@@ -176,7 +176,7 @@ static func damage(duel, p: int, amount: int, is_battle := false) -> int:
 	p &= 1
 	if amount <= 0:
 		return 0
-	var pf := pflags(duel, p)
+	var pf = pflags(duel, p)
 	if not is_battle and int(pf.get("no_effect_damage_turn", 0)) == turn_number(duel):
 		return 0
 	if int(pf.get("effect_dmg_to_heal_turn", 0)) == turn_number(duel) and not is_battle:
@@ -185,7 +185,7 @@ static func damage(duel, p: int, amount: int, is_battle := false) -> int:
 		amount = int(amount / 2)
 	if amount <= 0:
 		return 0
-	var st := state(duel)
+	var st = state(duel)
 	st["last_damage"][p] = amount
 	if is_joey(duel):
 		duel.f5784e0(p, mini(amount, 0xffff))
@@ -198,14 +198,14 @@ static func battle_damage(duel, p: int, amount: int) -> int:
 	p &= 1
 	if amount <= 0:
 		return 0
-	var pf := pflags(duel, p)
+	var pf = pflags(duel, p)
 	if int(pf.get("no_battle_damage_turn", 0)) == turn_number(duel):
 		return 0
 	if int(pf.get("halve_damage_turn", 0)) == turn_number(duel):
 		amount = int(amount / 2)
 	if amount <= 0:
 		return 0
-	var st := state(duel)
+	var st = state(duel)
 	st["last_damage"][p] = amount
 	if is_joey(duel):
 		duel.f5784a0(p, mini(amount, 0xffff))
@@ -218,14 +218,14 @@ static func heal(duel, p: int, amount: int) -> int:
 	p &= 1
 	if amount <= 0:
 		return 0
-	var opp := 1 - p
+	var opp = 1 - p
 	# Bad Reaction to Simochi / Nurse Reficule equivalent
 	if has_faceup_id(duel, opp, 2777) or has_faceup_id(duel, 0, 2777):
 		return damage(duel, p, amount, false)
 	if is_joey(duel):
 		duel.f5787f0(p, mini(amount, 0xffff))
 	else:
-		var before := get_lp(duel, p)
+		var before = get_lp(duel, p)
 		set_lp(duel, p, before + amount)
 		if duel.has_method("present"):
 			duel.present("lp_total", {"p": p, "from": before, "to": get_lp(duel, p), "amount": amount, "native_silent": false})
@@ -236,14 +236,14 @@ static func pay_lp(duel, p: int, amount: int) -> bool:
 	p &= 1
 	if amount <= 0:
 		return true
-	var cur := get_lp(duel, p)
+	var cur = get_lp(duel, p)
 	if cur <= amount and amount > 0:
 		if cur < amount:
 			return false
 	if is_joey(duel):
 		duel.f5784e0(p, mini(amount, 0xffff))
 	else:
-		var after := maxi(0, cur - amount)
+		var after = maxi(0, cur - amount)
 		set_lp(duel, p, after)
 		if duel.has_method("present"):
 			duel.present("lp_total", {"p": p, "from": cur, "to": after, "amount": -amount, "native_silent": false})
@@ -256,7 +256,7 @@ static func can_pay_lp(duel, p: int, amount: int) -> bool:
 
 
 static func pflags(duel, p: int) -> Dictionary:
-	var st := state(duel)
+	var st = state(duel)
 	var pf: Dictionary = st["player_flags"]
 	if not pf.has(p & 1):
 		pf[p & 1] = {}
@@ -264,16 +264,16 @@ static func pflags(duel, p: int) -> Dictionary:
 
 
 static func zflags(duel, p: int, z: int) -> Dictionary:
-	var st := state(duel)
-	var k := "%d:%d" % [p & 1, z]
+	var st = state(duel)
+	var k = "%d:%d" % [p & 1, z]
 	if not st["zone_flags"].has(k):
 		st["zone_flags"][k] = {}
 	return st["zone_flags"][k]
 
 
 static func clear_zone_state(duel, p: int, z: int) -> void:
-	var st := state(duel)
-	var k := "%d:%d" % [p & 1, z]
+	var st = state(duel)
+	var k = "%d:%d" % [p & 1, z]
 	st["temp_atk"].erase(k)
 	st["temp_def"].erase(k)
 	st["perm_atk"].erase(k)
@@ -320,7 +320,7 @@ static func csub(duel, idx: int) -> int:
 
 
 static func is_monster(duel, idx: int) -> bool:
-	var t := ctype(duel, idx)
+	var t = ctype(duel, idx)
 	return idx > 0 and (t > 0 and t < 0x15 or t == 0x18)
 
 
@@ -341,7 +341,7 @@ static func is_extra_deck_monster(duel, idx: int) -> bool:
 static func is_ritual_monster(duel, idx: int) -> bool:
 	if not is_monster(duel, idx):
 		return false
-	var cid := raw_id(duel, idx)
+	var cid = raw_id(duel, idx)
 	if cid in [2526, 2966, 3046, 3071, 3084, 3129]:
 		return true
 	return ((prop_of(duel, idx) >> 18) & 3) == 3
@@ -370,7 +370,7 @@ static func monster_attr(duel, idx: int) -> int:
 
 
 static func monster_level(duel, idx: int) -> int:
-	var t := ctype(duel, idx)
+	var t = ctype(duel, idx)
 	if t == 0x18:
 		return 10
 	if t >= 0x15:
@@ -379,7 +379,7 @@ static func monster_level(duel, idx: int) -> int:
 
 
 static func base_atk(duel, idx: int) -> int:
-	var t := ctype(duel, idx)
+	var t = ctype(duel, idx)
 	if t == 0x18:
 		return 4000
 	if t >= 0x15 and t <= 0x17:
@@ -388,7 +388,7 @@ static func base_atk(duel, idx: int) -> int:
 
 
 static func base_def(duel, idx: int) -> int:
-	var t := ctype(duel, idx)
+	var t = ctype(duel, idx)
 	if t == 0x18:
 		return 4000
 	if t >= 0x15 and t <= 0x17:
@@ -415,19 +415,19 @@ static func zone_id(duel, p: int, z: int) -> int:
 
 
 static func is_face_up(duel, p: int, z: int) -> bool:
-	var addr := zone_addr(duel, p, z)
+	var addr = zone_addr(duel, p, z)
 	if (duel.m.u32(addr) & 0xfff) == 0:
 		return false
 	return (duel.m.u8(addr + 6) & 2) != 0
 
 
 static func is_atk_pos(duel, p: int, z: int) -> bool:
-	var addr := zone_addr(duel, p, z)
+	var addr = zone_addr(duel, p, z)
 	return (duel.m.u8(addr + 6) & 1) == 0
 
 
 static func eff_atk(duel, p: int, z: int) -> int:
-	var idx := zone_idx(duel, p, z)
+	var idx = zone_idx(duel, p, z)
 	if idx == 0 or z >= 5:
 		return 0
 	var out: int = duel.m.local(12)
@@ -439,7 +439,7 @@ static func eff_atk(duel, p: int, z: int) -> int:
 
 
 static func eff_def(duel, p: int, z: int) -> int:
-	var idx := zone_idx(duel, p, z)
+	var idx = zone_idx(duel, p, z)
 	if idx == 0 or z >= 5:
 		return 0
 	var out: int = duel.m.local(12)
@@ -453,7 +453,7 @@ static func eff_def(duel, p: int, z: int) -> int:
 static func pile_count(duel, p: int, loc: int) -> int:
 	p &= 1
 	if is_joey(duel):
-		var base := JoeyMem.pl(p)
+		var base = JoeyMem.pl(p)
 		match loc:
 			LOC_HAND: return duel.m.u8(base + JoeyMem.P_HAND_N)
 			LOC_FUSION: return duel.m.u8(base + JoeyMem.P_FUSION_N)
@@ -461,7 +461,7 @@ static func pile_count(duel, p: int, loc: int) -> int:
 			LOC_GRAVE: return duel.m.u8(base + JoeyMem.P_GRAVE_N)
 			LOC_BANISH: return duel.m.u8(base + JoeyMem.P_BANISH_N)
 		return 0
-	var base := DuelMem.pl(p)
+	var base = DuelMem.pl(p)
 	match loc:
 		LOC_HAND: return duel.m.u8(base + DuelMem.P_HAND_N)
 		LOC_FUSION: return duel.m.u8(base + DuelMem.P_FUSION_N)
@@ -505,7 +505,7 @@ static func free_st_zone(duel, p: int) -> int:
 
 
 static func count_monsters(duel, p: int, face_up_only := false) -> int:
-	var n := 0
+	var n = 0
 	for z in 5:
 		if zone_idx(duel, p, z) != 0 and (not face_up_only or is_face_up(duel, p, z)):
 			n += 1
@@ -513,8 +513,8 @@ static func count_monsters(duel, p: int, face_up_only := false) -> int:
 
 
 static func count_st(duel, p: int, include_field := false) -> int:
-	var n := 0
-	var lim := 11 if include_field else 10
+	var n = 0
+	var lim = 11 if include_field else 10
 	for z in range(5, lim):
 		if zone_idx(duel, p, z) != 0:
 			n += 1
@@ -529,7 +529,7 @@ static func has_faceup_id(duel, p: int, cid: int) -> bool:
 
 
 static func count_faceup_id(duel, p: int, cid: int) -> int:
-	var n := 0
+	var n = 0
 	for z in 11:
 		if zone_idx(duel, p, z) != 0 and is_face_up(duel, p, z) and zone_id(duel, p, z) == cid:
 			n += 1
@@ -538,9 +538,9 @@ static func count_faceup_id(duel, p: int, cid: int) -> int:
 
 static func card_name(duel, cid: int) -> String:
 	if Engine.get_main_loop() != null:
-		var root := Engine.get_main_loop().get("root") as Node
+		var root = Engine.get_main_loop().get("root") as Node
 		if root != null:
-			var db := root.get_node_or_null("CardDB")
+			var db = root.get_node_or_null("CardDB")
 			if db != null and db.has_method("get_card_by_internal_id"):
 				var info: Dictionary = db.get_card_by_internal_id(cid)
 				if not info.is_empty():
@@ -549,10 +549,10 @@ static func card_name(duel, cid: int) -> String:
 
 
 static func name_matches(duel, idx: int, substr: String) -> bool:
-	var cid := raw_id(duel, idx)
+	var cid = raw_id(duel, idx)
 	if cid <= 0:
 		return false
-	var low := substr.to_lower()
+	var low = substr.to_lower()
 	match low:
 		"exodia": return cid in EXODIA_IDS
 		"forbidden one": return cid in FORBIDDEN_ONE_IDS
@@ -581,7 +581,7 @@ static func name_matches(duel, idx: int, substr: String) -> bool:
 		"ojama": return cid in OJAMA_IDS
 		"union": return cid in UNION_IDS
 		"dark scorpion": return cid in DARK_SCORPION_IDS
-	var nm := card_name(duel, cid).to_lower()
+	var nm = card_name(duel, cid).to_lower()
 	if nm != "":
 		return nm.find(low) >= 0
 	return false
@@ -590,8 +590,8 @@ static func name_matches(duel, idx: int, substr: String) -> bool:
 # --- HOPT / OPT / OPD / Counters / Stat Mods -----------------------------------------------------
 
 static func can_hopt(duel, p: int, cid: int) -> bool:
-	var st := state(duel)
-	var k := "%d:%d" % [p & 1, cid]
+	var st = state(duel)
+	var k = "%d:%d" % [p & 1, cid]
 	return int(st["hopt"].get(k, -1)) != turn_number(duel)
 
 
@@ -600,7 +600,7 @@ static func mark_hopt(duel, p: int, cid: int) -> void:
 
 
 static func can_opt(duel, p: int, cid: int, slot := 0) -> bool:
-	var k := "%d:%d:%d" % [p & 1, cid, slot]
+	var k = "%d:%d:%d" % [p & 1, cid, slot]
 	return int(state(duel)["opt"].get(k, -1)) != turn_number(duel)
 
 
@@ -617,18 +617,18 @@ static func mark_opd(duel, p: int, cid: int) -> void:
 
 
 static func add_counter(duel, p: int, z: int, kind: String, delta := 1) -> int:
-	var st := state(duel)
-	var k := "%d:%d:%s" % [p & 1, z, kind]
-	var val := maxi(0, int(st["counters"].get(k, 0)) + delta)
+	var st = state(duel)
+	var k = "%d:%d:%s" % [p & 1, z, kind]
+	var val = maxi(0, int(st["counters"].get(k, 0)) + delta)
 	st["counters"][k] = val
 	if is_face_up(duel, p, z):
 		if is_joey(duel):
-			var zo := JoeyMem.zone(p & 1, z)
+			var zo = JoeyMem.zone(p & 1, z)
 			duel.m.set_u16(zo + JoeyMem.Z_COUNTER, maxi(0, duel.m.u16(zo + JoeyMem.Z_COUNTER) + delta))
 		else:
-			var zn := DuelMem.zone(p & 1, z)
+			var zn = DuelMem.zone(p & 1, z)
 			var cur: int = duel.m.u16(zn + 6)
-			var cnt := clampi(((cur >> 2) & 0xf) + delta, 0, 15)
+			var cnt = clampi(((cur >> 2) & 0xf) + delta, 0, 15)
 			duel.m.set_u16(zn + 6, (cur & 0xffc3) | (cnt << 2))
 	return val
 
@@ -638,10 +638,10 @@ static func get_counter(duel, p: int, z: int, kind: String) -> int:
 
 
 static func add_stat_mod(duel, p: int, z: int, atk_delta: int, def_delta: int, until_ep := true) -> void:
-	var st := state(duel)
-	var k := "%d:%d" % [p & 1, z]
+	var st = state(duel)
+	var k = "%d:%d" % [p & 1, z]
 	if until_ep:
-		var t := turn_number(duel)
+		var t = turn_number(duel)
 		if atk_delta != 0:
 			if not st["temp_atk"].has(k):
 				st["temp_atk"][k] = []
@@ -656,9 +656,9 @@ static func add_stat_mod(duel, p: int, z: int, atk_delta: int, def_delta: int, u
 
 
 static func set_stat_val(duel, p: int, z: int, atk_val: int, def_val: int, until_ep := true) -> void:
-	var st := state(duel)
-	var k := "%d:%d" % [p & 1, z]
-	var exp := turn_number(duel) if until_ep else -1
+	var st = state(duel)
+	var k = "%d:%d" % [p & 1, z]
+	var exp = turn_number(duel) if until_ep else -1
 	if atk_val >= 0:
 		st["set_atk"][k] = [atk_val, exp]
 	if def_val >= 0:
@@ -679,7 +679,7 @@ static func schedule_delayed(duel, target_turn: int, target_phase: int, p: int, 
 # --- Deterministic RNG (Coin & Dice) -------------------------------------------------------------
 
 static func coin_toss(duel, p := 0) -> int:
-	var r := 0
+	var r = 0
 	if duel.rng != null:
 		r = duel.rng.rand() & 1
 	else:
@@ -696,7 +696,7 @@ static func coin_toss(duel, p := 0) -> int:
 
 
 static func dice_roll(duel, p := 0) -> int:
-	var r := 1
+	var r = 1
 	if duel.rng != null:
 		r = (duel.rng.rand() % 6) + 1
 	else:
@@ -712,7 +712,7 @@ static func dice_roll(duel, p := 0) -> int:
 
 static func declare_win(duel, winner_p: int) -> void:
 	winner_p &= 1
-	var st := state(duel)
+	var st = state(duel)
 	st["pending_win"] = winner_p
 	if is_joey(duel):
 		set_lp(duel, 1 - winner_p, 0)
@@ -727,11 +727,11 @@ static func draw(duel, p: int, count: int) -> int:
 	p &= 1
 	if count <= 0:
 		return 0
-	var deck_n := pile_count(duel, p, LOC_DECK)
+	var deck_n = pile_count(duel, p, LOC_DECK)
 	if deck_n <= 0:
 		declare_win(duel, 1 - p)
 		return 0
-	var actual := mini(count, deck_n)
+	var actual = mini(count, deck_n)
 	if is_joey(duel):
 		duel.f578b60(p, actual)
 	else:
@@ -745,8 +745,8 @@ static func mill(duel, p: int, count: int, trigger := 1) -> int:
 	p &= 1
 	if count <= 0:
 		return 0
-	var deck_n := pile_count(duel, p, LOC_DECK)
-	var actual := mini(count, deck_n)
+	var deck_n = pile_count(duel, p, LOC_DECK)
+	var actual = mini(count, deck_n)
 	if actual <= 0:
 		return 0
 	if is_joey(duel):
@@ -769,7 +769,7 @@ static func shuffle_deck(duel, p: int) -> void:
 static func _core_take_pile_entry(duel, p: int, loc: int, i: int, out_addr: int) -> bool:
 	p &= 1
 	var m: DuelMem = duel.m
-	var q := p * DuelMem.PLAYER_SIZE
+	var q = p * DuelMem.PLAYER_SIZE
 	if i < 0 or i >= pile_count(duel, p, loc):
 		return false
 	match loc:
@@ -787,14 +787,14 @@ static func _core_take_pile_entry(duel, p: int, loc: int, i: int, out_addr: int)
 			duel.f541cb0(out_addr, duel.f5419b0(p, LOC_BANISH, i))
 			return duel.f544a80(p, i) != 0
 		LOC_FUSION:
-			var count_at := 0xa11949 + q
+			var count_at = 0xa11949 + q
 			var n: int = m.u8(count_at)
 			if i >= n:
 				return false
-			var at := 0xa12378 + q + i * 4
+			var at = 0xa12378 + q + i * 4
 			duel.f541cb0(out_addr, at)
 			m.set_u8(count_at, n - 1)
-			var j := i
+			var j = i
 			while j < m.u8(count_at):
 				duel.f541cb0(at, at + 4)
 				j += 1
@@ -827,18 +827,30 @@ static func _core_put_pile_entry(duel, p: int, loc: int, entry_addr: int, to_bot
 			duel.f5425e0(p, entry_addr)
 
 
+static func _present(duel, kind: String, data: Dictionary = {}) -> void:
+	if duel == null:
+		return
+	if is_joey(duel):
+		var ev: Dictionary = data.duplicate(true)
+		ev["kind"] = kind
+		duel.events.append(ev)
+	elif duel.has_method("present"):
+		duel.present(kind, data)
+
+
 static func move_pile_card(duel, from_p: int, from_loc: int, i: int, to_p: int, to_loc: int, to_bottom := false) -> int:
 	from_p &= 1
 	to_p &= 1
 	if i < 0 or i >= pile_count(duel, from_p, from_loc):
 		return 0
 	var tmp: int = duel.m.local(4)
-	var idx := pile_idx(duel, from_p, from_loc, i)
+	var idx: int = pile_idx(duel, from_p, from_loc, i)
+	var cid: int = raw_id(duel, idx)
 	if is_joey(duel):
 		var src: int = duel.f5700f0(from_p, from_loc, i)
 		duel.f5675c0(tmp, src)
 		duel.f570790(from_p, from_loc, i)
-		var arg := 1 if (to_loc == LOC_DECK and to_bottom) else 0
+		var arg = 1 if (to_loc == LOC_DECK and to_bottom) else 0
 		duel.f5708d0(to_p, to_loc, arg, tmp)
 	else:
 		if not _core_take_pile_entry(duel, from_p, from_loc, i, tmp):
@@ -846,7 +858,15 @@ static func move_pile_card(duel, from_p: int, from_loc: int, i: int, to_p: int, 
 		_core_put_pile_entry(duel, to_p, to_loc, tmp, to_bottom)
 	if to_loc == LOC_GRAVE:
 		var list: Array = state(duel)["sent_gy_this_turn"][to_p]
-		list.append(raw_id(duel, idx))
+		list.append(cid)
+	var dst_slot: int = 0 if to_bottom else maxi(0, pile_count(duel, to_p, to_loc) - 1)
+	_present(duel, "move", {
+		"p": from_p,
+		"card": cid,
+		"from": (from_p & 1) | ((from_loc & 0xf) << 1) | ((i & 0xff) << 5),
+		"to": (to_p & 1) | ((to_loc & 0xf) << 1) | ((dst_slot & 0xff) << 5) | 0x8000,
+		"reason": 0,
+	})
 	sync_visuals(duel)
 	return idx
 
@@ -864,7 +884,7 @@ static func discard_hand_slot(duel, p: int, hand_i: int, trigger := 1) -> int:
 	p &= 1
 	if hand_i < 0 or hand_i >= pile_count(duel, p, LOC_HAND):
 		return 0
-	var idx := pile_idx(duel, p, LOC_HAND, hand_i)
+	var idx = pile_idx(duel, p, LOC_HAND, hand_i)
 	if is_joey(duel):
 		move_pile_card(duel, p, LOC_HAND, hand_i, p, LOC_GRAVE)
 	else:
@@ -874,9 +894,9 @@ static func discard_hand_slot(duel, p: int, hand_i: int, trigger := 1) -> int:
 
 static func discard_random(duel, p: int, count := 1) -> int:
 	p &= 1
-	var done := 0
+	var done = 0
 	for _k in count:
-		var n := pile_count(duel, p, LOC_HAND)
+		var n = pile_count(duel, p, LOC_HAND)
 		if n <= 0:
 			break
 		var r: int = (duel.rng.rand() % n) if duel.rng != null else (randi() % n)
@@ -887,16 +907,16 @@ static func discard_random(duel, p: int, count := 1) -> int:
 
 static func send_zone_to_gy(duel, p: int, z: int) -> bool:
 	p &= 1
-	var idx := zone_idx(duel, p, z)
+	var idx = zone_idx(duel, p, z)
 	if idx == 0:
 		return false
-	var cid := raw_id(duel, idx)
+	var cid = raw_id(duel, idx)
 	if is_joey(duel):
 		duel.f577b30(p, z)
 	else:
 		var tmp: int = duel.m.local(4)
 		duel.f541cb0(tmp, DuelMem.zone(p, z))
-		var pbit := 0x8000 if p != 0 else 0
+		var pbit = 0x8000 if p != 0 else 0
 		if cid >= 0x780 and cid < 2000:
 			duel.f54e250(p, z, 1)
 		else:
@@ -914,10 +934,10 @@ static func send_zone_to_gy(duel, p: int, z: int) -> bool:
 
 static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	p &= 1
-	var idx := zone_idx(duel, p, z)
+	var idx = zone_idx(duel, p, z)
 	if idx == 0:
 		return false
-	var zf := zflags(duel, p, z)
+	var zf = zflags(duel, p, z)
 	if by_battle and bool(zf.get("indest_battle", false)):
 		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
@@ -925,7 +945,7 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	if bool(zf.get("indest_once", false)):
 		zf["indest_once"] = false
 		return false
-	var cid := raw_id(duel, idx)
+	var cid = raw_id(duel, idx)
 	if is_joey(duel):
 		var info: int = duel.m.local(0x14)
 		duel.m.set_u16(info, idx)
@@ -969,25 +989,41 @@ static func bounce_zone(duel, p: int, z: int) -> bool:
 
 static func spin_zone(duel, p: int, z: int, to_bottom := false) -> bool:
 	p &= 1
-	var idx := zone_idx(duel, p, z)
+	var idx: int = zone_idx(duel, p, z)
 	if idx == 0:
 		return false
+	var cid: int = raw_id(duel, idx)
+	var entry_val: int = zone_entry(duel, p, z)
+	var owner: int = (entry_val >> 12) & 1
+	var dst_slot: int = 0 if to_bottom else pile_count(duel, owner, LOC_DECK)
 	if is_joey(duel):
 		var tmp: int = duel.m.local(4)
 		var entry: int = duel.m.u32(JoeyMem.zone(p, z))
-		var owner := (entry >> 12) & 1
 		duel.m.set_u32(tmp, entry)
 		duel.f570790(p, z, 0)
 		duel.f5708d0(owner, LOC_DECK, 1 if to_bottom else 0, tmp)
+		_present(duel, "move", {
+			"p": p,
+			"card": cid,
+			"from": (p & 1) | ((z & 0xf) << 1),
+			"to": (owner & 1) | ((LOC_DECK & 0xf) << 1) | ((dst_slot & 0xff) << 5),
+			"reason": 0,
+		})
 	else:
 		if to_bottom:
 			var tmp: int = duel.m.local(4)
 			var entry: int = duel.m.u32(DuelMem.zone(p, z))
-			var owner := (entry >> 12) & 1
 			duel.m.set_u32(tmp, entry)
 			duel.f54ca50(p, z, 0)
 			duel.f542c40(p, z)
 			duel.f5425a0(owner, tmp)
+			_present(duel, "move", {
+				"p": p,
+				"card": cid,
+				"from": (p & 1) | ((z & 0xf) << 1),
+				"to": (owner & 1) | ((LOC_DECK & 0xf) << 1) | ((dst_slot & 0xff) << 5),
+				"reason": 0,
+			})
 		else:
 			duel.f54e510(p, z)
 	clear_zone_state(duel, p, z)
@@ -997,10 +1033,10 @@ static func spin_zone(duel, p: int, z: int, to_bottom := false) -> bool:
 
 static func tribute_zone(duel, p: int, z: int) -> bool:
 	p &= 1
-	var idx := zone_idx(duel, p, z)
+	var idx = zone_idx(duel, p, z)
 	if idx == 0 or z >= 5:
 		return false
-	var cid := raw_id(duel, idx)
+	var cid = raw_id(duel, idx)
 	if is_joey(duel):
 		duel.f577cf0(p, z, JoeyMem.zone(p, z), 1, 0)
 	else:
@@ -1011,16 +1047,16 @@ static func tribute_zone(duel, p: int, z: int) -> bool:
 
 
 static func add_from_pile_to_hand(duel, p: int, loc: int, i: int) -> int:
-	var owner := p & 1
-	var idx := move_pile_card(duel, owner, loc, i, owner, LOC_HAND)
+	var owner = p & 1
+	var idx = move_pile_card(duel, owner, loc, i, owner, LOC_HAND)
 	if idx > 0 and loc == LOC_DECK:
 		shuffle_deck(duel, owner)
 	return idx
 
 
 static func send_from_deck_to_gy(duel, p: int, i: int) -> int:
-	var owner := p & 1
-	var idx := move_pile_card(duel, owner, LOC_DECK, i, owner, LOC_GRAVE)
+	var owner = p & 1
+	var idx = move_pile_card(duel, owner, LOC_DECK, i, owner, LOC_GRAVE)
 	if idx > 0:
 		shuffle_deck(duel, owner)
 	return idx
@@ -1029,12 +1065,13 @@ static func send_from_deck_to_gy(duel, p: int, i: int) -> int:
 static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_p: int, face_up := true, def_pos := false) -> int:
 	src_p &= 1
 	target_p &= 1
-	var z := free_monster_zone(duel, target_p)
+	var z = free_monster_zone(duel, target_p)
 	if z < 0:
 		return -1
-	var idx := pile_idx(duel, src_p, loc, i)
+	var idx = pile_idx(duel, src_p, loc, i)
 	if idx == 0:
 		return -1
+	var cid: int = raw_id(duel, idx)
 	var tmp: int = duel.m.local(4)
 	if is_joey(duel):
 		var src: int = duel.f5700f0(src_p, loc, i)
@@ -1045,66 +1082,70 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 		if not _core_take_pile_entry(duel, src_p, loc, i, tmp):
 			return -1
 		duel.f5422b0(target_p, z, tmp, 1 if def_pos else 0, 1 if face_up else 0)
-		var zn := DuelMem.zone(target_p, z)
+		var zn = DuelMem.zone(target_p, z)
 		if face_up:
 			duel.m.set_u8(zn + 6, duel.m.u8(zn + 6) | 2)
 		else:
 			duel.m.set_u8(zn + 6, duel.m.u8(zn + 6) & ~2)
-		if duel.has_method("present"):
-			duel.present("summon_special", {"p": target_p, "zone": z, "card": raw_id(duel, idx), "face_up": face_up, "def": def_pos})
 	if loc == LOC_DECK:
 		shuffle_deck(duel, src_p)
-	var cid := raw_id(duel, idx)
 	state(duel)["summoned_this_turn"][target_p].append(cid)
-	if is_joey(duel):
-		duel.events.append({"kind": "summon_special", "p": target_p, "zone": z, "card": cid})
+	var flags: int = (1 if def_pos else 0) | ((1 if face_up else 0) << 1)
+	_present(duel, "move", {
+		"p": src_p,
+		"card": cid,
+		"from": (src_p & 1) | ((loc & 0xf) << 1) | ((i & 0xff) << 5),
+		"to": (target_p & 1) | ((z & 0xf) << 1) | ((1 if def_pos else 0) << 14) | ((1 if face_up else 0) << 15),
+		"reason": 1,
+	})
+	_present(duel, "special", {"p": target_p, "zone": z, "card": cid, "flags": flags})
+	sync_visuals(duel)
 	return z
 
 
 static func special_summon_by_id(duel, p: int, cid: int, atk := -1, def_val := -1, face_up := true, def_pos := false) -> int:
 	p &= 1
-	var z := free_monster_zone(duel, p)
+	var z = free_monster_zone(duel, p)
 	if z < 0:
 		return -1
-	var idx := card_idx(duel, cid)
+	var idx = card_idx(duel, cid)
 	if idx <= 0:
 		idx = card_idx(duel, 0x780) # fallback token index
 	if idx <= 0:
 		return -1
 	var tmp: int = duel.m.local(4)
-	var entry := ((p & 1) << 12) | (idx & 0xfff)
+	var entry = ((p & 1) << 12) | (idx & 0xfff)
 	duel.m.set_u32(tmp, entry)
 	if is_joey(duel):
 		duel.f568610(p, z, tmp, 1 if face_up else 0, 1 if def_pos else 0)
 	else:
 		duel.f5422b0(p, z, tmp, 1 if def_pos else 0, 1 if face_up else 0)
-		var zn := DuelMem.zone(p, z)
+		var zn = DuelMem.zone(p, z)
 		if face_up:
 			duel.m.set_u8(zn + 6, duel.m.u8(zn + 6) | 2)
 	if atk >= 0 or def_val >= 0:
 		set_stat_val(duel, p, z, atk, def_val, false)
-	if is_joey(duel):
-		duel.events.append({"kind": "summon_special", "p": p, "zone": z, "card": cid})
-	elif duel.has_method("present"):
-		duel.present("summon_special", {"p": p, "zone": z, "card": cid, "face_up": face_up, "def": def_pos})
+	var flags: int = (1 if def_pos else 0) | ((1 if face_up else 0) << 1)
+	_present(duel, "special", {"p": p, "zone": z, "card": cid, "flags": flags})
+	sync_visuals(duel)
 	return z
 
 
 static func spawn_token(duel, p: int, token_type := 0, def_pos := false, custom_atk := -1, custom_def := -1) -> int:
 	p &= 1
-	var z := free_monster_zone(duel, p)
+	var z = free_monster_zone(duel, p)
 	if z < 0:
 		return -1
-	var tid := 0x780 + clampi(token_type, 0, 3)
+	var tid = 0x780 + clampi(token_type, 0, 3)
 	if is_joey(duel):
-		var z2 := special_summon_by_id(duel, p, tid, custom_atk, custom_def, true, def_pos)
+		var z2 = special_summon_by_id(duel, p, tid, custom_atk, custom_def, true, def_pos)
 		return z2
-	var b := (1 if def_pos else 0) if token_type == 0 else clampi(token_type, 0, 3)
+	var b = (1 if def_pos else 0) if token_type == 0 else clampi(token_type, 0, 3)
 	if def_pos and (b == 0 or b == 3):
 		b = 1
 	elif not def_pos and (b == 1 or b == 2):
 		b = 0
-	var pbit := 0x8000 if p != 0 else 0
+	var pbit = 0x8000 if p != 0 else 0
 	duel.issue(pbit | 0xa5, z, b, 0)
 	if custom_atk >= 0 or custom_def >= 0:
 		set_stat_val(duel, p, z, custom_atk, custom_def, false)
@@ -1113,13 +1154,13 @@ static func spawn_token(duel, p: int, token_type := 0, def_pos := false, custom_
 
 static func activate_trap_as_monster(duel, p: int, st_z: int, atk := 0, def_val := 0, type_id := 15, attr := 0, lv := 4) -> int:
 	p &= 1
-	var mz := free_monster_zone(duel, p)
+	var mz = free_monster_zone(duel, p)
 	if mz < 0:
 		return -1
-	var st_idx := zone_idx(duel, p, st_z)
+	var st_idx = zone_idx(duel, p, st_z)
 	if st_idx == 0:
 		return -1
-	var cid := raw_id(duel, st_idx)
+	var cid = raw_id(duel, st_idx)
 	var tmp: int = duel.m.local(4)
 	duel.m.set_u32(tmp, duel.m.u32(zone_addr(duel, p, st_z)))
 	if is_joey(duel):
@@ -1133,6 +1174,14 @@ static func activate_trap_as_monster(duel, p: int, st_z: int, atk := 0, def_val 
 	state(duel)["trap_monsters"]["%d:%d" % [p, mz]] = {
 		"card_id": cid, "type": type_id, "attr": attr, "lv": lv, "atk": atk, "def": def_val,
 	}
+	_present(duel, "move", {
+		"p": p,
+		"card": cid,
+		"from": (p & 1) | ((st_z & 0xf) << 1),
+		"to": (p & 1) | ((mz & 0xf) << 1) | 0x8000,
+		"reason": 1,
+	})
+	_present(duel, "special", {"p": p, "zone": mz, "card": cid, "flags": 2})
 	sync_visuals(duel)
 	return mz
 
@@ -1140,11 +1189,12 @@ static func activate_trap_as_monster(duel, p: int, st_z: int, atk := 0, def_val 
 static func set_st_from_pile(duel, src_p: int, loc: int, i: int, target_p: int, face_up := false) -> int:
 	src_p &= 1
 	target_p &= 1
-	var idx := pile_idx(duel, src_p, loc, i)
+	var idx = pile_idx(duel, src_p, loc, i)
 	if idx == 0:
 		return -1
-	var is_field := (ctype(duel, idx) == 0x16 and csub(duel, idx) == 2)
-	var tz := 10 if is_field else free_st_zone(duel, target_p)
+	var cid: int = raw_id(duel, idx)
+	var is_field = (ctype(duel, idx) == 0x16 and csub(duel, idx) == 2)
+	var tz = 10 if is_field else free_st_zone(duel, target_p)
 	if tz < 0:
 		return -1
 	if is_field and zone_idx(duel, target_p, 10) != 0:
@@ -1164,17 +1214,25 @@ static func set_st_from_pile(duel, src_p: int, loc: int, i: int, target_p: int, 
 			duel.f5423a0(target_p, tz - 5, tmp, 1 if face_up else 0)
 	if loc == LOC_DECK:
 		shuffle_deck(duel, src_p)
+	_present(duel, "move", {
+		"p": src_p,
+		"card": cid,
+		"from": (src_p & 1) | ((loc & 0xf) << 1) | ((i & 0xff) << 5),
+		"to": (target_p & 1) | ((tz & 0xf) << 1) | (0x8000 if face_up else 0),
+		"reason": 0,
+	})
+	_present(duel, "card_effect" if face_up else "set", {"p": target_p, "zone": tz, "card": cid, "flags": 2 if face_up else 0})
 	sync_visuals(duel)
 	return tz
 
 
 static func change_position(duel, p: int, z: int, def_pos: int, face_up := -1) -> void:
 	p &= 1
-	var addr := zone_addr(duel, p, z)
+	var addr = zone_addr(duel, p, z)
 	if (duel.m.u32(addr) & 0xfff) == 0 or z >= 5:
 		return
 	var cur: int = duel.m.u16(addr + 6)
-	var next := cur
+	var next = cur
 	if def_pos >= 0:
 		if def_pos != 0:
 			next |= 1
@@ -1185,10 +1243,18 @@ static func change_position(duel, p: int, z: int, def_pos: int, face_up := -1) -
 			next |= 2
 		else:
 			next &= ~2
+	var was_up: bool = (cur & 2) != 0
+	var was_def: bool = (cur & 1) != 0
+	var now_up: bool = (next & 2) != 0
+	var now_def: bool = (next & 1) != 0
 	duel.m.set_u16(addr + 6, next)
 	if not is_joey(duel):
 		if def_pos >= 0:
 			duel.f54e660(p, z, def_pos, 1)
+	if was_up != now_up:
+		_present(duel, "flip", {"p": p, "zone": z, "b": 1 if now_up else 0, "flags": cur & 3, "native_target_flags": next & 3})
+	elif was_def != now_def and is_joey(duel):
+		_present(duel, "change_position", {"p": p, "zone": z, "b": 1 if now_up else 0, "flags": cur & 3, "native_target_flags": next & 3})
 	sync_visuals(duel)
 
 
@@ -1197,20 +1263,28 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 	to_p &= 1
 	if from_p == to_p or from_z < 0 or from_z >= 5:
 		return -1
-	var to_z := free_monster_zone(duel, to_p)
+	var to_z = free_monster_zone(duel, to_p)
 	if to_z < 0 or zone_idx(duel, from_p, from_z) == 0:
 		return -1
-	var was_face := is_face_up(duel, from_p, from_z)
-	var was_def := not is_atk_pos(duel, from_p, from_z)
+	var cid: int = zone_id(duel, from_p, from_z)
+	var was_face = is_face_up(duel, from_p, from_z)
+	var was_def = not is_atk_pos(duel, from_p, from_z)
 	var tmp: int = duel.m.local(4)
 	duel.m.set_u32(tmp, zone_entry(duel, from_p, from_z))
 	if is_joey(duel):
 		duel.f570790(from_p, from_z, 0)
 		duel.f568610(to_p, to_z, tmp, 1 if was_face else 0, 1 if was_def else 0)
+		_present(duel, "move", {
+			"p": from_p,
+			"card": cid,
+			"from": (from_p & 1) | ((from_z & 0xf) << 1),
+			"to": (to_p & 1) | ((to_z & 0xf) << 1) | ((1 if was_def else 0) << 14) | ((1 if was_face else 0) << 15),
+			"reason": 0,
+		})
 		sync_visuals(duel)
 	else:
-		var origin := ((from_z & 0xff) << 8) | from_p
-		var target := ((to_z & 0xff) << 8) | to_p
+		var origin = ((from_z & 0xff) << 8) | from_p
+		var target = ((to_z & 0xff) << 8) | to_p
 		duel.f54d570(to_p, origin, target)
 	if temporary_until_ep:
 		schedule_delayed(duel, turn_number(duel), PHASE_EP, to_p, 0, "return_control", {"from_p": to_p, "from_z": to_z, "orig_p": from_p})
@@ -1221,12 +1295,12 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 	if zone_idx(duel, 0, z0) == 0 or zone_idx(duel, 1, z1) == 0:
 		return false
 	if is_joey(duel):
-		var e0 := zone_entry(duel, 0, z0)
-		var e1 := zone_entry(duel, 1, z1)
-		var f0 := is_face_up(duel, 0, z0)
-		var d0 := not is_atk_pos(duel, 0, z0)
-		var f1 := is_face_up(duel, 1, z1)
-		var d1 := not is_atk_pos(duel, 1, z1)
+		var e0 = zone_entry(duel, 0, z0)
+		var e1 = zone_entry(duel, 1, z1)
+		var f0 = is_face_up(duel, 0, z0)
+		var d0 = not is_atk_pos(duel, 0, z0)
+		var f1 = is_face_up(duel, 1, z1)
+		var d1 = not is_atk_pos(duel, 1, z1)
 		var t0: int = duel.m.local(4)
 		var t1: int = duel.m.local(4)
 		duel.m.set_u32(t0, e0)
@@ -1235,6 +1309,7 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 		duel.f570790(1, z1, 0)
 		duel.f568610(1, z1, t0, 1 if f0 else 0, 1 if d0 else 0)
 		duel.f568610(0, z0, t1, 1 if f1 else 0, 1 if d1 else 0)
+		_present(duel, "zone_swap", {"p": 0, "a": (z0 << 8) | 0, "b": (z1 << 8) | 1})
 		sync_visuals(duel)
 	else:
 		duel.f54d6c0(0, (z0 << 8) | 0, (z1 << 8) | 1)
@@ -1244,24 +1319,26 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 static func link_equip(duel, eq_p: int, eq_z: int, tgt_p: int, tgt_z: int) -> void:
 	eq_p &= 1
 	tgt_p &= 1
-	var cid := zone_id(duel, eq_p, eq_z)
+	var cid = zone_id(duel, eq_p, eq_z)
 	state(duel)["equip_links"]["%d:%d" % [eq_p, eq_z]] = {"target_p": tgt_p, "target_z": tgt_z, "card_id": cid}
 	if not is_joey(duel):
-		var origin := ((eq_z & 0xff) << 8) | eq_p
-		var target := ((tgt_z & 0xff) << 8) | tgt_p
+		var origin = ((eq_z & 0xff) << 8) | eq_p
+		var target = ((tgt_z & 0xff) << 8) | tgt_p
 		duel.f54e730(eq_p, origin, target)
 	else:
-		var zo := JoeyMem.zone(tgt_p, tgt_z)
+		var zo = JoeyMem.zone(tgt_p, tgt_z)
 		var n: int = duel.m.u16(zo + JoeyMem.Z_LINKS_N)
 		if n < 32:
 			duel.m.set_u16(zo + JoeyMem.Z_LINK_REF + n * 2, ((eq_z & 0xff) << 8) | eq_p)
 			duel.m.set_u8(zo + JoeyMem.Z_LINK_KIND + n * 2, 1)
 			duel.m.set_u16(zo + JoeyMem.Z_LINKS_N, n + 1)
+		_present(duel, "cmd84", {"p": eq_p, "a": ((eq_z & 0xff) << 8) | eq_p, "b": ((tgt_z & 0xff) << 8) | tgt_p, "card": cid})
+		sync_visuals(duel)
 
 
 static func get_equip_target(duel, eq_p: int, eq_z: int) -> Dictionary:
-	var k := "%d:%d" % [eq_p & 1, eq_z]
-	var st := state(duel)
+	var k = "%d:%d" % [eq_p & 1, eq_z]
+	var st = state(duel)
 	if st["equip_links"].has(k):
 		return st["equip_links"][k]
 	if not is_joey(duel):
@@ -1275,15 +1352,15 @@ static func get_equip_target(duel, eq_p: int, eq_z: int) -> Dictionary:
 
 static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := true, target_opp := true) -> Dictionary:
 	var sides: Array = [1 - (owner_p & 1), owner_p & 1] if target_opp else [owner_p & 1, 1 - (owner_p & 1)]
-	var best_score := -999999
-	var best := {}
+	var best_score = -999999
+	var best = {}
 	for pl in sides:
 		for z in 11:
-			var idx := zone_idx(duel, pl, z)
+			var idx = zone_idx(duel, pl, z)
 			if idx == 0:
 				continue
 			if filter.call(duel, pl, z, idx):
-				var score := 0
+				var score = 0
 				if z < 5:
 					score = eff_atk(duel, pl, z) + monster_level(duel, idx) * 10
 				else:
@@ -1302,15 +1379,15 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 
 static func choose_pile_card(duel, p: int, loc: int, filter: Callable, prefer_highest := true) -> int:
 	p &= 1
-	var n := pile_count(duel, p, loc)
-	var best_i := -1
-	var best_score := -999999
+	var n = pile_count(duel, p, loc)
+	var best_i = -1
+	var best_score = -999999
 	for i in n:
-		var idx := pile_idx(duel, p, loc, i)
+		var idx = pile_idx(duel, p, loc, i)
 		if idx == 0:
 			continue
 		if filter.call(duel, idx, i):
-			var s := base_atk(duel, idx) + monster_level(duel, idx) * 50 + (500 if is_spell(duel, idx) else 300)
+			var s = base_atk(duel, idx) + monster_level(duel, idx) * 50 + (500 if is_spell(duel, idx) else 300)
 			if not prefer_highest:
 				s = -s
 			if s > best_score:
@@ -1322,7 +1399,7 @@ static func choose_pile_card(duel, p: int, loc: int, filter: Callable, prefer_hi
 static func matching_pile_indices(duel, p: int, loc: int, filter: Callable) -> Array[int]:
 	var out: Array[int] = []
 	for i in pile_count(duel, p, loc):
-		var idx := pile_idx(duel, p, loc, i)
+		var idx = pile_idx(duel, p, loc, i)
 		if idx != 0 and filter.call(duel, idx, i):
 			out.append(i)
 	return out
@@ -1332,7 +1409,7 @@ static func collect_matching_zones(duel, filter: Callable) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for pl in 2:
 		for z in 11:
-			var idx := zone_idx(duel, pl, z)
+			var idx = zone_idx(duel, pl, z)
 			if idx != 0 and filter.call(duel, pl, z, idx):
 				out.append({"p": pl, "z": z, "idx": idx})
 	return out
@@ -1363,7 +1440,7 @@ static func has_toon_world(duel, p := -1) -> bool:
 
 
 static func is_divine_beast(duel, idx: int) -> bool:
-	var cid := raw_id(duel, idx)
+	var cid = raw_id(duel, idx)
 	return ctype(duel, idx) == 0x18 or cid in EGYPTIAN_GOD_IDS or cid in [2503, 2504, 2505, 2664]
 
 
@@ -1390,10 +1467,11 @@ static func find_pile_index_by_id(duel, p: int, loc: int, cid: int) -> int:
 
 
 static func pay_half_lp(duel, p: int) -> int:
-	var lp := get_lp(duel, p)
+	var lp = get_lp(duel, p)
 	var cost := int(lp / 2)
 	if is_joey(duel):
-		set_lp(duel, p, lp - cost)
+		if cost > 0:
+			duel.f5784e0(p & 1, mini(cost, 0xffff))
 	else:
 		set_lp(duel, p, lp - cost)
 		if duel.has_method("present"):
@@ -1405,8 +1483,8 @@ static func pay_half_lp(duel, p: int) -> int:
 static func record_lp_paid(duel, p: int, amount: int) -> void:
 	if amount <= 0:
 		return
-	var pf := pflags(duel, p)
-	var t := turn_number(duel)
+	var pf = pflags(duel, p)
+	var t = turn_number(duel)
 	if int(pf.get("lp_paid_turn_id", -1)) != t:
 		pf["lp_paid_last_turn"] = int(pf.get("lp_paid_this_turn", 0))
 		pf["lp_paid_this_turn"] = 0
@@ -1421,8 +1499,8 @@ static func roll_raw_die(duel) -> int:
 
 
 static func total_spell_counters(duel, p := -1) -> int:
-	var st := state(duel)
-	var total := 0
+	var st = state(duel)
+	var total = 0
 	for k in st["counters"].keys():
 		var parts := str(k).split(":")
 		if parts.size() >= 3 and parts[2] == "spell":
@@ -1434,8 +1512,8 @@ static func total_spell_counters(duel, p := -1) -> int:
 static func remove_spell_counters(duel, p: int, need: int) -> bool:
 	if total_spell_counters(duel, p) < need:
 		return false
-	var st := state(duel)
-	var rem := need
+	var st = state(duel)
+	var rem = need
 	for k in st["counters"].keys():
 		if rem <= 0:
 			break
@@ -1444,7 +1522,7 @@ static func remove_spell_counters(duel, p: int, need: int) -> bool:
 			var cur := int(st["counters"][k])
 			if cur <= 0:
 				continue
-			var take := mini(cur, rem)
+			var take = mini(cur, rem)
 			st["counters"][k] = cur - take
 			rem -= take
 			var owner_p := int(parts[0])
@@ -1455,23 +1533,23 @@ static func remove_spell_counters(duel, p: int, need: int) -> bool:
 
 
 static func equip_count_on_monster(duel, p: int, z: int) -> int:
-	var st := state(duel)
-	var n := 0
+	var st = state(duel)
+	var n = 0
 	for ek in st["equip_links"].keys():
 		var link: Dictionary = st["equip_links"][ek]
 		if int(link.get("target_p", -1)) == (p & 1) and int(link.get("target_z", -1)) == z:
 			n += 1
 	if not is_joey(duel):
-		var zn := DuelMem.zone(p & 1, z)
+		var zn = DuelMem.zone(p & 1, z)
 		n = maxi(n, duel.m.u16(zn + 0x88))
 	else:
-		var zo := JoeyMem.zone(p & 1, z)
+		var zo = JoeyMem.zone(p & 1, z)
 		n = maxi(n, duel.m.u16(zo + JoeyMem.Z_LINKS_N))
 	return n
 
 
 static func discard_matching_hand(duel, p: int, filter: Callable) -> int:
-	var i := choose_pile_card(duel, p, LOC_HAND, filter, false)
+	var i = choose_pile_card(duel, p, LOC_HAND, filter, false)
 	if i < 0:
 		return 0
 	return discard_hand_slot(duel, p, i, 1)
@@ -1479,13 +1557,25 @@ static func discard_matching_hand(duel, p: int, filter: Callable) -> int:
 
 static func negate_chain_entry(duel, target_entry_idx: int, destroy_card := true) -> void:
 	if is_joey(duel):
+		if target_entry_idx < 0:
+			return
+		var j_entry: int = target_entry_idx if target_entry_idx >= 0xa55b40 else (0xa55b40 + target_entry_idx * 20)
+		duel.m.set_u16(j_entry + 4, duel.m.u16(j_entry + 4) | 4)
+		if destroy_card:
+			var j_ref: int = duel.m.u16(j_entry + 2)
+			var j_tp: int = ((j_ref >> 14) & 1) ^ (j_ref & 1)
+			var j_tz: int = (j_ref >> 1) & 31
+			if j_tz <= 10:
+				destroy_zone(duel, j_tp, j_tz)
 		return
-	var entry := 0xa15e80 + target_entry_idx * 0x14
+	if target_entry_idx < 0:
+		return
+	var entry: int = target_entry_idx if target_entry_idx >= 0xa15e80 else (0xa15e80 + target_entry_idx * 0x14)
 	duel.m.set_u8(entry + 4, duel.m.u8(entry + 4) | (0x0c if destroy_card else 0x04))
 	if destroy_card:
 		var flags: int = duel.m.u16(entry + 2)
-		var tp := flags & 1
-		var tloc := (flags >> 4) & 0x3f
+		var tp = flags & 1
+		var tloc = (flags >> 4) & 0x3f
 		if tloc <= 10:
 			destroy_zone(duel, tp, tloc)
 

@@ -691,7 +691,7 @@ func _show_import_error(result: Dictionary) -> void:
 	var title := _text("title_apk_failed" if _building_apk else "title_import_failed")
 	var game := str(failure.get("game", "")) if failure.get("game") != null else ""
 	var game_label := game.capitalize() if game in Game.GAMES else ""
-	var stage_key := "stage_" + str(failure.get("stage", ""))
+	var stage_key = "stage_" + str(failure.get("stage", ""))
 	var stage := _text(stage_key if TEXTS.TEXT.has(stage_key) else "stage_process")
 	var heading := title + (" · " + game_label if game_label != "" else "")
 	var reason := str(failure.get("reason", ""))

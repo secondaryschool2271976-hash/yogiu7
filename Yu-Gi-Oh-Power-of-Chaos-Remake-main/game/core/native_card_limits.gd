@@ -21,7 +21,7 @@ const COPY_VARIANTS := [[0, 2000], [14, 2014], [34, 1210, 2034], [37, 2037],
 static func copy_limit(game: String, id: int, native: Dictionary) -> int:
 	if game == "joey":
 		if id in JOEY_FORBIDDEN:
-			var block := Marshalls.base64_to_raw(str(native.get("block", "")))
+			var block = Marshalls.base64_to_raw(str(native.get("block", "")))
 			return 0 if block.size() > 0x10ee and block[0x10ee] != 0 else 1
 		if id in JOEY_LIMITED:
 			return 1

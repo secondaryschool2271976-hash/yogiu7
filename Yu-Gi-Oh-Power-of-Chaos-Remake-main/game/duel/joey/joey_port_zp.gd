@@ -25,7 +25,7 @@ func _zp_ref(ctx: int) -> int:
 func f583f40(ctx: int) -> int:
 	var p := ((m.u16(ctx + 2) >> 14) ^ m.u16(ctx + 2)) & 1
 	var card := effect_card_id(m.u16(ctx)) & 0xffff
-	var wanted := {0x51: 0x2e5, 0x186: 0x187, 0x28b: 0x170}.get(card, ctx) as int
+	var wanted = {0x51: 0x2e5, 0x186: 0x187, 0x28b: 0x170}.get(card, ctx) as int
 	if not _zp_live(ctx): return 0
 	match m.u8(0xa55c8a):
 		126: f5b9170((p << 15) | 0x60, 0, 0, 0)
@@ -161,7 +161,7 @@ func f584cb0(ctx: int) -> int:
 func f584d00(ctx: int) -> int:
 	if _zp_live(ctx):
 		var card := effect_card_id(m.u16(ctx)) & 0xffff
-		var amount := {0x151: 200, 0x152: 500, 0x153: 600, 0x154: 800, 0x155: 1000, 0x3ee: 400}.get(card, 0) as int
+		var amount = {0x151: 200, 0x152: 500, 0x153: 600, 0x154: 800, 0x155: 1000, 0x3ee: 400}.get(card, 0) as int
 		f5787f0(m.u8(ctx + 6) & 1, amount)
 	return 0
 

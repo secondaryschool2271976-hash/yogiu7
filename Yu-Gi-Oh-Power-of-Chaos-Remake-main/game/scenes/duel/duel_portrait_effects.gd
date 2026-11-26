@@ -65,16 +65,16 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 	var voice := ""
 	match kind:
 		"reaction_destroy":
-			var index := duel.cards.index_of(int(d.get("card", 0)))
-			var type := duel.cards.type_of(index)
+			var index = duel.cards.index_of(int(d.get("card", 0)))
+			var type = duel.cards.type_of(index)
 			if type in [21, 22, 23] or (type != 24 and duel.f445810(index) < 2000): return {}
 			if p == 0: return _voice(d, 0x2f, false) # 4023d0: Yugi_18 directa, sin bust-up.
 			layout = "reaction_o3"
 			voice = "yugi_52"
 		"reaction_flip":
 			var card := int(d.get("card", 0))
-			var index := duel.cards.index_of(card)
-			var type := duel.cards.type_of(index)
+			var index = duel.cards.index_of(card)
+			var type = duel.cards.type_of(index)
 			# Este evento procede de 4040f0/405950 -> 402630 -> 401e00.
 			if p != 0:
 				# CPU: voz por carta (Trap Hole 0x3ea -> Yugi_26...) o Yugi_21 con cualquier tipo 0x15;
@@ -90,8 +90,8 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 		"reaction_card":
 			# 0x402610 -> 0x401ca0(p, carta).
 			var card := int(d.get("card", 0))
-			var index := duel.cards.index_of(card)
-			var type := duel.cards.type_of(index)
+			var index = duel.cards.index_of(card)
+			var type = duel.cards.type_of(index)
 			if p == 1:
 				if card == 0x15b: return _gofu(d, duel)
 				if card == 0x3f0: return _voice(d, 0x3c + (visual_rand(duel) & 1))  # Yugi_31/32
@@ -128,7 +128,7 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 				return _voice(d, id)
 			if c == 4: return _voice(d, 0x4b, false) # Suena directamente (0x583e10).
 			if c not in [1, 2]: return {}
-			var index := duel.cards.index_of(card)
+			var index = duel.cards.index_of(card)
 			# Con ATK < 2000 solo la voz 0x4d, sin bust-up.
 			if duel.f445810(index) < 2000: return _voice(d, 0x4d)
 			layout = "reaction_o4"
@@ -136,7 +136,7 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 		"reaction_lp":
 			var delta: int = int(d.get("delta", 0))
 			if p != 1 or delta >= 0: return {}
-			var life := duel.m.u16(DuelMem.pl(1))
+			var life = duel.m.u16(DuelMem.pl(1))
 			if -delta <= 2000 and life > 4000:
 				layout = "reaction_d1" if -delta <= 1500 else "reaction_d3"
 				voice = "yugi_%02d" % (33 + (2 if (visual_rand(duel) & 1) == 0 else 0)) if -delta <= 1500 else "yugi_34"
@@ -221,18 +221,18 @@ static func _jo_reaction(d: Dictionary, portrait: int, id: int, wait := true) ->
 static func _joey(d: Dictionary, duel: Duel) -> Dictionary:
 	if duel.game_mode in [3, 6] or duel.tutorial_interactive: return {}
 	var p := int(d.get("p", 0)) & 1
-	var kind := String(d.get("kind", ""))
+	var kind = String(d.get("kind", ""))
 	var card := int(d.get("card", -1))
-	var index := duel.cards.index_of(card)
+	var index = duel.cards.index_of(card)
 	match kind:
 		"reaction_activation": # Jo403bc0 ->402be0; distinta de4030f0.
 			if p != 1 or card < 0: return {}
 			if card in [0x3f0, 0x447, 0x487]: return _jo_reaction(d, 0, 0x43 + (visual_rand(duel) & 1))
 			if card in [0x28a, 0x3c7, 0x3de, 0x438, 0x443, 0x4b3, 0x4b4, 0x4de, 0x76e]: return {}
 			if card == 0x420: return _jo_reaction(d, 5, 0x37)
-			var type := duel.cards.type_of(index)
+			var type = duel.cards.type_of(index)
 			if type == 21:
-				var flags := duel.m.u8(0xa133f2)
+				var flags = duel.m.u8(0xa133f2)
 				var count := 6 if (flags & 1) != p and (flags & 14) == 6 else 3
 				var choice := visual_rand(duel) % count
 				return _jo_reaction(d, [2,0,2,1,5,10][choice], [0x33,0x36,0x38,0x34,0x37,0x39][choice])
@@ -244,7 +244,7 @@ static func _joey(d: Dictionary, duel: Duel) -> Dictionary:
 			return _jo_reaction(d, 4, 0x58) if duel.f445810(index) >= 2000 and duel.f4457d0(index) > 4 else {}
 		"reaction_flip": # Jo403700: contador de turnos, no reloj visual ni comandos.
 			if p != 1: return {}
-			var turn := duel.m.u16(0xa133f0)
+			var turn = duel.m.u16(0xa133f0)
 			var old := int(_joey_flip_turns.get(duel.get_instance_id(), -8))
 			if turn >= old and turn < old + 8: return {}
 			_joey_flip_turns[duel.get_instance_id()] = turn
@@ -254,7 +254,7 @@ static func _joey(d: Dictionary, duel: Duel) -> Dictionary:
 				var choices := {0x420: [0, 0x3f], 0x3de: [7, 0x6c], 0x14f: [0, 0x3b], 0x28a: [2, 0x35], 0x3c7: [7, 0x68], 0x3ea: [0, 0x3e], 0x3f0: [0, 0x3d], 0x403: [0, 0x3c], 0x4b4: [7, 0x6a], 0x438: [2, 0x69], 0x443: [2, 0x6b], 0x4b3: [7, 0x66], 0x4de: [5, 0x6d], 0x76e: [7, 0x67]}
 				if not choices.has(card): return {}
 				return _jo_reaction(d, choices[card][0], choices[card][1])
-			var type := duel.cards.type_of(index)
+			var type = duel.cards.type_of(index)
 			if type == 21: return _jo_reaction(d, 4, 0x52 + (visual_rand(duel) & 1))
 			if type == 22: return _jo_reaction(d, 4, 0x57)
 		"reaction_lp": # Jo403900, tabla5da3c0=[10,10,6,6,12,12].
@@ -307,8 +307,8 @@ static func _kaiba(d: Dictionary, duel: Duel) -> Dictionary:
 	var p: int = int(d.get("p", 0)) & 1
 	var kind: String = str(d.get("kind", ""))
 	var card: int = int(d.get("card", 0))
-	var index := duel.cards.index_of(card)
-	var type := duel.cards.type_of(index)
+	var index = duel.cards.index_of(card)
+	var type = duel.cards.type_of(index)
 	match kind:
 		"reaction_destroy": # 402460, umbral CPU 2000; humano solo voz con umbral 2400.
 			if type in [21, 22, 23]: return {}
@@ -331,7 +331,7 @@ static func _kaiba(d: Dictionary, duel: Duel) -> Dictionary:
 			if p == 0 or card == 0x3c0: return {}
 			if card in [0x290, 0x294, 0x3ca, 0x3f0] and type != 22: return {}
 			if type == 21:
-				var variant := (visual_rand(duel) & 1) * 2 if duel.m.u8(0xa133f2) & 1 else visual_rand(duel) % 3
+				var variant = (visual_rand(duel) & 1) * 2 if duel.m.u8(0xa133f2) & 1 else visual_rand(duel) % 3
 				return _portrait(d, "reaction05", "ka%02d" % (18 + variant))
 			if type == 22:
 				# 401c80: Ka45 si 56e150 (Yu53b880, subtipo) vale 2; antes se miraba el modo de juego
@@ -340,7 +340,7 @@ static func _kaiba(d: Dictionary, duel: Duel) -> Dictionary:
 				return _portrait(d, "reaction09", voice)
 		"reaction_lp": # 4028e0, selección determinista exacta sin RNG.
 			var delta: int = int(d.get("delta", 0))
-			var life := duel.m.u16(DuelMem.pl(1))
+			var life = duel.m.u16(DuelMem.pl(1))
 			if p != 1 or delta >= 0 or life == 0: return {}
 			var damage := -delta
 			var selection: int
@@ -399,7 +399,7 @@ static func render(owner: Node2D, event: Dictionary, frame: int) -> void:
 		return
 	if mode == "next_turn":
 		var counter := frame * 8
-		var color := "b" if int(event.get("p", 0)) == 0 else "r"
+		var color = "b" if int(event.get("p", 0)) == 0 else "r"
 		var name := "nex_?_" + color
 		var offset := 0.0
 		if counter < 64: offset = (64 - counter) * 2.0
@@ -430,7 +430,7 @@ static func render(owner: Node2D, event: Dictionary, frame: int) -> void:
 		Audio.play_sfx(event["sound_after"])
 		event["sound_after_played"] = true
 	var portrait_game: String = str(event.get("portrait_game", "yugi"))
-	var path := "%s/bust_up/%s.txt" % [portrait_game, event.get("layout", "")]
+	var path = "%s/bust_up/%s.txt" % [portrait_game, event.get("layout", "")]
 	if not Assets.exists(path.trim_suffix(".txt") + ".layout.json"): return
 	var layout := Assets.layout(path)
 	if layout.items.is_empty(): return
@@ -601,7 +601,7 @@ static func _render_gofu(owner: Node2D, event: Dictionary, frame: int) -> void:
 			strips.add(Rect2(0, y, 800, 1), Vector2(0, y + ((65536 - native_cos(angle)) * 600 >> 16)))
 		return
 	_sprite(owner, "yugi", layout.resource(0), Vector2.ZERO)
-	var speech := 9 + int(event["random"])
+	var speech = 9 + int(event["random"])
 	_sprite(owner, "yugi", layout.resource(speech), Vector2(layout.position(speech)))
 	var open := int(c != 0x40)
 	for index in [1 + open, 3 + open]:
@@ -645,7 +645,7 @@ static func _render_summon(owner: Node2D, event: Dictionary, frame: int) -> void
 		var speech := 8 + random % 3
 		_sprite(owner, "yugi", layout.resource(speech), Vector2(layout.position(speech)))
 		if counter >= 65536:
-			var second := 12 if int(event["args"][2]) == 1 else 11
+			var second = 12 if int(event["args"][2]) == 1 else 11
 			_sprite(owner, "yugi", layout.resource(second), Vector2(layout.position(second)))
 	for row in 5:
 		var beam := _sprite(owner, "yugi", layout.resource(2), Vector2.ZERO)
@@ -691,7 +691,7 @@ static func tick_joey_summon(event: Dictionary) -> void:
 static func _render_joey_summon(owner: Node2D, event: Dictionary, frame: int) -> void:
 	var counter := int(event["counter"])
 	if counter == 4: return # 486290 captura primero;414dc0 no dibuja en este paso.
-	var layout := Assets.layout("joey/bust_up/%s.txt" % event["layout"])
+	var layout = Assets.layout("joey/bust_up/%s.txt" % event["layout"])
 	var background := _sprite(owner, "joey", layout.resource(0), Vector2.ZERO)
 	var exiting: bool = event.get("mode", "") == "joey_summon_exit"
 	var progress := (256 if frame == 0 else maxi(0, 272 - frame * 32)) if exiting else mini(256, 16 + (frame - 1) * 32)
@@ -761,7 +761,7 @@ void fragment() {
 static func _render_blueeyes(owner: Node2D, event: Dictionary, frame: int) -> void:
 	_timed_sounds(event, frame)
 	var layout := Assets.layout("kaiba/bust_up/activate.txt")
-	var counter := frame * 4 if frame < int(event["exit_frame"]) else 65536 + (frame - int(event["exit_frame"])) * 4
+	var counter = frame * 4 if frame < int(event["exit_frame"]) else 65536 + (frame - int(event["exit_frame"])) * 4
 	# Antes64,40de30 mueve filas individuales.40dd00 conserva las filas ya asentadas.
 	var base := _sprite(owner, "kaiba", layout.resource(0), Vector2.ZERO)
 	if base != null and counter < 64:

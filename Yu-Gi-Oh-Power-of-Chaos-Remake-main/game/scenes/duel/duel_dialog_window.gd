@@ -307,7 +307,7 @@ func _glide_start(index := 0, keyboard := false) -> void:
 func _glide_step() -> void:
 	if _glide.is_empty():
 		return
-	var mouse := _pointer + position if _pointer.x > -999 else Vector2(_glide["at"])
+	var mouse = _pointer + position if _pointer.x > -999 else Vector2(_glide["at"])
 	var at := PointerGlide.step(self, mouse)
 	PointerGlide.note(at)
 	_pointer = at - position
@@ -432,7 +432,7 @@ func _pick(pos: Vector2, opening_button := false, touch := false) -> int:
 			if kind == "coin":
 				var img: Image = it["mask"]
 				if img != null:
-					var x := local.x + int(it["cell"]) * int(r.size.x)
+					var x = local.x + int(it["cell"]) * int(r.size.x)
 					if x < img.get_width() and img.get_pixel(x, local.y).a < 0.5:
 						continue
 		return i
@@ -737,13 +737,13 @@ func _draw_item(i: int, font: Font) -> void:
 				_draw_kaiba_option(r, i)
 			elif tex != null:
 				draw_texture(tex, r.position)
-			var label := String(it["label"])
+			var label = String(it["label"])
 			var w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
 			var at := Vector2(r.position.x + (r.size.x - w) / 2.0, r.position.y + (r.size.y + font.get_ascent(FONT_SIZE) - font.get_descent(FONT_SIZE)) / 2.0)
 			draw_string(font, at + Vector2(1, 1), label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, Color(0, 0, 0, 0.8))
 			draw_string(font, at, label, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, Color(1, 1, 1))
 		"card":
-			var tex := _card_tex(int(it["answer"]))
+			var tex = _card_tex(int(it["answer"]))
 			if tex != null:
 				_draw_card(self, tex, r, int(it["answer"]) == 1, Color(1, 1, 1))
 		"coin":
@@ -883,7 +883,7 @@ func _draw_cards() -> void:
 ## 0x431590: una estrella por nivel; las ultimas FUN_0056aef0 (byte 0xa15fe1) con level2.
 func _draw_stars() -> void:
 	var level := int(data.get("level", 0))
-	var rest := duel.m.u8(0xa15fe1)
+	var rest = duel.m.u8(0xa15fe1)
 	var star := _tex("level")
 	var star2 := _tex("level2")
 	if star == null or level <= 0:

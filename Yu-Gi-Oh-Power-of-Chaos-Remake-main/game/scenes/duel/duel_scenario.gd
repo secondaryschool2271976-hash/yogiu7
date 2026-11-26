@@ -88,7 +88,7 @@ func _read(d: Dictionary) -> void:
 		var placed: Array = []
 		if p < raw_field.size():
 			for entry: Dictionary in raw_field[p]:
-				var id := resolve(entry.get("card", ""))
+				var id = resolve(entry.get("card", ""))
 				if id >= 0:
 					placed.append({"card": id, "zone": int(entry.get("zone", 0)), "c": int(entry.get("c", 0))})
 		field[p] = placed

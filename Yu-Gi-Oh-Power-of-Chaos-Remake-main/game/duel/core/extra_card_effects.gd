@@ -56,8 +56,8 @@ static func pot_of_greed_extra_draws_core(duel, activating_player: int) -> int:
 		return 0
 	for pl in 2:
 		for z in 5:
-			var zone := DuelMem.zone(pl, z)
-			var idx := m.u16(zone) & 0xfff
+			var zone = DuelMem.zone(pl, z)
+			var idx = m.u16(zone) & 0xfff
 			if idx == 0:
 				continue
 			if (m.u16(zone + 6) & 3) == 2 and (m.u16(zone + 6) & 0x1000) == 0:
@@ -72,27 +72,27 @@ static func pot_of_greed_extra_draws_joey(duel, activating_player: int) -> int:
 		return 0
 	for pl in 2:
 		for z in 5:
-			var zo := JoeyMem.zone(pl, z)
-			var idx := m.u16(zo) & 0xfff
+			var zo = JoeyMem.zone(pl, z)
+			var idx = m.u16(zo) & 0xfff
 			if idx == 0:
 				continue
-			var fl := m.u16(zo + JoeyMem.Z_FLAGS)
+			var fl = m.u16(zo + JoeyMem.Z_FLAGS)
 			if (fl & 3) == 2 and (m.u8(zo + JoeyMem.Z_STATUS) & 0x20) == 0:
-				var key := JoeyMem.ident(m.u32(zo))
+				var key = JoeyMem.ident(m.u32(zo))
 				if (duel.f56b440(idx, key) & 0xffffffff) == 0 and duel.cards.id_of(idx) == 3093:
 					return 1
 	return 0
 
 
 static func matches_ritual_monster_core(duel, card_index: int, ritual_id: int) -> bool:
-	var idx := card_index & 0xfff
+	var idx = card_index & 0xfff
 	if idx == 0 or ritual_id <= 0:
 		return false
 	return duel.cards.id_of(idx) == ritual_id or (duel.effect_card_id(idx) & 0xffff) == ritual_id
 
 
 static func matches_ritual_monster_joey(duel, card_index: int, ritual_id: int) -> bool:
-	var idx := card_index & 0xfff
+	var idx = card_index & 0xfff
 	if idx == 0 or ritual_id <= 0:
 		return false
 	return duel.cards.id_of(idx) == ritual_id or (duel.effect_card_id(idx) & 0xffff) == ritual_id
@@ -134,13 +134,13 @@ static func _is_ritual_monster_joey(duel, idx: int) -> bool:
 
 
 static func sync_ritual_table_core(duel, spell_index: int, player := -1) -> void:
-	var idx := spell_index & 0xfff
+	var idx = spell_index & 0xfff
 	if idx == 0:
 		return
 	var raw_spell: int = duel.cards.id_of(idx)
 	var m: DuelMem = duel.m
-	var target_row := -1
-	var r := 0
+	var target_row = -1
+	var r = 0
 	while (m.u32(0x5aa9f0 + r * 4) & 0x3ffe000) != 0:
 		if ((m.u32(0x5aa9f0 + r * 4) >> 13) & 0x1fff) == 0x2d0:
 			target_row = r
@@ -157,18 +157,18 @@ static func sync_ritual_table_core(duel, spell_index: int, player := -1) -> void
 	if player >= 0:
 		players.append(player & 1)
 	else:
-		var turn_p := m.u8(0xa1340f) & 1
+		var turn_p = m.u8(0xa1340f) & 1
 		players.append(turn_p)
 		players.append(1 - turn_p)
-	var pref := _preferred_ritual_monsters(raw_spell)
-	var chosen_id := 0
-	var chosen_lv := 8
+	var pref = _preferred_ritual_monsters(raw_spell)
+	var chosen_id = 0
+	var chosen_lv = 8
 	for pl in players:
-		var a := DuelMem.pl(pl)
-		var hand_n := m.u8(a + DuelMem.P_HAND_N)
+		var a = DuelMem.pl(pl)
+		var hand_n = m.u8(a + DuelMem.P_HAND_N)
 		for target_id in pref:
 			for i in hand_n:
-				var h_idx := m.u16(a + DuelMem.P_HAND + i * 4) & 0xfff
+				var h_idx = m.u16(a + DuelMem.P_HAND + i * 4) & 0xfff
 				if duel.cards.id_of(h_idx) == target_id:
 					chosen_id = target_id
 					chosen_lv = maxi(1, (duel.f401a20(h_idx) >> 25) & 0xf)
@@ -177,7 +177,7 @@ static func sync_ritual_table_core(duel, spell_index: int, player := -1) -> void
 				break
 		if chosen_id == 0:
 			for i in hand_n:
-				var h_idx := m.u16(a + DuelMem.P_HAND + i * 4) & 0xfff
+				var h_idx = m.u16(a + DuelMem.P_HAND + i * 4) & 0xfff
 				if _is_ritual_monster_core(duel, h_idx):
 					chosen_id = duel.cards.id_of(h_idx)
 					chosen_lv = maxi(1, (duel.f401a20(h_idx) >> 25) & 0xf)
@@ -192,13 +192,13 @@ static func sync_ritual_table_core(duel, spell_index: int, player := -1) -> void
 
 
 static func sync_ritual_table_joey(duel, spell_index: int, player := -1) -> void:
-	var idx := spell_index & 0xfff
+	var idx = spell_index & 0xfff
 	if idx == 0:
 		return
 	var raw_spell: int = duel.cards.id_of(idx)
 	var m: JoeyMem = duel.m
-	var target_row := -1
-	var r := 0
+	var target_row = -1
+	var r = 0
 	while (m.u32(0x5ed060 + r * 4) & 0x3ffe000) != 0:
 		if ((m.u32(0x5ed060 + r * 4) >> 13) & 0x1fff) == 0x2d0:
 			target_row = r
@@ -215,18 +215,18 @@ static func sync_ritual_table_joey(duel, spell_index: int, player := -1) -> void
 	if player >= 0:
 		players.append(player & 1)
 	else:
-		var turn_p := m.u8(JoeyMem.TURN) & 1
+		var turn_p = m.u8(JoeyMem.TURN) & 1
 		players.append(turn_p)
 		players.append(1 - turn_p)
-	var pref := _preferred_ritual_monsters(raw_spell)
-	var chosen_id := 0
-	var chosen_lv := 8
+	var pref = _preferred_ritual_monsters(raw_spell)
+	var chosen_id = 0
+	var chosen_lv = 8
 	for pl in players:
-		var a := JoeyMem.pl(pl)
-		var hand_n := m.u8(a + JoeyMem.P_HAND_N)
+		var a = JoeyMem.pl(pl)
+		var hand_n = m.u8(a + JoeyMem.P_HAND_N)
 		for target_id in pref:
 			for i in hand_n:
-				var h_idx := m.u16(a + JoeyMem.P_HAND + i * 4) & 0xfff
+				var h_idx = m.u16(a + JoeyMem.P_HAND + i * 4) & 0xfff
 				if duel.cards.id_of(h_idx) == target_id:
 					chosen_id = target_id
 					chosen_lv = maxi(1, duel.f4026c0(h_idx) & 0xffff)
@@ -235,7 +235,7 @@ static func sync_ritual_table_joey(duel, spell_index: int, player := -1) -> void
 				break
 		if chosen_id == 0:
 			for i in hand_n:
-				var h_idx := m.u16(a + JoeyMem.P_HAND + i * 4) & 0xfff
+				var h_idx = m.u16(a + JoeyMem.P_HAND + i * 4) & 0xfff
 				if _is_ritual_monster_joey(duel, h_idx):
 					chosen_id = duel.cards.id_of(h_idx)
 					chosen_lv = maxi(1, duel.f4026c0(h_idx) & 0xffff)
@@ -253,10 +253,10 @@ static func sync_ritual_table_joey(duel, spell_index: int, player := -1) -> void
 
 static func _core_gy_monsters(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var pl := DuelMem.pl(p)
-	var n := 0
+	var pl = DuelMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + DuelMem.P_GRAVE_N):
-		var idx := m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
 		if ((duel.f401a20(idx) >> 20) & 0x1f) < 0x15:
 			n += 1
 	return n
@@ -264,10 +264,10 @@ static func _core_gy_monsters(duel, p: int) -> int:
 
 static func _core_gy_normal_monsters(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var pl := DuelMem.pl(p)
-	var n := 0
+	var pl = DuelMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + DuelMem.P_GRAVE_N):
-		var idx := m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
 		if ((duel.f401a20(idx) >> 20) & 0x1f) < 0x15 and (duel.f541950(idx) & 0xffff) == 0:
 			n += 1
 	return n
@@ -275,10 +275,10 @@ static func _core_gy_normal_monsters(duel, p: int) -> int:
 
 static func _core_gy_type(duel, p: int, kind: int) -> int:
 	var m: DuelMem = duel.m
-	var pl := DuelMem.pl(p)
-	var n := 0
+	var pl = DuelMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + DuelMem.P_GRAVE_N):
-		var idx := m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
 		if ((duel.f401a20(idx) >> 20) & 0x1f) == kind:
 			n += 1
 	return n
@@ -286,10 +286,10 @@ static func _core_gy_type(duel, p: int, kind: int) -> int:
 
 static func _core_hand_type(duel, p: int, kind: int) -> int:
 	var m: DuelMem = duel.m
-	var pl := DuelMem.pl(p)
-	var n := 0
+	var pl = DuelMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + DuelMem.P_HAND_N):
-		var idx := m.u16(pl + DuelMem.P_HAND + i * 4) & 0xfff
+		var idx = m.u16(pl + DuelMem.P_HAND + i * 4) & 0xfff
 		if ((duel.f401a20(idx) >> 20) & 0x1f) == kind:
 			n += 1
 	return n
@@ -297,10 +297,10 @@ static func _core_hand_type(duel, p: int, kind: int) -> int:
 
 static func _core_gy_exodia(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var pl := DuelMem.pl(p)
-	var n := 0
+	var pl = DuelMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + DuelMem.P_GRAVE_N):
-		var idx := m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
 		if duel.cards.id_of(idx) in EXODIA_IDS or (duel.effect_card_id(idx) & 0xffff) in EXODIA_IDS:
 			n += 1
 	return n
@@ -308,15 +308,15 @@ static func _core_gy_exodia(duel, p: int) -> int:
 
 static func _core_top_gy_stat_sum(duel, p: int, count: int, use_def := false) -> int:
 	var m: DuelMem = duel.m
-	var pl := DuelMem.pl(p)
+	var pl = DuelMem.pl(p)
 	var vals: Array[int] = []
 	for i in m.u8(pl + DuelMem.P_GRAVE_N):
-		var idx := m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + DuelMem.P_GRAVE + i * 4) & 0xfff
 		if ((duel.f401a20(idx) >> 20) & 0x1f) < 0x15:
 			vals.append(duel.f445850(idx) if use_def else duel.f445810(idx))
 	vals.sort()
 	vals.reverse()
-	var total := 0
+	var total = 0
 	for i in mini(count, vals.size()):
 		total += vals[i]
 	return total
@@ -324,7 +324,7 @@ static func _core_top_gy_stat_sum(duel, p: int, count: int, use_def := false) ->
 
 static func _core_field_cards(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 11:
 		if (m.u32(DuelMem.zone(p, z)) & 0xfff) != 0:
 			n += 1
@@ -333,7 +333,7 @@ static func _core_field_cards(duel, p: int) -> int:
 
 static func _core_field_monsters(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
 		if (m.u32(DuelMem.zone(p, z)) & 0xfff) != 0:
 			n += 1
@@ -342,10 +342,10 @@ static func _core_field_monsters(duel, p: int) -> int:
 
 static func _core_faceup_monsters(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
-		var zone := DuelMem.zone(p, z)
-		var idx := m.u16(zone) & 0xfff
+		var zone = DuelMem.zone(p, z)
+		var idx = m.u16(zone) & 0xfff
 		if idx != 0 and (m.u8(zone + 6) & 2) != 0:
 			n += 1
 	return n
@@ -353,10 +353,10 @@ static func _core_faceup_monsters(duel, p: int) -> int:
 
 static func _core_amazoness_on_field(duel, p: int) -> int:
 	var m: DuelMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
-		var zone := DuelMem.zone(p, z)
-		var idx := m.u16(zone) & 0xfff
+		var zone = DuelMem.zone(p, z)
+		var idx = m.u16(zone) & 0xfff
 		if idx != 0 and (m.u8(zone + 6) & 2) != 0 and duel.cards.id_of(idx) in AMAZONESS_IDS:
 			n += 1
 	return n
@@ -364,12 +364,12 @@ static func _core_amazoness_on_field(duel, p: int) -> int:
 
 static func _core_other_type_on_field(duel, p: int, skip_z: int, kind: int) -> int:
 	var m: DuelMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
 		if z == skip_z:
 			continue
-		var zone := DuelMem.zone(p, z)
-		var idx := m.u16(zone) & 0xfff
+		var zone = DuelMem.zone(p, z)
+		var idx = m.u16(zone) & 0xfff
 		if idx != 0 and (m.u8(zone + 6) & 2) != 0 and ((duel.f401a20(idx) >> 20) & 0x1f) == kind:
 			n += 1
 	return n
@@ -380,8 +380,8 @@ static func _core_has_active_raw_id(duel, pl: int, target_id: int, skip_p := -1,
 	for z in 5:
 		if pl == skip_p and z == skip_z:
 			continue
-		var zone := DuelMem.zone(pl, z)
-		var idx := m.u16(zone) & 0xfff
+		var zone = DuelMem.zone(pl, z)
+		var idx = m.u16(zone) & 0xfff
 		if idx != 0 and (m.u8(zone + 6) & 2) != 0 and (m.u16(zone + 6) & 0x1000) == 0:
 			if duel.cards.id_of(idx) == target_id:
 				return true
@@ -392,10 +392,10 @@ static func _core_count_active_st_raw_id(duel, pl: int, target_id: int) -> int:
 	var m: DuelMem = duel.m
 	if (m.u32(0xa133ec) & 0x100) != 0:
 		return 0
-	var n := 0
+	var n = 0
 	for z in range(5, 11):
-		var zone := DuelMem.zone(pl, z)
-		var idx := m.u16(zone) & 0xfff
+		var zone = DuelMem.zone(pl, z)
+		var idx = m.u16(zone) & 0xfff
 		if idx != 0 and (m.u8(zone + 6) & 2) != 0 and (m.u8(zone + 0x8f) & 4) == 0:
 			if duel.cards.id_of(idx) == target_id:
 				n += 1
@@ -408,7 +408,7 @@ static func _core_skill_drain_active(duel) -> bool:
 
 static func _core_highest_other_atk(duel, self_p: int, self_z: int, only_player := -1) -> int:
 	var m: DuelMem = duel.m
-	var best := 0
+	var best = 0
 	if _in_avatar_calc:
 		return best
 	_in_avatar_calc = true
@@ -418,13 +418,13 @@ static func _core_highest_other_atk(duel, self_p: int, self_z: int, only_player 
 		for z in 5:
 			if pl == (self_p & 1) and z == self_z:
 				continue
-			var zone := DuelMem.zone(pl, z)
-			var idx := m.u16(zone) & 0xfff
+			var zone = DuelMem.zone(pl, z)
+			var idx = m.u16(zone) & 0xfff
 			if idx == 0 or (m.u8(zone + 6) & 2) == 0:
 				continue
 			if duel.cards.id_of(idx) == 2661:
 				continue
-			var tmp := m.local(12)
+			var tmp = m.local(12)
 			duel.f546470(pl, z, tmp)
 			best = maxi(best, m.u32(tmp + 4))
 	_in_avatar_calc = false
@@ -445,23 +445,23 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 			m.set_u32(out + 4, 0)
 			m.set_u32(out + 8, 0)
 		return Vector2i.ZERO
-	var pl := DuelMem.pl(p)
-	var opp := 1 - (p & 1)
-	var opp_pl := DuelMem.pl(opp)
-	var atk_add := 0
-	var def_add := 0
+	var pl = DuelMem.pl(p)
+	var opp = 1 - (p & 1)
+	var opp_pl = DuelMem.pl(opp)
+	var atk_add = 0
+	var def_add = 0
 	match raw_id:
 		2501:
 			# The Winged Dragon of Ra: inherits power from 3 Tributes (top 3 GY monsters, min 3000)
 			m.set_u32(out + 4, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, false)))
 			m.set_u32(out + 8, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, true)))
 		2502:
-			var hc := m.u8(pl + DuelMem.P_HAND_N)
+			var hc = m.u8(pl + DuelMem.P_HAND_N)
 			m.set_u32(out + 4, hc * 1000)
 			m.set_u32(out + 8, hc * 1000)
 		2505:
 			# Holactie the Creator of Light
-			var lp_stat := maxi(5000, m.u16(pl + DuelMem.P_LP))
+			var lp_stat = maxi(5000, m.u16(pl + DuelMem.P_LP))
 			m.set_u32(out + 4, lp_stat)
 			m.set_u32(out + 8, lp_stat)
 		2506:
@@ -487,7 +487,7 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 			atk_add = _core_gy_type(duel, p, 7) * 500
 		2545:
 			# Dark Paladin: +500 ATK per Dragon on field or in either GY
-			var dragons := (
+			var dragons = (
 				_core_other_type_on_field(duel, p, z, 1)
 				+ _core_other_type_on_field(duel, opp, -1, 1)
 				+ _core_gy_type(duel, p, 1)
@@ -496,7 +496,7 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 			atk_add = dragons * 500
 		2546:
 			# Dark Paladin - Wave-Motion: +500 ATK per other face-up monster on field
-			var others := maxi(0, _core_faceup_monsters(duel, p) - 1) + _core_faceup_monsters(duel, opp)
+			var others = maxi(0, _core_faceup_monsters(duel, p) - 1) + _core_faceup_monsters(duel, opp)
 			atk_add = others * 500
 		2552:
 			# Dragon Master Knight: +500 ATK per other Dragon you control
@@ -515,7 +515,7 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		2575:
 			atk_add = _core_gy_normal_monsters(duel, p) * 1000
 		2581, 2582, 2585:
-			var total_cards := (
+			var total_cards = (
 				m.u8(DuelMem.pl(0) + DuelMem.P_BANISH_N)
 				+ m.u8(DuelMem.pl(1) + DuelMem.P_BANISH_N)
 				+ m.u8(DuelMem.pl(0) + DuelMem.P_GRAVE_N)
@@ -548,11 +548,11 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		2660:
 			atk_add = m.u16(pl + DuelMem.P_LP)
 		2661:
-			var target_stat := _core_highest_other_atk(duel, p, z) + 100
+			var target_stat = _core_highest_other_atk(duel, p, z) + 100
 			m.set_u32(out + 4, target_stat)
 			m.set_u32(out + 8, target_stat)
 		2663:
-			var opp_cards := _core_field_cards(duel, opp) * 1000
+			var opp_cards = _core_field_cards(duel, opp) * 1000
 			atk_add = opp_cards
 			def_add = opp_cards
 		2664:
@@ -562,11 +562,11 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 			# Toon Dark Magician Girl: +300 ATK per Spellcaster in either GY
 			atk_add = (_core_gy_type(duel, p, 18) + _core_gy_type(duel, opp, 18)) * 300
 		2677, 2594:
-			var traps := _core_gy_type(duel, p, 21) * 1000
+			var traps = _core_gy_type(duel, p, 21) * 1000
 			atk_add = traps
 			def_add = traps
 		2684:
-			var spells := _core_gy_type(duel, opp, 22) * 500
+			var spells = _core_gy_type(duel, opp, 22) * 500
 			atk_add = spells
 			def_add = spells
 		2699:
@@ -578,7 +578,7 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 			def_add = 800
 		2758:
 			# Spirit Ryu: +500 ATK/DEF per Dragon in your hand
-			var drg := _core_hand_type(duel, p, 1) * 500
+			var drg = _core_hand_type(duel, p, 1) * 500
 			atk_add = drg
 			def_add = drg
 		2771:
@@ -620,7 +620,7 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		3086:
 			atk_add = _core_gy_monsters(duel, p) * 300
 		3121:
-			var ban := m.u8(pl + DuelMem.P_BANISH_N) * 400
+			var ban = m.u8(pl + DuelMem.P_BANISH_N) * 400
 			atk_add = ban
 			def_add = ban
 		3123:
@@ -631,21 +631,21 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 
 static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int) -> void:
 	var m: DuelMem = duel.m
-	var idx := m.u16(out) & 0xfff
+	var idx = m.u16(out) & 0xfff
 	var raw_id: int = duel.cards.id_of(idx)
-	var skill_drain := _core_skill_drain_active(duel)
+	var skill_drain = _core_skill_drain_active(duel)
 	if raw_id == 2661 and (m.u16(zone + 6) & 0x1000) == 0 and not skill_drain:
-		var target_stat := _core_highest_other_atk(duel, p, z) + 100
+		var target_stat = _core_highest_other_atk(duel, p, z) + 100
 		m.set_u32(out + 4, target_stat)
 		m.set_u32(out + 8, target_stat)
 		return
-	var owner := p & 1
-	var opp := 1 - owner
+	var owner = p & 1
+	var opp = 1 - owner
 	var prop: int = int(duel.f401a20(idx))
 	var m_type: int = m.u8(out + 2) & 0x1f
 	var m_lv: int = (prop >> 25) & 0xf
-	var atk_delta := 0
-	var def_delta := 0
+	var atk_delta = 0
+	var def_delta = 0
 	if not skill_drain:
 		# Ally field-wide / Union-support auras
 		if m_type == 7:
@@ -705,17 +705,17 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 		if _core_has_active_raw_id(duel, opp, 2983):
 			atk_delta -= 500
 	# Continuous Spells / Traps & Field Spells
-	var a_forces := _core_count_active_st_raw_id(duel, owner, 2698)
+	var a_forces = _core_count_active_st_raw_id(duel, owner, 2698)
 	if a_forces > 0 and m_type == 15:
-		var ws_count := (
+		var ws_count = (
 			_core_other_type_on_field(duel, owner, -1, 15)
 			+ _core_other_type_on_field(duel, owner, -1, 18)
 		)
 		atk_delta += a_forces * ws_count * 200
-	var banner := _core_count_active_st_raw_id(duel, owner, 2807)
+	var banner = _core_count_active_st_raw_id(duel, owner, 2807)
 	if banner > 0 and (m.u8(0xa133f2) & 1) == owner:
 		atk_delta += banner * 200
-	var y_shield := _core_count_active_st_raw_id(duel, owner, 3091)
+	var y_shield = _core_count_active_st_raw_id(duel, owner, 3091)
 	if y_shield > 0:
 		def_delta += y_shield * 300
 	if (_core_count_active_st_raw_id(duel, 0, 2846) > 0 or _core_count_active_st_raw_id(duel, 1, 2846) > 0) and raw_id in GRAVEKEEPER_IDS:
@@ -736,9 +736,9 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 		for i in m.u16(zone + 0x88):
 			if m.u8(zone + 0x48 + i * 2) != 1:
 				continue
-			var link := m.u16(zone + 8 + i * 2)
-			var lzone := DuelMem.zone(link & 1, (link >> 8) & 0xff)
-			var lix := m.u16(lzone) & 0xfff
+			var link = m.u16(zone + 8 + i * 2)
+			var lzone = DuelMem.zone(link & 1, (link >> 8) & 0xff)
+			var lix = m.u16(lzone) & 0xfff
 			if lix == 0 or (m.u8(lzone + 0x8f) & 4) != 0:
 				continue
 			match duel.cards.id_of(lix):
@@ -770,7 +770,7 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	if not skill_drain and raw_id != 2662 and _core_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f53fbd0(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f53fbd0(m.u32(out + 8)))
-	var custom_stats := CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
+	var custom_stats = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
 	m.set_u32(out + 4, maxi(0, custom_stats.x))
 	m.set_u32(out + 8, maxi(0, custom_stats.y))
 
@@ -779,10 +779,10 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 
 static func _joey_gy_monsters(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var pl := JoeyMem.pl(p)
-	var n := 0
+	var pl = JoeyMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + JoeyMem.P_GRAVE_N):
-		var idx := m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
 		if (duel.f4025d0(idx) & 0xffff) < 0x15:
 			n += 1
 	return n
@@ -790,10 +790,10 @@ static func _joey_gy_monsters(duel, p: int) -> int:
 
 static func _joey_gy_normal_monsters(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var pl := JoeyMem.pl(p)
-	var n := 0
+	var pl = JoeyMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + JoeyMem.P_GRAVE_N):
-		var idx := m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
 		if (duel.f4025d0(idx) & 0xffff) < 0x15 and (duel.f402740(idx) & 0xffff) == 0:
 			n += 1
 	return n
@@ -801,10 +801,10 @@ static func _joey_gy_normal_monsters(duel, p: int) -> int:
 
 static func _joey_gy_type(duel, p: int, kind: int) -> int:
 	var m: JoeyMem = duel.m
-	var pl := JoeyMem.pl(p)
-	var n := 0
+	var pl = JoeyMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + JoeyMem.P_GRAVE_N):
-		var idx := m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
 		if (duel.f4025d0(idx) & 0xffff) == kind:
 			n += 1
 	return n
@@ -812,10 +812,10 @@ static func _joey_gy_type(duel, p: int, kind: int) -> int:
 
 static func _joey_hand_type(duel, p: int, kind: int) -> int:
 	var m: JoeyMem = duel.m
-	var pl := JoeyMem.pl(p)
-	var n := 0
+	var pl = JoeyMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + JoeyMem.P_HAND_N):
-		var idx := m.u16(pl + JoeyMem.P_HAND + i * 4) & 0xfff
+		var idx = m.u16(pl + JoeyMem.P_HAND + i * 4) & 0xfff
 		if (duel.f4025d0(idx) & 0xffff) == kind:
 			n += 1
 	return n
@@ -823,10 +823,10 @@ static func _joey_hand_type(duel, p: int, kind: int) -> int:
 
 static func _joey_gy_exodia(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var pl := JoeyMem.pl(p)
-	var n := 0
+	var pl = JoeyMem.pl(p)
+	var n = 0
 	for i in m.u8(pl + JoeyMem.P_GRAVE_N):
-		var idx := m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
 		if duel.cards.id_of(idx) in EXODIA_IDS or (duel.effect_card_id(idx) & 0xffff) in EXODIA_IDS:
 			n += 1
 	return n
@@ -834,15 +834,15 @@ static func _joey_gy_exodia(duel, p: int) -> int:
 
 static func _joey_top_gy_stat_sum(duel, p: int, count: int, use_def := false) -> int:
 	var m: JoeyMem = duel.m
-	var pl := JoeyMem.pl(p)
+	var pl = JoeyMem.pl(p)
 	var vals: Array[int] = []
 	for i in m.u8(pl + JoeyMem.P_GRAVE_N):
-		var idx := m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
+		var idx = m.u16(pl + JoeyMem.P_GRAVE + i * 4) & 0xfff
 		if (duel.f4025d0(idx) & 0xffff) < 0x15:
 			vals.append((duel.f402800(idx) if use_def else duel.f4027b0(idx)) & 0xffff)
 	vals.sort()
 	vals.reverse()
-	var total := 0
+	var total = 0
 	for i in mini(count, vals.size()):
 		total += vals[i]
 	return total
@@ -850,7 +850,7 @@ static func _joey_top_gy_stat_sum(duel, p: int, count: int, use_def := false) ->
 
 static func _joey_field_cards(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 11:
 		if (m.u32(JoeyMem.zone(p, z)) & 0xfff) != 0:
 			n += 1
@@ -859,7 +859,7 @@ static func _joey_field_cards(duel, p: int) -> int:
 
 static func _joey_field_monsters(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
 		if (m.u32(JoeyMem.zone(p, z)) & 0xfff) != 0:
 			n += 1
@@ -868,10 +868,10 @@ static func _joey_field_monsters(duel, p: int) -> int:
 
 static func _joey_faceup_monsters(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
-		var zo := JoeyMem.zone(p, z)
-		var idx := m.u16(zo) & 0xfff
+		var zo = JoeyMem.zone(p, z)
+		var idx = m.u16(zo) & 0xfff
 		if idx != 0 and (m.u8(zo + JoeyMem.Z_FLAGS) & 2) != 0:
 			n += 1
 	return n
@@ -879,10 +879,10 @@ static func _joey_faceup_monsters(duel, p: int) -> int:
 
 static func _joey_amazoness_on_field(duel, p: int) -> int:
 	var m: JoeyMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
-		var zo := JoeyMem.zone(p, z)
-		var idx := m.u16(zo) & 0xfff
+		var zo = JoeyMem.zone(p, z)
+		var idx = m.u16(zo) & 0xfff
 		if idx != 0 and (m.u8(zo + JoeyMem.Z_FLAGS) & 2) != 0 and duel.cards.id_of(idx) in AMAZONESS_IDS:
 			n += 1
 	return n
@@ -890,12 +890,12 @@ static func _joey_amazoness_on_field(duel, p: int) -> int:
 
 static func _joey_other_type_on_field(duel, p: int, skip_z: int, kind: int) -> int:
 	var m: JoeyMem = duel.m
-	var n := 0
+	var n = 0
 	for z in 5:
 		if z == skip_z:
 			continue
-		var zo := JoeyMem.zone(p, z)
-		var idx := m.u16(zo) & 0xfff
+		var zo = JoeyMem.zone(p, z)
+		var idx = m.u16(zo) & 0xfff
 		if idx != 0 and (m.u8(zo + JoeyMem.Z_FLAGS) & 2) != 0 and (duel.f56f6d0(p, z) & 0xffff) == kind:
 			n += 1
 	return n
@@ -906,10 +906,10 @@ static func _joey_has_active_raw_id(duel, pl: int, target_id: int, skip_p := -1,
 	for z in 5:
 		if pl == skip_p and z == skip_z:
 			continue
-		var zo := JoeyMem.zone(pl, z)
-		var idx := m.u16(zo) & 0xfff
+		var zo = JoeyMem.zone(pl, z)
+		var idx = m.u16(zo) & 0xfff
 		if idx != 0 and (m.u8(zo + JoeyMem.Z_FLAGS) & 2) != 0 and (m.u8(zo + JoeyMem.Z_STATUS) & 0x20) == 0:
-			var key := JoeyMem.ident(m.u32(zo))
+			var key = JoeyMem.ident(m.u32(zo))
 			if (duel.f56b440(idx, key) & 0xffffffff) == 0 and duel.cards.id_of(idx) == target_id:
 				return true
 	return false
@@ -917,15 +917,15 @@ static func _joey_has_active_raw_id(duel, pl: int, target_id: int, skip_p := -1,
 
 static func _joey_count_active_st_raw_id(duel, pl: int, target_id: int) -> int:
 	var m: JoeyMem = duel.m
-	var rules := m.u32(0xa577ec)
+	var rules = m.u32(0xa577ec)
 	if (rules & 0x10000) != 0:
 		return 0
-	var n := 0
+	var n = 0
 	for z in range(5, 11):
-		var zo := JoeyMem.zone(pl, z)
-		var idx := m.u16(zo) & 0xfff
+		var zo = JoeyMem.zone(pl, z)
+		var idx = m.u16(zo) & 0xfff
 		if idx != 0 and (m.u8(zo + JoeyMem.Z_FLAGS) & 2) != 0 and (m.u8(zo + JoeyMem.Z_STATUS) & 0x20) == 0:
-			var key := JoeyMem.ident(m.u32(zo))
+			var key = JoeyMem.ident(m.u32(zo))
 			if (duel.f56b440(idx, key) & 0xffffffff) == 0 and duel.cards.id_of(idx) == target_id:
 				n += 1
 	return n
@@ -937,7 +937,7 @@ static func _joey_skill_drain_active(duel) -> bool:
 
 static func _joey_highest_other_atk(duel, self_p: int, self_z: int, only_player := -1) -> int:
 	var m: JoeyMem = duel.m
-	var best := 0
+	var best = 0
 	if _in_avatar_calc:
 		return best
 	_in_avatar_calc = true
@@ -947,8 +947,8 @@ static func _joey_highest_other_atk(duel, self_p: int, self_z: int, only_player 
 		for z in 5:
 			if pl == (self_p & 1) and z == self_z:
 				continue
-			var zo := JoeyMem.zone(pl, z)
-			var idx := m.u16(zo) & 0xfff
+			var zo = JoeyMem.zone(pl, z)
+			var idx = m.u16(zo) & 0xfff
 			if idx == 0 or (m.u8(zo + JoeyMem.Z_FLAGS) & 2) == 0:
 				continue
 			if duel.cards.id_of(idx) == 2661:
@@ -972,19 +972,19 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 			m.set_u32(out + 4, 0)
 			m.set_u32(out + 8, 0)
 		return
-	var pl := JoeyMem.pl(p)
-	var opp := 1 - (p & 1)
-	var opp_pl := JoeyMem.pl(opp)
+	var pl = JoeyMem.pl(p)
+	var opp = 1 - (p & 1)
+	var opp_pl = JoeyMem.pl(opp)
 	match raw_id:
 		2501:
 			m.set_u32(out + 4, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, false)))
 			m.set_u32(out + 8, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, true)))
 		2502:
-			var hc := m.u8(pl + JoeyMem.P_HAND_N)
+			var hc = m.u8(pl + JoeyMem.P_HAND_N)
 			m.set_u32(out + 4, hc * 1000)
 			m.set_u32(out + 8, hc * 1000)
 		2505:
-			var lp_stat := maxi(5000, m.u16(pl + JoeyMem.P_LP))
+			var lp_stat = maxi(5000, m.u16(pl + JoeyMem.P_LP))
 			m.set_u32(out + 4, lp_stat)
 			m.set_u32(out + 8, lp_stat)
 		2506:
@@ -1005,7 +1005,7 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 		2539:
 			v[0] += _joey_gy_type(duel, p, 7) * 500
 		2545:
-			var dragons := (
+			var dragons = (
 				_joey_other_type_on_field(duel, p, z, 1)
 				+ _joey_other_type_on_field(duel, opp, -1, 1)
 				+ _joey_gy_type(duel, p, 1)
@@ -1013,7 +1013,7 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 			)
 			v[0] += dragons * 500
 		2546:
-			var others := maxi(0, _joey_faceup_monsters(duel, p) - 1) + _joey_faceup_monsters(duel, opp)
+			var others = maxi(0, _joey_faceup_monsters(duel, p) - 1) + _joey_faceup_monsters(duel, opp)
 			v[0] += others * 500
 		2552:
 			v[0] += _joey_other_type_on_field(duel, p, z, 1) * 500
@@ -1029,7 +1029,7 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 		2575:
 			v[0] += _joey_gy_normal_monsters(duel, p) * 1000
 		2581, 2582, 2585:
-			var total_cards := (
+			var total_cards = (
 				m.u8(JoeyMem.pl(0) + JoeyMem.P_BANISH_N)
 				+ m.u8(JoeyMem.pl(1) + JoeyMem.P_BANISH_N)
 				+ m.u8(JoeyMem.pl(0) + JoeyMem.P_GRAVE_N)
@@ -1057,11 +1057,11 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 		2660:
 			v[0] += m.u16(pl + JoeyMem.P_LP)
 		2661:
-			var target_stat := _joey_highest_other_atk(duel, p, z) + 100
+			var target_stat = _joey_highest_other_atk(duel, p, z) + 100
 			m.set_u32(out + 4, target_stat)
 			m.set_u32(out + 8, target_stat)
 		2663:
-			var opp_cards := _joey_field_cards(duel, opp) * 1000
+			var opp_cards = _joey_field_cards(duel, opp) * 1000
 			v[0] += opp_cards
 			v[1] += opp_cards
 		2664:
@@ -1070,11 +1070,11 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 		2669:
 			v[0] += (_joey_gy_type(duel, p, 18) + _joey_gy_type(duel, opp, 18)) * 300
 		2677, 2594:
-			var traps := _joey_gy_type(duel, p, 21) * 1000
+			var traps = _joey_gy_type(duel, p, 21) * 1000
 			v[0] += traps
 			v[1] += traps
 		2684:
-			var spells := _joey_gy_type(duel, opp, 22) * 500
+			var spells = _joey_gy_type(duel, opp, 22) * 500
 			v[0] += spells
 			v[1] += spells
 		2699:
@@ -1084,7 +1084,7 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 			v[0] += maxi(1200, _joey_highest_other_atk(duel, p, z, p & 1))
 			v[1] += 800
 		2758:
-			var drg := _joey_hand_type(duel, p, 1) * 500
+			var drg = _joey_hand_type(duel, p, 1) * 500
 			v[0] += drg
 			v[1] += drg
 		2771:
@@ -1120,7 +1120,7 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 		3086:
 			v[0] += _joey_gy_monsters(duel, p) * 300
 		3121:
-			var ban := m.u8(pl + JoeyMem.P_BANISH_N) * 400
+			var ban = m.u8(pl + JoeyMem.P_BANISH_N) * 400
 			v[0] += ban
 			v[1] += ban
 		3123:
@@ -1129,21 +1129,21 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 
 static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -> void:
 	var m: JoeyMem = duel.m
-	var idx := m.u16(out) & 0xfff
+	var idx = m.u16(out) & 0xfff
 	var raw_id: int = duel.cards.id_of(idx)
-	var key := JoeyMem.ident(m.u32(zo))
-	var skill_drain := _joey_skill_drain_active(duel)
+	var key = JoeyMem.ident(m.u32(zo))
+	var skill_drain = _joey_skill_drain_active(duel)
 	if raw_id == 2661 and (duel.f56b440(idx, key) & 0xffffffff) == 0 and not skill_drain:
-		var target_stat := _joey_highest_other_atk(duel, p, z) + 100
+		var target_stat = _joey_highest_other_atk(duel, p, z) + 100
 		m.set_u32(out + 4, target_stat)
 		m.set_u32(out + 8, target_stat)
 		return
-	var owner := p & 1
-	var opp := 1 - owner
+	var owner = p & 1
+	var opp = 1 - owner
 	var m_type: int = m.u8(out + 2) & 0xff
 	var m_lv: int = int(duel.f4026c0(idx)) & 0xffff
-	var atk_delta := 0
-	var def_delta := 0
+	var atk_delta = 0
+	var def_delta = 0
 	if not skill_drain:
 		if m_type == 7:
 			if _joey_has_active_raw_id(duel, owner, 2536, owner, z):
@@ -1200,17 +1200,17 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 		if _joey_has_active_raw_id(duel, opp, 2983):
 			atk_delta -= 500
 	# Continuous Spells / Traps & Field Spells
-	var a_forces := _joey_count_active_st_raw_id(duel, owner, 2698)
+	var a_forces = _joey_count_active_st_raw_id(duel, owner, 2698)
 	if a_forces > 0 and m_type == 15:
-		var ws_count := (
+		var ws_count = (
 			_joey_other_type_on_field(duel, owner, -1, 15)
 			+ _joey_other_type_on_field(duel, owner, -1, 18)
 		)
 		atk_delta += a_forces * ws_count * 200
-	var banner := _joey_count_active_st_raw_id(duel, owner, 2807)
+	var banner = _joey_count_active_st_raw_id(duel, owner, 2807)
 	if banner > 0 and (m.u8(JoeyMem.TURN) & 1) == owner:
 		atk_delta += banner * 200
-	var y_shield := _joey_count_active_st_raw_id(duel, owner, 3091)
+	var y_shield = _joey_count_active_st_raw_id(duel, owner, 3091)
 	if y_shield > 0:
 		def_delta += y_shield * 300
 	if (_joey_count_active_st_raw_id(duel, 0, 2846) > 0 or _joey_count_active_st_raw_id(duel, 1, 2846) > 0) and raw_id in GRAVEKEEPER_IDS:
@@ -1230,9 +1230,9 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 		for i in m.u16(zo + JoeyMem.Z_LINKS_N):
 			if (m.u8(zo + JoeyMem.Z_LINK_KIND + i * 2) & 0xf) != 1:
 				continue
-			var ref := m.u16(zo + JoeyMem.Z_LINK_REF + i * 2)
-			var tz := JoeyMem.zone(ref & 1, ref >> 8)
-			var lix := m.u16(tz) & 0xfff
+			var ref = m.u16(zo + JoeyMem.Z_LINK_REF + i * 2)
+			var tz = JoeyMem.zone(ref & 1, ref >> 8)
+			var lix = m.u16(tz) & 0xfff
 			if lix == 0 or (m.u8(tz + JoeyMem.Z_STATUS) & 0x20) != 0 or (m.u8(tz + JoeyMem.Z_FLAGS) & 2) == 0:
 				continue
 			match duel.cards.id_of(lix):
@@ -1264,7 +1264,7 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	if not skill_drain and raw_id != 2662 and _joey_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f5be050(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f5be050(m.u32(out + 8)))
-	var custom_stats := CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
+	var custom_stats = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
 	m.set_u32(out + 4, maxi(0, custom_stats.x))
 	m.set_u32(out + 8, maxi(0, custom_stats.y))
 

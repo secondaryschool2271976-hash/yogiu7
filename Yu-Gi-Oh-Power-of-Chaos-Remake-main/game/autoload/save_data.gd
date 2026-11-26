@@ -119,7 +119,7 @@ func deck_file_header(persist := false) -> PackedByteArray:
 
 
 static func _stored_deck_file_header(profile: Dictionary) -> PackedByteArray:
-	var head := Marshalls.base64_to_raw(str(profile.get("deck_header", "")))
+	var head = Marshalls.base64_to_raw(str(profile.get("deck_header", "")))
 	if head.size() == 8:
 		return head
 	var native: Variant = profile.get("native_system")
@@ -668,7 +668,7 @@ func ensure_game(game: String, validate_startup := true) -> void:
 func _migrate_shared_stats() -> void:
 	var stats: Dictionary = data.get_or_add("stats", {})
 	var native: Dictionary = data.get("native_system", {})
-	var block := Marshalls.base64_to_raw(str(native.get("block", "")))
+	var block = Marshalls.base64_to_raw(str(native.get("block", "")))
 	var imported := block.decode_u32(0x10f8) if block.size() == SystemDat.BLOCK_SIZE else 0
 	for pair in [["wins", 0x7ff, imported & 0x7ff], ["losses", 0x7ff, (imported >> 11) & 0x7ff], ["draws", 0x3ff, imported >> 22]]:
 		var total := int(pair[2])
@@ -683,23 +683,23 @@ func _migrate_shared_stats() -> void:
 func record_result(game: String, result: int) -> Dictionary:
 	ensure_game(game)
 	var stats: Dictionary = data["stats"][game]
-	var key := {1: "wins", 2: "losses", 3: "draws"}.get(result, "") as String
+	var key = {1: "wins", 2: "losses", 3: "draws"}.get(result, "") as String
 	if key != "":
-		var count := mini(0x3ff if result == 3 else 0x7ff, int(stats.get(key, 0)) + 1)
+		var count = mini(0x3ff if result == 3 else 0x7ff, int(stats.get(key, 0)) + 1)
 		for id in GAMES:
 			data["stats"][id][key] = count
 	return stats
 
 
 func native_option_byte(offset: int) -> int:
-	var block := Marshalls.base64_to_raw(str(data.get("native_system", {}).get("block", "")))
+	var block = Marshalls.base64_to_raw(str(data.get("native_system", {}).get("block", "")))
 	return block[offset] if offset >= 0 and offset < block.size() else 0
 
 func set_native_option_byte(offset: int, value: int) -> void:
 	if offset < 0 or offset >= SystemDat.BLOCK_SIZE:
 		return
 	var native: Dictionary = data.get_or_add("native_system", {})
-	var block := Marshalls.base64_to_raw(str(native.get("block", "")))
+	var block = Marshalls.base64_to_raw(str(native.get("block", "")))
 	if block.size() != SystemDat.BLOCK_SIZE:
 		block.resize(SystemDat.BLOCK_SIZE)
 		for i in 8:
@@ -716,7 +716,7 @@ func export_system_dat(destination: String, game := "", header_key := -1) -> boo
 		game = "yugi"
 	# Exportar es serializar, no arrancar el juego ni sustituir el mazo del usuario.
 	ensure_game(game, false)
-	var head := Marshalls.base64_to_raw(str(data.get("native_system", {}).get("header", "")))
+	var head = Marshalls.base64_to_raw(str(data.get("native_system", {}).get("header", "")))
 	if header_key >= 0:
 		head.resize(8)
 		head[0] = 1

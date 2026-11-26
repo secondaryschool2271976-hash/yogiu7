@@ -66,9 +66,9 @@ func tick_piles() -> void:
 
 static func memory_zone(duel: Duel, p: int, z: int) -> Dictionary:
 	var at := DuelMem.zone(p, z)
-	var index := duel.m.u16(at) & 0xfff
+	var index = duel.m.u16(at) & 0xfff
 	if index == 0: return {}
-	var flags := duel.m.u8(at + 6)
+	var flags = duel.m.u8(at + 6)
 	return {"card": duel.cards.id_of(index), "face": (flags & 2) != 0, "defense": z < 5 and (flags & 1) != 0,
 			"owner": (duel.m.u16(at) >> 12) & 1}
 
@@ -76,7 +76,7 @@ static func memory_zone(duel: Duel, p: int, z: int) -> Dictionary:
 static func memory_hand(duel: Duel, p: int) -> Array:
 	var out := []
 	for i in duel.m.u8(DuelMem.pl(p) + DuelMem.P_HAND_N):
-		var index := duel.m.u16(DuelMem.pl(p) + DuelMem.P_HAND + i * 4) & 0xfff
+		var index = duel.m.u16(DuelMem.pl(p) + DuelMem.P_HAND + i * 4) & 0xfff
 		# 0xc4/0xc5 vacian el hueco antes del vuelo: ya no es un objeto de la mano.
 		if index == 0: continue
 		out.append({"card": duel.cards.id_of(index), "face": true, "defense": false, "owner": p})
@@ -88,7 +88,7 @@ static func memory_pile(duel: Duel, p: int, loc: int) -> Dictionary:
 			DuelMem.LOC_GRAVE: DuelMem.P_GRAVE_N, DuelMem.LOC_BANISH: DuelMem.P_BANISH_N}[loc]
 	var list_at: int = {DuelMem.LOC_FUSION: DuelMem.P_FUSION, DuelMem.LOC_DECK: DuelMem.P_DECK,
 			DuelMem.LOC_GRAVE: DuelMem.P_GRAVE, DuelMem.LOC_BANISH: DuelMem.P_BANISH}[loc]
-	var n := duel.m.u8(DuelMem.pl(p) + count_at)
+	var n = duel.m.u8(DuelMem.pl(p) + count_at)
 	var top := -1
 	if n > 0:
 		# El mazo tiene la carta de arriba en la posicion 0; las demas pilas, al final.
@@ -176,7 +176,7 @@ func take(duel: Duel, p: int, loc: int, i: int) -> Dictionary:
 	if loc in PILES:
 		var pile: Dictionary = piles[p][loc]
 		if int(pile["count"]) == 0: return {}
-		var obj := {"card": int(pile["top"]), "face": loc != DuelMem.LOC_DECK, "defense": false, "owner": p}
+		var obj = {"card": int(pile["top"]), "face": loc != DuelMem.LOC_DECK, "defense": false, "owner": p}
 		var mem := memory_pile(duel, p, loc)
 		pile["count"] = maxi(0, int(pile["count"]) - 1)
 		pile["top"] = mem["top"] if int(mem["count"]) == int(pile["count"]) else _pile_top_below(duel, p, loc, int(pile["count"]))

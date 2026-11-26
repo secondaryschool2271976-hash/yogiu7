@@ -265,7 +265,7 @@ func link() -> void:
 	verification_url = str(data.get("verification_url", data.get("verification_uri", "https://www.google.com/device")))
 	changed.emit()
 	var interval := float(data.get("interval", 5))
-	var deadline := Time.get_unix_time_from_system() + float(data.get("expires_in", 1800))
+	var deadline = Time.get_unix_time_from_system() + float(data.get("expires_in", 1800))
 	while Time.get_unix_time_from_system() < deadline:
 		await get_tree().create_timer(interval).timeout
 		if serial != _link_serial:
@@ -736,7 +736,7 @@ func _github_find_remote() -> Dictionary:
 			if item is Dictionary and str(item.get("description", "")) == GIST_DESC:
 				var item_files: Variant = item.get("files", {})
 				if item_files is Dictionary and (item_files as Dictionary).has(SaveData.FILE_NAME):
-					var full_resp := await _github_request(HTTPClient.METHOD_GET, "/gists/" + str(item.get("id", "")), _refresh_token)
+					var full_resp = await _github_request(HTTPClient.METHOD_GET, "/gists/" + str(item.get("id", "")), _refresh_token)
 					var full_parsed := _json(full_resp)
 					if full_resp.code == 200 and full_parsed.has("files"):
 						gist = full_parsed
@@ -754,7 +754,7 @@ func _github_find_remote() -> Dictionary:
 	var save_entry: Dictionary = files_dict[SaveData.FILE_NAME]
 	var content_bytes := PackedByteArray()
 	if bool(save_entry.get("truncated", false)) and str(save_entry.get("raw_url", "")) != "":
-		var raw_resp := await _request(HTTPClient.METHOD_GET, str(save_entry.get("raw_url", "")), ["User-Agent: PowerOfChaos-CloudSync"], PackedByteArray())
+		var raw_resp = await _request(HTTPClient.METHOD_GET, str(save_entry.get("raw_url", "")), ["User-Agent: PowerOfChaos-CloudSync"], PackedByteArray())
 		if raw_resp.code != 200:
 			return {"error": _github_error_text(raw_resp, {})}
 		content_bytes = raw_resp.body
@@ -771,7 +771,7 @@ func _github_find_remote() -> Dictionary:
 		var res_entry: Dictionary = files_dict[GIST_RESUME_FILE]
 		var b64_text := ""
 		if bool(res_entry.get("truncated", false)) and str(res_entry.get("raw_url", "")) != "":
-			var raw_res := await _request(HTTPClient.METHOD_GET, str(res_entry.get("raw_url", "")), ["User-Agent: PowerOfChaos-CloudSync"], PackedByteArray())
+			var raw_res = await _request(HTTPClient.METHOD_GET, str(res_entry.get("raw_url", "")), ["User-Agent: PowerOfChaos-CloudSync"], PackedByteArray())
 			if raw_res.code == 200:
 				b64_text = raw_res.body.get_string_from_utf8().strip_edges()
 		else:

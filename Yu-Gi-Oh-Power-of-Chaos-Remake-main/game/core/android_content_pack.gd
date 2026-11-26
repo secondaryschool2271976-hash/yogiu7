@@ -69,7 +69,7 @@ static func validate_pack(path: String) -> Dictionary:
 			return {"ok": false, "error": "resources"}
 		# Same lookup as Duel.create/create_native: without it the duel stops on
 		# "Faltan los datos del motor de duelo" after the pack was accepted.
-		var engine_files: Array = ["joey_image.bin"] if game == "joey" else ["yugi_image.bin", "kaiba_image.bin"]
+		var engine_files: Array = ["joey_image.bin", "kaiba_image.bin", "yugi_image.bin"] if game == "joey" else ["yugi_image.bin", "kaiba_image.bin"]
 		if not engine_files.any(func(name: String) -> bool: return entries.has("res://data/common/duel/" + name)):
 			return {"ok": false, "error": "engine", "game": game}
 	var cards_entry: Dictionary = entries["res://data/common/db/cards.json"]

@@ -67,7 +67,7 @@ static func fusion_state(counter: int, count: int) -> Dictionary:
 
 static func normalize(event: Dictionary, duel) -> Dictionary:
 	var result := event.duplicate(true)
-	var mode := String(result.get("mode", result.get("kind", "")))
+	var mode = String(result.get("mode", result.get("kind", "")))
 	var args: Array = result.get("args", [])
 	var op := int(result.get("op", -1))
 	if op in [0xe0, 0xe1]: mode = "coin"
@@ -323,7 +323,7 @@ static func _exodia_pose(owner: Node2D, stage: int, counter: int) -> void:
 
 static func _coin(owner: Node2D, event: Dictionary, frame: int) -> void:
 	var args: Array = event.get("args", [])
-	var count := 3 if int(event.get("op", 0xe0)) == 0xe1 else 1
+	var count = 3 if int(event.get("op", 0xe0)) == 0xe1 else 1
 	var result := int(event.get("result", 0))
 	var choice := 1
 	if not args.is_empty():
@@ -388,7 +388,7 @@ static func dice_state(counter: int, result: int, source: Vector2) -> Dictionary
 static func _dice(owner: Node2D, event: Dictionary, frame: int) -> void:
 	var counter := -256 + frame * 8
 	var source: Vector2 = event.get("source_pos", event.get("center", Vector2(525,300)))
-	var result := clampi(int(event.get("result", 1)), 1, 6)
+	var result = clampi(int(event.get("result", 1)), 1, 6)
 	var args: Array = event.get("args", [])
 	if not args.is_empty(): result = clampi(int(args[0]),1,6)
 	var state := dice_state(counter,result,source)

@@ -1047,7 +1047,7 @@ func _redeem_deck_gift(raw_entry: String, gift_res: Dictionary) -> void:
 	var deck_dict := {"main": [], "fusion": [], "side": []}
 	var total_added := 0
 	var unique_resolved := 0
-	var cover_cid := _resolve_card_id(str(gift_res.get("cardCode", "")))
+	var cover_cid = _resolve_card_id(str(gift_res.get("cardCode", "")))
 
 	for entry_v: Variant in cards_raw:
 		if not (entry_v is Dictionary):
@@ -1063,7 +1063,7 @@ func _redeem_deck_gift(raw_entry: String, gift_res: Dictionary) -> void:
 			continue
 		if cover_cid < 0:
 			cover_cid = cid
-		var copies := clampi(int(entry.get("copies", 1)), 1, 3)
+		var copies = clampi(int(entry.get("copies", 1)), 1, 3)
 		var zone := str(entry.get("zone", "main")).strip_edges().to_lower()
 		if zone not in ["main", "fusion", "side"]:
 			zone = "main"
@@ -1797,7 +1797,7 @@ func _finish_spin() -> void:
 		_show_special_set(_won_set_index)
 		var entry: Dictionary = SPECIAL_SETS[_won_set_index]
 		var full_deck := _build_special_set_full_deck(entry)
-		var export_name := "Set_" + str(entry.get("id", "ready"))
+		var export_name = "Set_" + str(entry.get("id", "ready"))
 		var res := SaveData.apply_ready_made_deck(full_deck, export_name, true)
 		_refresh_wheel_cooldown_ui()
 		_wheel_status.add_theme_color_override("font_color", Color(0.45, 1.0, 0.68))
@@ -2470,7 +2470,7 @@ func _populate_admin_deck_sources() -> void:
 			var p := str(entry.get("path", ""))
 			if p == "" or (Paths.has_data() and not Assets.exists(p)):
 				continue
-			var p_name := _tr(str(entry.get("ar", "")), str(entry.get("es", "")), str(entry.get("en", "")))
+			var p_name = _tr(str(entry.get("ar", "")), str(entry.get("es", "")), str(entry.get("en", "")))
 			var disp := "🃏 [%s] %s" % [ed_tags[g], p_name]
 			_admin_deck_sources.append({
 				"kind": "preset_json",
@@ -2480,8 +2480,8 @@ func _populate_admin_deck_sources() -> void:
 			})
 
 	for s: Dictionary in SPECIAL_SETS:
-		var s_name := _tr(str(s["ar"]), str(s["es"]), str(s["en"]))
-		var disp := "★ %s (%d)" % [s_name, (s["cards"] as Array).size()]
+		var s_name = _tr(str(s["ar"]), str(s["es"]), str(s["en"]))
+		var disp = "★ %s (%d)" % [s_name, (s["cards"] as Array).size()]
 		_admin_deck_sources.append({"kind": "special_set", "set": s, "label": s_name, "display": disp})
 
 	if _admin_deck_sources.is_empty():
@@ -3202,9 +3202,9 @@ func _populate_ready_decks_entries() -> void:
 	if CardDB.cards.is_empty():
 		CardDB.load_db()
 	for s: Dictionary in SPECIAL_SETS:
-		var s_name := _tr(str(s["ar"]), str(s["es"]), str(s["en"]))
+		var s_name = _tr(str(s["ar"]), str(s["es"]), str(s["en"]))
 		var full_deck := _build_special_set_full_deck(s)
-		var exp_name := "Ready_" + str(s.get("id", "set"))
+		var exp_name = "Ready_" + str(s.get("id", "set"))
 		_ready_decks_entries.append({
 			"category": "special",
 			"tag": _tr("★ مجموعة خاصة", "★ Especial", "★ Special"),
@@ -3242,7 +3242,7 @@ func _populate_ready_decks_entries() -> void:
 			var main_arr: Array = deck_dict.get("main", [])
 			if main_arr.is_empty():
 				continue
-			var p_name := _tr(str(entry.get("ar", "")), str(entry.get("es", "")), str(entry.get("en", "")))
+			var p_name = _tr(str(entry.get("ar", "")), str(entry.get("es", "")), str(entry.get("en", "")))
 			var base_file := p.get_file().get_basename()
 			var exp_name := "%s_%s" % [g.capitalize(), base_file]
 			var cov_id := int(main_arr[0]) if not main_arr.is_empty() else 34
@@ -3302,9 +3302,9 @@ func _rebuild_ready_decks_list() -> void:
 		row.add_child(badge_lbl)
 
 		var deck_dict: Dictionary = item.get("deck", {})
-		var m_cnt := (deck_dict.get("main", []) as Array).size()
-		var f_cnt := (deck_dict.get("fusion", []) as Array).size()
-		var s_cnt := (deck_dict.get("side", []) as Array).size()
+		var m_cnt = (deck_dict.get("main", []) as Array).size()
+		var f_cnt = (deck_dict.get("fusion", []) as Array).size()
+		var s_cnt = (deck_dict.get("side", []) as Array).size()
 
 		var title_lbl := Label.new()
 		title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL

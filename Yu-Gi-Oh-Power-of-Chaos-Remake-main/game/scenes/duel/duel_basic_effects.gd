@@ -84,19 +84,19 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 		var objects: Array = []
 		var hide: Array = []
 		var hand := mode == "joey_hand_shuffle"
-		var count := duel.m.u8(DuelMem.pl(p) + DuelMem.P_HAND_N)
+		var count = duel.m.u8(DuelMem.pl(p) + DuelMem.P_HAND_N)
 		for i in d["objects"]:
 			var at := duel.f5419b0(p, 11 if hand else 0, int(i))
 			var center: Vector2 = d.get("centers", {}).get(i, Geometry.hand(p, i, count) if hand else Geometry.zone(p, i))
 			var flags := int(d["visual_flags"][i]) if not hand else 0
-			var card := duel.f401a70(duel.m.u32(at) & 0xfff)
+			var card = duel.f401a70(duel.m.u32(at) & 0xfff)
 			objects.append({"center":center, "card":card, "before":d["before"][i] if hand else card,
 				"angle":(p * 2 + (flags & 1)) * 128, "face":p == 0 if hand else bool(flags & 2)})
 			hide.append(center)
 		d["shuffle_objects"] = objects
 		d["hide"] = hide
 	elif mode == "hand_shuffle":
-		var count := duel.m.u8(DuelMem.pl(p) + DuelMem.P_HAND_N)
+		var count = duel.m.u8(DuelMem.pl(p) + DuelMem.P_HAND_N)
 		var cards: Array[int] = []
 		var initial: Array[Vector2] = []
 		for index in count:
@@ -117,7 +117,7 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 		for index in count: d["hide"].append(Geometry.hand(p, index, count))
 	elif mode == "card_effect":
 		var card: int = d.get("card", 0)
-		var index := duel.cards.index_of(card)
+		var index = duel.cards.index_of(card)
 		d["monster"] = duel.cards.type_of(index) > 0 and duel.cards.type_of(index) < 21
 		var loc: int = d.get("loc", 11)
 		var slot: int = d.get("c", 0)
@@ -140,7 +140,7 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 			exists = duel.f544a00(p, card) != 0
 			if exists: d["center"] = Geometry.GRAVE[p]
 		elif loc == 11:
-			var count := duel.m.u8(DuelMem.pl(p) + 2)
+			var count = duel.m.u8(DuelMem.pl(p) + 2)
 			for hand_index in count:
 				if (duel.m.u16(DuelMem.pl(p) + DuelMem.P_HAND + hand_index * 4) & 0xfff) == index:
 					exists = true
@@ -200,18 +200,18 @@ static func normalize(event: Dictionary, duel: Duel) -> Dictionary:
 		var defender: int = d["defender"]
 		# 40cca0/40ced0 leen los flags del lado opuesto al atacante, incluso si
 		# 0x33 dirige el ataque a una carta de su mismo lado.
-		var opposing_side := 1 - int(d["p"])
+		var opposing_side = 1 - int(d["p"])
 		d["reflection"] = bool(d.get("native_reflection", d["target_zone"] >= 0 and (d["result_flags"][opposing_side] & 2) == 0))
 		var shakes: Array = []
 		for side in 2:
 			var z: int = d["source_zone"] if side == d["p"] else d["target_zone"]
 			var result := int(d["result_flags"][side])
 			# Jo414110: state2 afecta el bit2 o el resultado4 exacto de bits2..4.
-			var hit := (result & 2) != 0 or (result & 0x1c) == 4 if d.get("native_impact", false) else (result & 6) != 0
+			var hit = (result & 2) != 0 or (result & 0x1c) == 4 if d.get("native_impact", false) else (result & 6) != 0
 			if z < 0 or not hit: continue
 			var card_side: int = defender if side == opposing_side else side
 			var at := DuelMem.zone(card_side, z)
-			var flags := duel.m.u8(at + 6)
+			var flags = duel.m.u8(at + 6)
 			shakes.append({"card": duel.cards.id_of(duel.m.u16(at) & 0xfff), "pos": Geometry.zone(card_side, z), "angle": ((flags & 1) + card_side * 2) * 128, "face": bool(flags & 2)})
 		d["shake_cards"] = shakes
 		d["reflection_size"] = Geometry.FIELD_SIZE
@@ -288,7 +288,7 @@ static func joey_shuffle_pose(center: Vector2, hand: bool, p: int, angle: int, f
 static func _joey_shuffle(owner: Node2D, event: Dictionary, frame: int) -> void:
 	var hand: bool = event["mode"] == "joey_hand_shuffle"
 	for object: Dictionary in event["shuffle_objects"]:
-		var pose := joey_shuffle_pose(object["center"], hand, event["p"], object["angle"], frame)
+		var pose = joey_shuffle_pose(object["center"], hand, event["p"], object["angle"], frame)
 		var card := object.duplicate()
 		# 418ef0 refreshes hand images after drawing counter256 (frame16).
 		if hand and frame <= 16: card["card"] = object["before"]
@@ -350,7 +350,7 @@ static func _render_set(owner: Node2D, event: Dictionary, counter: int) -> void:
 	var center: Vector2 = event["center"]
 	var wave := Math.cos_fx(counter - 128)
 	var alpha := (wave * 176) >> 16
-	var color := "y" if event.get("monster", false) else "b"
+	var color = "y" if event.get("monster", false) else "b"
 	# La carta ya llego desde la mano; el nucleo aun no ha escrito la zona mientras espera
 	# este objeto. Representar su imagen base durante toda la espera y sumar la copia
 	# luminosa de 4390d0 (Yugi) / 439810 (Kaiba), llamada de dibujo +ac.
@@ -458,7 +458,7 @@ static func _activation(owner: Node2D, event: Dictionary, counter: int) -> void:
 	else:
 		_card(owner, event, center, event.get("card_size", size), 256, ((int(event.get("flags", 0)) & 1) + (int(event.get("p", 0)) & 1) * 2) * 128)
 	var wave := Math.cos_fx(counter - 128)
-	var color := "y" if event.get("monster", false) else "b"
+	var color = "y" if event.get("monster", false) else "b"
 	_asset(owner, "kouka_sita_" + color, center, wave, mini(255, wave >> 8), counter / 2)
 	# El original dibuja el rectángulo blanco entre las dos capas (alpha wave>>9).
 	var flash := Polygon2D.new()
@@ -567,7 +567,7 @@ static func _banner(owner: Node2D, event: Dictionary, frame: int) -> void:
 	var start: bool = int(event.get("op", 0)) == 0x14
 	var counter := frame * (8 if start else 4)
 	if start and event.get("game", "yugi") == "kaiba":
-		var sprite := _asset(owner, event.get("asset", "duel_start_?"), Vector2(400,300))
+		var sprite = _asset(owner, event.get("asset", "duel_start_?"), Vector2(400,300))
 		if sprite != null:
 			var plan := kaiba_start_banner(counter, Vector2i(sprite.texture.get_size()))
 			sprite.centered = false
@@ -629,7 +629,7 @@ static func _special(owner: Node2D, event: Dictionary, counter: int) -> void:
 			sprite.position = center - size / 2 + Vector2(size.x / 2 + rows[row], row + 0.5)
 			owner.add_child(sprite)
 	if counter < 192:
-		var color := "d" if int(event.get("flags", 0)) & 1 else "a"
+		var color = "d" if int(event.get("flags", 0)) & 1 else "a"
 		_asset(owner, "sp_sum_%s%d" % [color, counter / 16 % 4 + 1], center, 65536, mini(255, Math.cos_fx(counter - 96) >> 8))
 
 static func _hand_shuffle(owner: Node2D, event: Dictionary, frame: int) -> void:

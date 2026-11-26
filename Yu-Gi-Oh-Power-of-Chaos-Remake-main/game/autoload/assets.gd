@@ -700,7 +700,7 @@ func _load_card_pack_texture(info: Dictionary) -> Texture2D:
 	var cache_key := "card_pack:%s:%s" % ["mini" if is_mini else "card", stem]
 	if _textures.has(cache_key):
 		return _textures[cache_key]
-	var buf := _read_card_pack_bytes(stem, str(info["entry"]))
+	var buf = _read_card_pack_bytes(stem, str(info["entry"]))
 	if buf.is_empty():
 		return null
 	var image := Image.new()
@@ -790,7 +790,7 @@ func texture_card_deferred(rel_path: String, fallback_rel_path: String, max_per_
 	if _card_pack_mirroring:
 		return texture(fallback_rel_path) if fallback_rel_path != "" else null
 	if not pack_info.is_empty():
-		var cache_key := "card_pack:%s:%s" % ["mini" if bool(pack_info["mini"]) else "card", str(pack_info["stem"])]
+		var cache_key = "card_pack:%s:%s" % ["mini" if bool(pack_info["mini"]) else "card", str(pack_info["stem"])]
 		if _textures.has(cache_key):
 			return _textures[cache_key]
 	else:

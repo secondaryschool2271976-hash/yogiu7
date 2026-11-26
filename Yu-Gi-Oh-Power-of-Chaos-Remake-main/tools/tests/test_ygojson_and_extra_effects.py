@@ -495,7 +495,7 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		# Verify PoC race/attribute ID fixes (Machine=7, Spellcaster=18, Aqua=14, Zombie=2, Insect=10, Plant=13, Fairy=17, LIGHT=1, DARK=2, WATER=3)
 		self.assertIn("CustomDuelOps.monster_race(duel, idx_tmp) != 7", m1_text)
 		self.assertIn("CustomDuelOps.monster_race(d, idx) == 7 and (CustomDuelOps.base_atk(d, idx) == 2100", m1_text)
-		self.assertIn("var need_race := 18 if cid == 2635 else 15", m1_text)
+		self.assertIn("18 if cid == 2635 else 15", m1_text)
 		self.assertIn("CustomDuelOps.monster_attr(duel, def_idx) == 2 and CustomDuelOps.monster_race(duel, def_idx) == 3", m1_text)
 		self.assertIn("CustomDuelOps.monster_attr(duel, idx) != 1", m1_text)
 		self.assertIn("CustomDuelOps.monster_race(duel, idx) == 14 and CustomDuelOps.monster_level(duel, idx) == 10", m1_text)
@@ -565,6 +565,22 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		ed_text = ed_path.read_text(encoding="utf-8")
 		self.assertIn("SaveData.set_deck(game, _deck.duplicate(true))", ed_text)
 		self.assertGreaterEqual(ed_text.count("_autosave_deck()"), 4)
+
+	def test_joey_startup_and_custom_effect_animations(self) -> None:
+		joey_normal_text = (REPO_ROOT / "game/scenes/duel/joey_native_normal.gd").read_text(encoding="utf-8")
+		self.assertIn('Duel.create(Paths.data_dir, "kaiba")', joey_normal_text)
+		self.assertIn('fallback.rules_game = "joey"', joey_normal_text)
+
+		ops_text = (CORE_DIR / "custom_duel_ops.gd").read_text(encoding="utf-8")
+		self.assertIn("static func _present(", ops_text)
+		self.assertIn('_present(duel, "move", {', ops_text)
+		self.assertIn('_present(duel, "special", {', ops_text)
+		self.assertIn('_present(duel, "flip", {', ops_text)
+
+		cce_text = (CORE_DIR / "custom_card_effects.gd").read_text(encoding="utf-8")
+		self.assertIn('CustomDuelOps._present(duel, "card_effect"', cce_text)
+		self.assertIn('ctx["target_link"]', cce_text)
+		self.assertIn('ctx["target_card_id"]', cce_text)
 
 
 if __name__ == "__main__":

@@ -553,13 +553,15 @@ func synchronize_view() -> void:
 func _emit(kind: String, data: Dictionary = {}) -> void:
 	if local_native_player != 0:
 		if data.has("p"): data.p = _view_player(int(data.p))
+		if data.has("p0"): data.p0 = _view_player(int(data.p0))
+		if data.has("p1"): data.p1 = _view_player(int(data.p1))
 		if kind == "move":
 			data.from = int(data.from) ^ 1
 			data.to = int(data.to) ^ 1
 			if data.has("detached_key"):
 				var parts: PackedStringArray = str(data.detached_key).split(":")
 				data.detached_key = "%d:%s" % [_view_player(int(parts[0])), parts[1]]
-		if kind == "cmd84":
+		if kind in ["cmd84", "zone_swap"] and data.has("a") and data.has("b"):
 			data.a = int(data.a) ^ 1
 			data.b = int(data.b) ^ 1
 		if kind == "cmd" and int(data.get("op", 0)) == 0x33 and data.get("native_battle", false):
@@ -596,7 +598,8 @@ func _collect_native_events() -> void:
 		var event: Dictionary = engine.events[_native_event_pos]
 		_native_event_pos += 1
 		var args: Array = event.get("args", [])
-		match str(event.get("kind", "")):
+		var ev_kind: String = str(event.get("kind", ""))
+		match ev_kind:
 			"table_sync":
 				for lp_p in 2:
 					_lp_targets[lp_p] = engine.m.u16(JoeyMem.pl(lp_p) + JoeyMem.P_LP)
@@ -607,6 +610,15 @@ func _collect_native_events() -> void:
 				_emit("summon_special", {"p": int(event.get("p", 0)), "zone": int(event.get("zone", 0)), "card": int(event.get("card", 0))})
 			"zone_clear":
 				_emit("zone_clear", {"p": int(event.get("p", 0)), "zone": int(event.get("zone", 0))})
+			"move", "destroy_effect", "card_effect", "flip", "change_position", "summon", "special", "special_summon", "set", "lp_total", "cmd84", "zone_swap", "field_to_deck":
+				var payload: Dictionary = {}
+				if event.get("data") is Dictionary:
+					payload = (event["data"] as Dictionary).duplicate(true)
+				else:
+					payload = event.duplicate(true)
+					payload.erase("kind")
+				var mapped_kind: String = "special" if ev_kind == "special_summon" else ev_kind
+				_emit(mapped_kind, payload)
 			"native_hand_shuffle":
 				var before := {}
 				for i in event.before:
@@ -859,7 +871,7 @@ func _lp_release(side: int, amount: int) -> void:
 	var before := int(_lp_targets[side])
 	var after := clampi(before + amount, 0, 0xffff)
 	_lp_targets[side] = after
-	var delay := clampi(32 - (_presentation_tick() - int(_lp_started.get(side, _presentation_tick()))), 0, 32)
+	var delay = clampi(32 - (_presentation_tick() - int(_lp_started.get(side, _presentation_tick()))), 0, 32)
 	_emit("lp_total", {"p": side, "from": before, "to": after, "amount": amount, "count_delay": delay, "native_silent": true})
 
 

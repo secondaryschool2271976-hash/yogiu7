@@ -3,7 +3,7 @@ extends RefCounted
 ## 43d630/43d670: el contador empieza en 0x100 y baja ocho por tick.
 static func excluded_flash(pile: Dictionary, tick: int) -> bool:
 	if not pile.has("flash_tick"): return false
-	var counter := 0x100 - (tick - int(pile["flash_tick"])) * 8
+	var counter = 0x100 - (tick - int(pile["flash_tick"])) * 8
 	return counter > 0 and counter < 0x80 and (counter & 0x10) != 0
 
 ##43c980: caras laterales y sombra; una sola carta superior, no cartas repetidas.

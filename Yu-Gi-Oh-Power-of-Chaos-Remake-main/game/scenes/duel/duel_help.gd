@@ -59,7 +59,7 @@ func _draw() -> void:
 	var w := int(tex.get_width()) if tex != null else 220
 	var h := int(tex.get_height()) if tex != null else 38
 	var pos: Vector2 = _target["pos"]
-	var card_h := 145 if int(_target["loc"]) == 11 else 72
+	var card_h = 145 if int(_target["loc"]) == 11 else 72
 	var card_top := int(pos.y) - card_h / 2
 	var cx := mini(int(pos.x), 800 - w / 2)
 	var scale := 0x100

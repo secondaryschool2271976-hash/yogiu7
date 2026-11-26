@@ -609,7 +609,7 @@ func _draw_top() -> void:
 		if hovered == i or _blinking(i):
 			# card_waku#s (propio) o #s2 segun el bit 12 de la entrada (0, 0, indice): es lo
 			# que lee el original para un objeto de la lista (su +0x24 vale indice << 5).
-			var owner := (duel.m.u32(duel.f5419b0(0, 0, index)) >> 12) & 1
+			var owner = (duel.m.u32(duel.f5419b0(0, 0, index)) >> 12) & 1
 			var frame := Assets.texture("%s/duel/card/%s.png" % [game, "card_waku#s2" if owner != 0 else "card_waku#s"])
 			if frame != null:
 				_top_layer.draw_texture(frame, Vector2(at) - frame.get_size() / 2)

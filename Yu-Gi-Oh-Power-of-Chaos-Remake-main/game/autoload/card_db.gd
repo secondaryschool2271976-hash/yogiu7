@@ -346,7 +346,7 @@ func _fallback_face_texture(card: Dictionary, mini: bool) -> Texture2D:
 	var shape := card_shape_of(card)
 	var cat := str(card.get("category", "monster"))
 	var attr_key := card_attribute_key(card)
-	var level := clampi(int(card.get("level", 0)), 0, 12)
+	var level = clampi(int(card.get("level", 0)), 0, 12)
 	var sub := card_subcategory(card)
 	var key := "%s_%s_%d_%s_%d" % [shape, attr_key, level, sub, 1 if mini else 0]
 	if _fallback_face_cache.has(key):
@@ -559,7 +559,7 @@ func type_text(card: Dictionary) -> String:
 	if Assets.lang == "a":
 		return "[%s%s%s]" % [base_type, KIND_SUFFIX_AR.get(kind, ""), abil_parts] if kind in ["fusion", "ritual"] else "[%s%s%s]" % [base_type, abil_parts, KIND_SUFFIX_AR.get(kind, "")]
 	var suffix_index: int = {"effect": 550, "fusion": 551, "ritual": 552}.get(kind, -1)
-	var suffix := _dialog_label(suffix_index, KIND_SUFFIX.get(kind, "")) if suffix_index >= 0 else ""
+	var suffix = _dialog_label(suffix_index, KIND_SUFFIX.get(kind, "")) if suffix_index >= 0 else ""
 	if kind in ["fusion", "ritual"]:
 		return "[%s%s%s]" % [base_type, suffix, abil_parts]
 	return "[%s%s%s]" % [base_type, abil_parts, suffix]

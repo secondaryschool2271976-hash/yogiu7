@@ -346,5 +346,5 @@ static func _describe(side: Dictionary, label: String, spanish: bool, arabic := 
 
 
 static func _date(unix: int) -> String:
-	var local := unix + int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+	var local = unix + int(Time.get_time_zone_from_system().get("bias", 0)) * 60
 	return Time.get_datetime_string_from_unix_time(local, true).left(16)

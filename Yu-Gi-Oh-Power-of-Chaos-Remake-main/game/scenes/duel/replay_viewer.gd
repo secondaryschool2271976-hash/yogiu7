@@ -937,7 +937,7 @@ func _redraw() -> void:
 			var pos := DuelGeometry.zone(p, z, game)
 			var face_up := bool(obj["face"])
 			# bit 14 de la palabra: posicion de defensa (va tumbada)
-			var defense := z < 5 and bool(obj["defense"])
+			var defense = z < 5 and bool(obj["defense"])
 			_card(int(obj["card"]), pos, CARD_SIZE, face_up, defense, p == 1)
 			_register_card(pos, Vector2(CARD_SIZE.y, CARD_SIZE.x) if defense else CARD_SIZE, p, 0 if z < 5 else 5 if z < 10 else 10, z if z < 5 else z - 5 if z < 10 else 0, int(obj["card"]), face_up or p == 0)
 			# Los contadores de la carta los dibuja DuelCardStats (0x4103e0 / 0x410640).
@@ -945,7 +945,7 @@ func _redraw() -> void:
 		var fusion: Dictionary = table.piles[p][DuelMem.LOC_FUSION]
 		if int(fusion["count"]) > 0:
 			# Jo44c3e0 ->43c550(p,12,0): existe desde la construccion de la mesa.
-			var fusion_top := _pile_position(p, DuelMem.LOC_FUSION, int(fusion["count"]))
+			var fusion_top = _pile_position(p, DuelMem.LOC_FUSION, int(fusion["count"]))
 			_pile_top_card(p, DuelMem.LOC_FUSION, fusion, fusion_top)
 			_register_card(fusion_top, CARD_SIZE, p, 12, int(fusion["count"]) - 1, int(fusion["top"]), p == 0)
 		var deck: Dictionary = table.piles[p][DuelMem.LOC_DECK]
@@ -955,7 +955,7 @@ func _redraw() -> void:
 			_count(DuelGeometry.DECK[p], int(deck["count"]))
 		var grave: Dictionary = table.piles[p][DuelMem.LOC_GRAVE]
 		if int(grave["count"]) > 0:
-			var grave_top := _pile_position(p, DuelMem.LOC_GRAVE, int(grave["count"]))
+			var grave_top = _pile_position(p, DuelMem.LOC_GRAVE, int(grave["count"]))
 			_pile_top_card(p, DuelMem.LOC_GRAVE, grave, grave_top)
 			_register_card(grave_top, CARD_SIZE, p, 14, int(grave["count"]) - 1, int(grave["top"]), true)
 			_count(JoeyPile.base_position(p, 14) if game == "joey" else DuelGeometry.GRAVE[p], int(grave["count"]))
@@ -1013,7 +1013,7 @@ func _pile_top_card(p: int, loc: int, pile: Dictionary, center: Vector2) -> void
 	var face := bool(pile.get("face", loc == DuelMem.LOC_GRAVE))
 	var flip := int(pile.get("animation_state", 0)) == 7
 	var counter := int(pile.get("animation_counter", 0))
-	var sprite := _card(int(pile["top"]), center, CARD_SIZE, face != (flip and counter >= 128), false, p == 1)
+	var sprite = _card(int(pile["top"]), center, CARD_SIZE, face != (flip and counter >= 128), false, p == 1)
 	if sprite != null and flip:
 		sprite.scale.x *= absf(DuelVisualMath.cos_fx(counter) / 65536.0)
 

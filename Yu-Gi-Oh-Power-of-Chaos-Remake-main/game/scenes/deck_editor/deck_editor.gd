@@ -762,7 +762,7 @@ func _refresh_add_card_button() -> void:
 	if _add_card_btn == null:
 		return
 	var card_id := _selected_trunk_id
-	var can_show := (not _swap) and (_modal == null) and card_id > 0 and int(_detail_card.get("internal_id", -1)) == card_id
+	var can_show = (not _swap) and (_modal == null) and card_id > 0 and int(_detail_card.get("internal_id", -1)) == card_id
 	_add_card_btn.visible = can_show
 	if can_show:
 		var card := CardDB.by_id(card_id)
@@ -1613,7 +1613,7 @@ func _show_detail(card: Dictionary) -> void:
 		return
 	var c: Dictionary = TEXT_COLORS[game]
 	_detail.text_direction = Control.TEXT_DIRECTION_RTL if Assets.lang == "a" else Control.TEXT_DIRECTION_AUTO
-	var detail_bb := "[color=%s][b]%s[/b][/color]\n" % [c["name"], CardDB.text(card, "names").replace("[", "[lb]")]
+	var detail_bb = "[color=%s][b]%s[/b][/color]\n" % [c["name"], CardDB.text(card, "names").replace("[", "[lb]")]
 	# 412410 solo incluye la linea de tipo para monstruos (tipo nativo1..20).
 	if str(card.get("category", "")) == "monster" or Assets.lang == "a":
 		detail_bb += "[color=%s]%s[/color]\n" % [c["type"], CardDB.type_text(card).replace("[", "[lb]")]
@@ -2645,7 +2645,7 @@ func _glide_step() -> void:
 		_glide = {}
 		return
 	_glide["k"] += 1
-	var f := DuelVisualMath.cos_fx(0x80 * int(_glide["k"]) / 6 - 0x80)
+	var f = DuelVisualMath.cos_fx(0x80 * int(_glide["k"]) / 6 - 0x80)
 	var d: Vector2 = _glide["delta"]
 	var at: Vector2 = _glide["from"] + Vector2((int(d.x) * f) >> 16, (int(d.y) * f) >> 16)
 	_glide["at"] = at
@@ -3280,7 +3280,7 @@ func _keyboard_pointer() -> void:
 ## Pasa a la zona siguiente/anterior con cartas (principal -> side -> fusion).
 func _move_deck_zone(step: int) -> void:
 	var zones := ["main", "side", "fusion"]
-	var i := zones.find(_deck_cursor["zone"])
+	var i = zones.find(_deck_cursor["zone"])
 	for n in range(1, 3):
 		var z: String = zones[wrapi(i + step * n, 0, 3)]
 		if not _deck[z].is_empty():

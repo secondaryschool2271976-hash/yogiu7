@@ -39,6 +39,15 @@ func f59ff00(kind: int) -> int:
 	return 0
 
 func f59ff50(a: int, b: int, c: int) -> int:
+	if c == 14:
+		var gy_cnt: int = f577620(b & 1, 14)
+		for gi in range(gy_cnt):
+			var g_idx: int = f5680e0(b & 1, 14, gi) & 0xfff
+			var g_cid: int = cards.id_of(g_idx) & 0xffff
+			if g_cid in [2507, 2625, 2650, 2653, 2658] and CustomCardEffects.can_activate(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
+				CustomCardEffects.resolve_chain_link(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi})
+				_jw_clear_window()
+				return 0
 	var entry := f59ff90(a, b, c)
 	if entry != 0:
 		f5ba490(entry, 0, 0)
@@ -46,6 +55,13 @@ func f59ff50(a: int, b: int, c: int) -> int:
 	return 0
 
 func f59ff90(_unused: int, p: int, kind: int) -> int:
+	if kind == 14:
+		var gy_cnt: int = f577620(p & 1, 14)
+		for gi in range(gy_cnt):
+			var g_idx: int = f5680e0(p & 1, 14, gi) & 0xfff
+			var g_cid: int = cards.id_of(g_idx) & 0xffff
+			if g_cid in [2507, 2625, 2650, 2653, 2658] and CustomCardEffects.can_activate(self, p & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
+				return (g_idx & 0xffff) | ((p & 1) << 31) | 0x5f0000
 	for i in range(_s32(m.u32(0x5efa64))):
 		var at := 0x5efa44 + i * 6
 		if kind == m.u16(at + 2):
@@ -111,6 +127,11 @@ func f5b8c60() -> int:
 				11:
 					if f4025d0(card) & 0xffff > 20:
 						f59fd60(1, 0, 0)
+						return 0
+					var raw_hand_id: int = cards.id_of(card & 0xfff) & 0xffff
+					if CustomCardEffects.handles(raw_hand_id) and CustomCardEffects.can_activate(self, p, raw_hand_id, CustomDuelOps.LOC_HAND, z, {"pile_i": z}):
+						CustomCardEffects.resolve_chain_link(self, p, raw_hand_id, CustomDuelOps.LOC_HAND, z, {"pile_i": z})
+						_jw_clear_window()
 						return 0
 					var id := s16(effect_card_id(card))
 					if id == 0x47:

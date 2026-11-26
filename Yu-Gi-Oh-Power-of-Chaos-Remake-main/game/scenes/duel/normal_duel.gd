@@ -640,7 +640,7 @@ func _collect_events() -> void:
 		_detail_event(data)
 		if data.get("kind", "") == "cursor" and _duel.ui_key_cursor:
 			# FUN_0053f7e0 -> FUN_00540bd0/00540af0: el teclado desliza el puntero.
-			var at := DuelGeometry.location(int(data["p"]) & 1, int(data["loc"]), int(data["i"]), _duel.m.u8(DuelMem.pl(int(data["p"]) & 1) + 2))
+			var at = DuelGeometry.location(int(data["p"]) & 1, int(data["loc"]), int(data["i"]), _duel.m.u8(DuelMem.pl(int(data["p"]) & 1) + 2))
 			if game == "joey" and int(data["loc"]) == DuelMem.LOC_BANISH:
 				at = DuelGeometry.JOEY_EXCLUDED[int(data["p"]) & 1]
 			if int(data["loc"]) == 11: at += DuelGeometry.hand_cursor_offset(int(data["p"]) & 1)

@@ -31,13 +31,14 @@ func _ready() -> void:
 		label.setup("joey")
 		add_child(label)
 	var adapter := _duel as JoeyPresentationAdapter
-	if _lan:
-		adapter.quick_messages = preload("res://scenes/duel/joey_native_quick_messages.gd").new()
-		add_child(adapter.quick_messages)
-	adapter.presentation_visual = _visual
-	adapter.engine.visual_busy_query = Callable(adapter, "query_visual_busy")
-	adapter.engine.visual_object_query = Callable(adapter, "query_visual_object").bind(_visual)
-	adapter.engine.visual_phase_hover_query = Callable(self, "_native_phase_hover")
+	if adapter != null:
+		if _lan:
+			adapter.quick_messages = preload("res://scenes/duel/joey_native_quick_messages.gd").new()
+			add_child(adapter.quick_messages)
+		adapter.presentation_visual = _visual
+		adapter.engine.visual_busy_query = Callable(adapter, "query_visual_busy")
+		adapter.engine.visual_object_query = Callable(adapter, "query_visual_object").bind(_visual)
+		adapter.engine.visual_phase_hover_query = Callable(self, "_native_phase_hover")
 
 
 ## El objeto de fase aporta su modo y el hit-test. El predicado de batalla
@@ -58,15 +59,21 @@ func _create_duel() -> Duel:
 			adapter.native_normal_kind = int(_resume_snapshot.get("native_normal_kind", 1 if Game.duel_mode == 1 else 0))
 		else:
 			adapter.native_normal_kind = 1 if Game.duel_mode == 1 else 0
-	if adapter != null and Game.joey_demo:
-		# Demostracion (D35): tipo 7, los dos lados de la CPU, jugador local nativo 1.
-		adapter.native_normal_kind = 7
-		adapter.forced_local_player = 1
-	return adapter
+		if Game.joey_demo:
+			# Demostracion (D35): tipo 7, los dos lados de la CPU, jugador local nativo 1.
+			adapter.native_normal_kind = 7
+			adapter.forced_local_player = 1
+		return adapter
+	var fallback := Duel.create(Paths.data_dir, "kaiba")
+	if fallback != null:
+		fallback.rules_game = "joey"
+	return fallback
 
 
 func make_replay() -> Ydr:
 	var replay := super.make_replay()
+	if not (_duel is JoeyPresentationAdapter):
+		return replay
 	var adapter := _duel as JoeyPresentationAdapter
 	replay.local_player = adapter.local_native_player
 	replay.commands = adapter.file_recorded.duplicate()
@@ -129,7 +136,9 @@ func _start_result() -> void:
 
 
 func _waiting_for_player() -> bool:
-	return _duel != null and (_duel as JoeyPresentationAdapter).waiting_for_player()
+	if _duel is JoeyPresentationAdapter:
+		return (_duel as JoeyPresentationAdapter).waiting_for_player()
+	return super._waiting_for_player()
 
 
 func _collect_visual_events() -> bool:
@@ -148,7 +157,7 @@ func _process(delta: float) -> void:
 	# sesión, como5bc700 antes de40cf20, sigue recibiendo paquetes a30Hz.
 	if _duel is JoeyPresentationAdapter and _lan and not _finished:
 		var adapter := _duel as JoeyPresentationAdapter
-		var paused := not adapter.list_open.is_empty() or (not adapter.dialog_open.is_empty() and int(adapter.dialog_open.get("type", 0)) not in [8, 9]) or (_visual != null and _visual.busy())
+		var paused = not adapter.list_open.is_empty() or (not adapter.dialog_open.is_empty() and int(adapter.dialog_open.get("type", 0)) not in [8, 9]) or (_visual != null and _visual.busy())
 		if paused:
 			Lan._poll()
 			_modal_network_clock = minf(_modal_network_clock + NativeClock.ticks(delta), 4.0)
@@ -166,10 +175,12 @@ func _process(delta: float) -> void:
 	super._process(delta)
 	# 44dd00: 5c0000 modifica las manos antes de45c8b0; el resto de objetos
 	# se dibuja con esas coordenadas en el mismo tick de la insercion.
-	if _duel != null and _visual != null and not _visual._shade_on and _visual._shade_c == 0:
+	if _duel is JoeyPresentationAdapter and _visual != null and not _visual._shade_on and _visual._shade_c == 0:
 		if super._advance_hands(delta): _redraw()
 		_show_hands(_hand_clock)
 
-func _advance_hands(_delta: float) -> bool:
+func _advance_hands(delta: float) -> bool:
 	# El padre avanza presentacion antes del motor; Joey recoloca despues.
+	if not (_duel is JoeyPresentationAdapter):
+		return super._advance_hands(delta)
 	return false

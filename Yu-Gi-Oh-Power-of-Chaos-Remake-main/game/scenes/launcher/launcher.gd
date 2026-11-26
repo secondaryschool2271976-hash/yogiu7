@@ -819,7 +819,7 @@ func _draw() -> void:
 	var voice_language := Assets.voice_language(Game.GAMES[_selected_index])
 	if voice_language != "" and not import_mode:
 		var voices_prefix := "الأصوات: " if Assets.lang == "a" else ("Voices: " if Assets.lang == "e" else "Voces: ")
-		var vtext := voices_prefix + str(Assets.LANGUAGES.get(voice_language, voice_language))
+		var vtext = voices_prefix + str(Assets.LANGUAGES.get(voice_language, voice_language))
 		var vw := _font.get_string_size(vtext, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 		draw_string(_font, Vector2((_screen.x - vw) * 0.5, _origin.y + 478),
 				vtext, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(GOLD_LIGHT, 0.88))
