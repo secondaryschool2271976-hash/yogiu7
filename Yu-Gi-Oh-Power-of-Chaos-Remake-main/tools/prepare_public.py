@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TOP = {"docs/ANDROID_UPDATES.md", "docs/PRIVACY.md","RELEASE_NOTES.md", "README.md", "README.es.md", "Jugar demo.bat", "THIRD_PARTY_NOTICES.md", ".gitattributes", "docs/LAUNCHER_SETTINGS.md", "docs/REDDIT_POST.en.md", "docs/CARD_TRANSLATIONS.md", "game/translations/spanish-card-catalog.json", "game/translations/arabic-cards.json", "game/assets/cards/extra_cards.json"}
 TOOL_TOP = {"tools/pyproject.toml", "tools/prepare_public.py", "tools/build_windows.py", "tools/importer_entry.py", "tools/trace_logo_contours.py",
             "tools/tests/test_public_import.py", "tools/tests/test_media_import.py",
-            "tools/tests/test_compact_import.py", "tools/configure_android_builder.py", "tools/tests/test_android_builder.py", "tools/tests/test_android_toolchain.py", "tools/tests/test_updater.py", "tools/tests/test_card_translations.py", "tools/tests/test_reviewed_card_pack.py",
+            "tools/tests/test_compact_import.py", "tools/configure_android_builder.py", "tools/tests/test_android_builder.py", "tools/tests/test_android_toolchain.py", "tools/tests/test_updater.py", "tools/tests/test_card_translations.py", "tools/tests/test_reviewed_card_pack.py", "tools/tests/test_ygojson_and_extra_effects.py",
             "tools/prepare_android_public.py", "tools/public_android/README.md", "tools/public_android/README.es.md",
             ".github/workflows/build-windows.yml", ".github/workflows/build-android.yml", "game/export_presets.cfg",
             # CI builds the APK from the Android snapshot of this same tree (build_android.py).
