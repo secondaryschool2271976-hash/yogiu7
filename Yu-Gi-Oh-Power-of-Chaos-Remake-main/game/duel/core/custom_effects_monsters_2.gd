@@ -299,10 +299,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			CustomDuelOps.mark_opt(duel, p, 2935, z)
 			var r1 := CustomDuelOps.dice_roll(duel, p)
 			var r2 := CustomDuelOps.dice_roll(duel, p)
-			var pick := CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx):
+			var pred_rb := func(d, pl, zz, idx):
 				var lv := CustomDuelOps.monster_level(d, idx)
 				return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and (lv == r1 or lv == r2)
-			, true, true)
+			var pick := CustomDuelOps.choose_zone(duel, p, pred_rb, true, true)
 			if not pick.is_empty():
 				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
 		2936, 2970: # Skilled White / Dark Magician
@@ -446,11 +446,11 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 						CustomDuelOps.bounce_zone(duel, pl, zz)
 		2818, 2819: # Owl of Luck / Cat of Ill Omen FLIP
 			if kind == "flip_summon" or kind == "flipped":
-				var si := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s):
+				var pred_owl := func(d, idx, _s):
 					if cid == 2818:
 						return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 2
 					return CustomDuelOps.is_trap(d, idx)
-				, true)
+				var si := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, pred_owl, true)
 				if si >= 0:
 					if CustomDuelOps.is_necrovalley_active(duel):
 						CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, si)
@@ -853,10 +853,10 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 		3001: # Agido: roll die SS Fairy of matching Lv from GY
 			if by_battle and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				var droll := CustomDuelOps.dice_roll(duel, p)
-				var fi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s):
+				var pred_agido := func(d, idx, _s):
 					var lv := CustomDuelOps.monster_level(d, idx)
 					return CustomDuelOps.monster_race(d, idx) == 7 and (lv == droll or (droll == 6 and lv >= 6))
-				, true)
+				var fi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, pred_agido, true)
 				if fi >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, fi, p, true, false)
 		3038: # Kaiser Glider: bounce 1 monster
@@ -1160,10 +1160,10 @@ static func _collect_monster_zones(duel, p: int, pred: Callable) -> Array[int]:
 	return out
 
 
-static func _find_any_in_piles(duel, p: int, locs: Array[int], target_ids: Array) -> int:
+static func _find_any_in_piles(duel, p: int, locs: Array, target_ids: Array) -> int:
 	for srcloc in locs:
 		for tid in target_ids:
-			var idx := CustomDuelOps.find_pile_index_by_id(duel, p, srcloc, int(tid))
+			var idx := CustomDuelOps.find_pile_index_by_id(duel, p, int(srcloc), int(tid))
 			if idx >= 0:
 				return idx
 	return -1

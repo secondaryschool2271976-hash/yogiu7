@@ -768,7 +768,7 @@ static func shuffle_deck(duel, p: int) -> void:
 
 static func _core_take_pile_entry(duel, p: int, loc: int, i: int, out_addr: int) -> bool:
 	p &= 1
-	var m = duel.m
+	var m: DuelMem = duel.m
 	var q := p * DuelMem.PLAYER_SIZE
 	if i < 0 or i >= pile_count(duel, p, loc):
 		return false
@@ -788,7 +788,7 @@ static func _core_take_pile_entry(duel, p: int, loc: int, i: int, out_addr: int)
 			return duel.f544a80(p, i) != 0
 		LOC_FUSION:
 			var count_at := 0xa11949 + q
-			var n := m.u8(count_at)
+			var n: int = m.u8(count_at)
 			if i >= n:
 				return false
 			var at := 0xa12378 + q + i * 4

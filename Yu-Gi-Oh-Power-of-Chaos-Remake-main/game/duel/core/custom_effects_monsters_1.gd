@@ -379,27 +379,27 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 			CustomDuelOps.mark_hopt(duel, p, 2683)
 			var cur_slot := slot
 			var banished := false
-			var gi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, i):
+			var pred_gy := func(d, idx, i):
 				var rid := CustomDuelOps.raw_id(d, idx)
 				return not (loc == CustomDuelOps.LOC_GRAVE and i == cur_slot) and (rid == 2681 or (rid in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.is_extra_deck_monster(d, idx)))
-			, false)
+			var gi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, pred_gy, false)
 			if gi >= 0:
 				if loc == CustomDuelOps.LOC_GRAVE and gi < cur_slot:
 					cur_slot -= 1
 				CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
 				banished = true
 			if not banished:
-				var fz := CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx):
+				var pred_fz := func(d, pl, zz, idx):
 					var rid := CustomDuelOps.raw_id(d, idx)
 					return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and (rid == 2681 or (rid in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.is_extra_deck_monster(d, idx)))
-				, false, false)
+				var fz := CustomDuelOps.choose_zone(duel, p, pred_fz, false, false)
 				if not fz.is_empty():
 					CustomDuelOps.banish_zone(duel, p, int(fz["z"]))
 					banished = true
 			if not banished:
-				var hi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, i):
+				var pred_hand := func(d, idx, i):
 					return not (loc == CustomDuelOps.LOC_HAND and i == cur_slot) and CustomDuelOps.raw_id(d, idx) == 2681
-				, false)
+				var hi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, pred_hand, false)
 				if hi >= 0:
 					if loc == CustomDuelOps.LOC_HAND and hi < cur_slot:
 						cur_slot -= 1
@@ -1248,10 +1248,10 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 		2532: # Cyber Dragon Core: Normal Summon -> add Cyber S/T or Cyber support
 			if kind == "normal" and CustomDuelOps.can_hopt(duel, p, 2532):
 				CustomDuelOps.mark_hopt(duel, p, 2532)
-				var si := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s):
+				var pred_cyber := func(d, idx, _s):
 					var nm := CustomDuelOps.card_name(d, CustomDuelOps.raw_id(d, idx)).to_lower()
 					return (CustomDuelOps.is_spell(d, idx) or CustomDuelOps.is_trap(d, idx)) and nm.find("cyber") >= 0
-				, false)
+				var si := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, pred_cyber, false)
 				if si >= 0:
 					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, si)
 		2533: # Cyber Dragon Drei: Normal -> Cyber Dragons Lv5
@@ -2270,9 +2270,9 @@ static func _find_red_eyes_zone(duel, p: int) -> int:
 	return -1
 
 
-static func _has_all_zones(duel, p: int, reqs: Array[int]) -> bool:
+static func _has_all_zones(duel, p: int, reqs: Array) -> bool:
 	for r in reqs:
-		if CustomDuelOps.find_zone_of_id(duel, p, r, true) < 0:
+		if CustomDuelOps.find_zone_of_id(duel, p, int(r), true) < 0:
 			return false
 	return true
 

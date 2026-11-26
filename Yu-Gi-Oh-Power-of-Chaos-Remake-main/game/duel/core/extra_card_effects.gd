@@ -770,9 +770,9 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	if not skill_drain and raw_id != 2662 and _core_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f53fbd0(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f53fbd0(m.u32(out + 8)))
-	var custom_stats: Dictionary = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
-	m.set_u32(out + 4, maxi(0, int(custom_stats.get("atk", m.u32(out + 4)))))
-	m.set_u32(out + 8, maxi(0, int(custom_stats.get("def", m.u32(out + 8)))))
+	var custom_stats := CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
+	m.set_u32(out + 4, maxi(0, custom_stats.x))
+	m.set_u32(out + 8, maxi(0, custom_stats.y))
 
 
 # --- Joey (JoeyMem) helpers ------------------------------------------------------------------
@@ -917,7 +917,7 @@ static func _joey_has_active_raw_id(duel, pl: int, target_id: int, skip_p := -1,
 
 static func _joey_count_active_st_raw_id(duel, pl: int, target_id: int) -> int:
 	var m: JoeyMem = duel.m
-	var rules := m.u32(JoeyMem.RULES)
+	var rules := m.u32(0xa577ec)
 	if (rules & 0x10000) != 0:
 		return 0
 	var n := 0
@@ -1226,7 +1226,7 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 		atk_delta += 500
 		def_delta += 500
 	# Extra Equip Spells & Equip Traps (direct stat modifiers without native alias subtraction).
-	if (m.u32(JoeyMem.RULES) & 0x10000) == 0:
+	if (m.u32(0xa577ec) & 0x10000) == 0:
 		for i in m.u16(zo + JoeyMem.Z_LINKS_N):
 			if (m.u8(zo + JoeyMem.Z_LINK_KIND + i * 2) & 0xf) != 1:
 				continue
@@ -1264,7 +1264,7 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	if not skill_drain and raw_id != 2662 and _joey_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f5be050(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f5be050(m.u32(out + 8)))
-	var custom_stats: Dictionary = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
-	m.set_u32(out + 4, maxi(0, int(custom_stats.get("atk", m.u32(out + 4)))))
-	m.set_u32(out + 8, maxi(0, int(custom_stats.get("def", m.u32(out + 8)))))
+	var custom_stats := CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
+	m.set_u32(out + 4, maxi(0, custom_stats.x))
+	m.set_u32(out + 8, maxi(0, custom_stats.y))
 

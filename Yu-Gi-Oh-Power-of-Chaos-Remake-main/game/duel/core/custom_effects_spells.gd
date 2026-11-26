@@ -1289,7 +1289,7 @@ static func _can_fang_of_critias(duel, p: int) -> int:
 
 
 static func _choose_equip_target(duel, p: int, cid: int) -> Dictionary:
-	return CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx):
+	var pred := func(d, pl, zz, idx):
 		if pl != p or zz >= 5 or not CustomDuelOps.is_face_up(d, pl, zz):
 			return false
 		match cid:
@@ -1298,7 +1298,7 @@ static func _choose_equip_target(duel, p: int, cid: int) -> Dictionary:
 			3011: return CustomDuelOps.monster_race(d, idx) == 17
 			3096: return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NINJA_IDS
 		return true
-	, true, false)
+	return CustomDuelOps.choose_zone(duel, p, pred, true, false)
 
 
 static func _resolve_ritual_spell(duel, p: int, cid: int) -> void:
