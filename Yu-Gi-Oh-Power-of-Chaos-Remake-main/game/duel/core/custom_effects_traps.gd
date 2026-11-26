@@ -618,7 +618,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				var host := CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5 and zz != un_z, true, false)
 				var eq_slot := CustomDuelOps.free_st_zone(duel, p)
 				if not host.is_empty() and eq_slot >= 0:
-					var tmp := duel.m.local(4)
+					var tmp: int = duel.m.local(4)
 					duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, un_z))
 					if CustomDuelOps.is_joey(duel):
 						duel.f570790(p, un_z, 0)
@@ -857,7 +857,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		3108: # A Hero Emerges
 			var hc := CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
 			if hc > 0:
-				var r := (duel.rng.rand() % hc) if duel.rng != null else (randi() % hc)
+				var r: int = (duel.rng.rand() % hc) if duel.rng != null else (randi() % hc)
 				var idx := CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, r)
 				if CustomDuelOps.is_monster(duel, idx) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, r, p)
@@ -878,7 +878,7 @@ static func on_standby_tick(duel, tp: int) -> void:
 			var hc := CustomDuelOps.pile_count(duel, opp, CustomDuelOps.LOC_HAND)
 			if hc > 0:
 				var idx := CustomDuelOps.pile_idx(duel, opp, CustomDuelOps.LOC_HAND, 0)
-				var guess := (duel.rng.rand() % 3) if duel.rng != null else 0
+				var guess: int = (duel.rng.rand() % 3) if duel.rng != null else 0
 				var actual := 1 if CustomDuelOps.is_spell(duel, idx) else (2 if CustomDuelOps.is_trap(duel, idx) else 0)
 				if guess == actual:
 					CustomDuelOps.damage(duel, opp, 700)

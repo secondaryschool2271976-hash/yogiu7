@@ -214,7 +214,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			var tz := _find_union_host(duel, p, z, cid)
 			var eq_z := CustomDuelOps.free_st_zone(duel, p)
 			if tz >= 0 and eq_z >= 0:
-				var tmp := duel.m.local(4)
+				var tmp: int = duel.m.local(4)
 				duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 				if CustomDuelOps.is_joey(duel):
 					duel.f570790(p, z, 0)
@@ -227,7 +227,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		elif loc == CustomDuelOps.LOC_FIELD_ST:
 			var mz := CustomDuelOps.free_monster_zone(duel, p)
 			if mz >= 0:
-				var tmp := duel.m.local(4)
+				var tmp: int = duel.m.local(4)
 				duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 				if CustomDuelOps.is_joey(duel):
 					duel.f570790(p, z, 0)
@@ -272,7 +272,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			var pick := CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == opp and zz < 5 and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.UNION_IDS, true, true)
 			var eq_z := CustomDuelOps.free_st_zone(duel, p)
 			if not pick.is_empty() and eq_z >= 0:
-				var tmp := duel.m.local(4)
+				var tmp: int = duel.m.local(4)
 				duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, opp, int(pick["z"])))
 				if CustomDuelOps.is_joey(duel):
 					duel.f570790(opp, int(pick["z"]), 0)

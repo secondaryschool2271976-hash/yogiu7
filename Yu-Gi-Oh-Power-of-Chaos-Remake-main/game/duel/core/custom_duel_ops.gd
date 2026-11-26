@@ -121,7 +121,7 @@ static func _new_state() -> Dictionary:
 
 
 static func state(duel) -> Dictionary:
-	var key := duel.get_instance_id()
+	var key: int = duel.get_instance_id()
 	if not _states.has(key):
 		_states[key] = _new_state()
 	return _states[key]
@@ -145,7 +145,7 @@ static func turn_player(duel) -> int:
 
 static func turn_number(duel) -> int:
 	if is_joey(duel):
-		var t := duel.m.u16(0xa577f8)
+		var t: int = duel.m.u16(0xa577f8)
 		return t if t > 0 else 1
 	return maxi(1, duel.m.u16(0xa133f0))
 
@@ -430,11 +430,11 @@ static func eff_atk(duel, p: int, z: int) -> int:
 	var idx := zone_idx(duel, p, z)
 	if idx == 0 or z >= 5:
 		return 0
-	var out := duel.m.local(12)
+	var out: int = duel.m.local(12)
 	if is_joey(duel):
 		duel.f56dd30(p & 1, z, out)
 		return maxi(0, duel.m.s16(out + 4) if duel.m.u32(out + 4) > 0x7fffffff else int(duel.m.u32(out + 4)))
-	duel.f545c90(p & 1, z, out)
+	duel.f546470(p & 1, z, out)
 	return maxi(0, int(duel.m.u32(out + 4))) if duel.m.u32(out + 4) < 0x80000000 else 0
 
 
@@ -442,11 +442,11 @@ static func eff_def(duel, p: int, z: int) -> int:
 	var idx := zone_idx(duel, p, z)
 	if idx == 0 or z >= 5:
 		return 0
-	var out := duel.m.local(12)
+	var out: int = duel.m.local(12)
 	if is_joey(duel):
 		duel.f56dd30(p & 1, z, out)
 		return maxi(0, int(duel.m.u32(out + 8))) if duel.m.u32(out + 8) < 0x80000000 else 0
-	duel.f545c90(p & 1, z, out)
+	duel.f546470(p & 1, z, out)
 	return maxi(0, int(duel.m.u32(out + 8))) if duel.m.u32(out + 8) < 0x80000000 else 0
 
 
@@ -627,7 +627,7 @@ static func add_counter(duel, p: int, z: int, kind: String, delta := 1) -> int:
 			duel.m.set_u16(zo + JoeyMem.Z_COUNTER, maxi(0, duel.m.u16(zo + JoeyMem.Z_COUNTER) + delta))
 		else:
 			var zn := DuelMem.zone(p & 1, z)
-			var cur := duel.m.u16(zn + 6)
+			var cur: int = duel.m.u16(zn + 6)
 			var cnt := clampi(((cur >> 2) & 0xf) + delta, 0, 15)
 			duel.m.set_u16(zn + 6, (cur & 0xffc3) | (cnt << 2))
 	return val
@@ -774,7 +774,7 @@ static func _core_take_pile_entry(duel, p: int, loc: int, i: int, out_addr: int)
 		return false
 	match loc:
 		LOC_HAND:
-			var addr := duel.f5419b0(p, LOC_HAND, i)
+			var addr: int = duel.f5419b0(p, LOC_HAND, i)
 			duel.f541cb0(out_addr, addr)
 			m.set_u32(addr, m.u32(addr) & 0xfffff000)
 			duel.f544e00(p)
@@ -815,8 +815,8 @@ static func _core_put_pile_entry(duel, p: int, loc: int, entry_addr: int, to_bot
 				duel.f542520(p, entry_addr)
 		LOC_GRAVE:
 			# Preserve original owner bit
-			var owner := (duel.m.u32(entry_addr) >> 12) & 1
-			var old := duel.m.u32(entry_addr)
+			var owner: int = (duel.m.u32(entry_addr) >> 12) & 1
+			var old: int = duel.m.u32(entry_addr)
 			duel.m.set_u32(entry_addr, (old & 0xffffefff) | (p << 12))
 			duel.f544300(entry_addr)
 			if owner != p:
@@ -832,10 +832,10 @@ static func move_pile_card(duel, from_p: int, from_loc: int, i: int, to_p: int, 
 	to_p &= 1
 	if i < 0 or i >= pile_count(duel, from_p, from_loc):
 		return 0
-	var tmp := duel.m.local(4)
+	var tmp: int = duel.m.local(4)
 	var idx := pile_idx(duel, from_p, from_loc, i)
 	if is_joey(duel):
-		var src := duel.f5700f0(from_p, from_loc, i)
+		var src: int = duel.f5700f0(from_p, from_loc, i)
 		duel.f5675c0(tmp, src)
 		duel.f570790(from_p, from_loc, i)
 		var arg := 1 if (to_loc == LOC_DECK and to_bottom) else 0
@@ -869,7 +869,7 @@ static func discard_random(duel, p: int, count := 1) -> int:
 		var n := pile_count(duel, p, LOC_HAND)
 		if n <= 0:
 			break
-		var r := (duel.rng.rand() % n) if duel.rng != null else (randi() % n)
+		var r: int = (duel.rng.rand() % n) if duel.rng != null else (randi() % n)
 		if discard_hand_slot(duel, p, r, 1) > 0:
 			done += 1
 	return done
@@ -884,7 +884,7 @@ static func send_zone_to_gy(duel, p: int, z: int) -> bool:
 	if is_joey(duel):
 		duel.f577b30(p, z)
 	else:
-		var tmp := duel.m.local(4)
+		var tmp: int = duel.m.local(4)
 		duel.f541cb0(tmp, DuelMem.zone(p, z))
 		var pbit := 0x8000 if p != 0 else 0
 		if cid >= 0x780 and cid < 2000:
@@ -916,7 +916,7 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 		return false
 	var cid := raw_id(duel, idx)
 	if is_joey(duel):
-		var info := duel.m.local(0x14)
+		var info: int = duel.m.local(0x14)
 		duel.m.set_u16(info, idx)
 		duel.m.set_u16(info + 2, p)
 		duel.f577880(info, p, z)
@@ -962,16 +962,16 @@ static func spin_zone(duel, p: int, z: int, to_bottom := false) -> bool:
 	if idx == 0:
 		return false
 	if is_joey(duel):
-		var tmp := duel.m.local(4)
-		var entry := duel.m.u32(JoeyMem.zone(p, z))
+		var tmp: int = duel.m.local(4)
+		var entry: int = duel.m.u32(JoeyMem.zone(p, z))
 		var owner := (entry >> 12) & 1
 		duel.m.set_u32(tmp, entry)
 		duel.f570790(p, z, 0)
 		duel.f5708d0(owner, LOC_DECK, 1 if to_bottom else 0, tmp)
 	else:
 		if to_bottom:
-			var tmp := duel.m.local(4)
-			var entry := duel.m.u32(DuelMem.zone(p, z))
+			var tmp: int = duel.m.local(4)
+			var entry: int = duel.m.u32(DuelMem.zone(p, z))
 			var owner := (entry >> 12) & 1
 			duel.m.set_u32(tmp, entry)
 			duel.f54ca50(p, z, 0)
@@ -1023,9 +1023,9 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 	var idx := pile_idx(duel, src_p, loc, i)
 	if idx == 0:
 		return -1
-	var tmp := duel.m.local(4)
+	var tmp: int = duel.m.local(4)
 	if is_joey(duel):
-		var src := duel.f5700f0(src_p, loc, i)
+		var src: int = duel.f5700f0(src_p, loc, i)
 		duel.f5675c0(tmp, src)
 		duel.f570790(src_p, loc, i)
 		duel.f568610(target_p, z, tmp, 1 if face_up else 0, 1 if def_pos else 0)
@@ -1057,7 +1057,7 @@ static func special_summon_by_id(duel, p: int, cid: int, atk := -1, def_val := -
 		idx = card_idx(duel, 0x780) # fallback token index
 	if idx <= 0:
 		return -1
-	var tmp := duel.m.local(4)
+	var tmp: int = duel.m.local(4)
 	var entry := ((p & 1) << 12) | (idx & 0xfff)
 	duel.m.set_u32(tmp, entry)
 	if is_joey(duel):
@@ -1102,7 +1102,7 @@ static func activate_trap_as_monster(duel, p: int, st_z: int, atk := 0, def_val 
 	if st_idx == 0:
 		return -1
 	var cid := raw_id(duel, st_idx)
-	var tmp := duel.m.local(4)
+	var tmp: int = duel.m.local(4)
 	duel.m.set_u32(tmp, duel.m.u32(zone_addr(duel, p, st_z)))
 	if is_joey(duel):
 		duel.f570790(p, st_z, 0)
@@ -1130,9 +1130,9 @@ static func set_st_from_pile(duel, src_p: int, loc: int, i: int, target_p: int, 
 		return -1
 	if is_field and zone_idx(duel, target_p, 10) != 0:
 		destroy_zone(duel, target_p, 10)
-	var tmp := duel.m.local(4)
+	var tmp: int = duel.m.local(4)
 	if is_joey(duel):
-		var src := duel.f5700f0(src_p, loc, i)
+		var src: int = duel.f5700f0(src_p, loc, i)
 		duel.f5675c0(tmp, src)
 		duel.f570790(src_p, loc, i)
 		duel.f5686e0(target_p, tz, tmp, 1 if face_up else 0)
@@ -1153,7 +1153,7 @@ static func change_position(duel, p: int, z: int, def_pos: int, face_up := -1) -
 	var addr := zone_addr(duel, p, z)
 	if (duel.m.u32(addr) & 0xfff) == 0 or z >= 5:
 		return
-	var cur := duel.m.u16(addr + 6)
+	var cur: int = duel.m.u16(addr + 6)
 	var next := cur
 	if def_pos >= 0:
 		if def_pos != 0:
@@ -1181,7 +1181,7 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 		return -1
 	var was_face := is_face_up(duel, from_p, from_z)
 	var was_def := not is_atk_pos(duel, from_p, from_z)
-	var tmp := duel.m.local(4)
+	var tmp: int = duel.m.local(4)
 	duel.m.set_u32(tmp, zone_entry(duel, from_p, from_z))
 	if is_joey(duel):
 		duel.f570790(from_p, from_z, 0)
@@ -1205,8 +1205,8 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 		var d0 := not is_atk_pos(duel, 0, z0)
 		var f1 := is_face_up(duel, 1, z1)
 		var d1 := not is_atk_pos(duel, 1, z1)
-		var t0 := duel.m.local(4)
-		var t1 := duel.m.local(4)
+		var t0: int = duel.m.local(4)
+		var t1: int = duel.m.local(4)
 		duel.m.set_u32(t0, e0)
 		duel.m.set_u32(t1, e1)
 		duel.f570790(0, z0, 0)
@@ -1229,7 +1229,7 @@ static func link_equip(duel, eq_p: int, eq_z: int, tgt_p: int, tgt_z: int) -> vo
 		duel.f54e730(eq_p, origin, target)
 	else:
 		var zo := JoeyMem.zone(tgt_p, tgt_z)
-		var n := duel.m.u16(zo + JoeyMem.Z_LINKS_N)
+		var n: int = duel.m.u16(zo + JoeyMem.Z_LINKS_N)
 		if n < 32:
 			duel.m.set_u16(zo + JoeyMem.Z_LINK_REF + n * 2, ((eq_z & 0xff) << 8) | eq_p)
 			duel.m.set_u8(zo + JoeyMem.Z_LINK_KIND + n * 2, 1)
@@ -1242,7 +1242,7 @@ static func get_equip_target(duel, eq_p: int, eq_z: int) -> Dictionary:
 	if st["equip_links"].has(k):
 		return st["equip_links"][k]
 	if not is_joey(duel):
-		var t := duel.f546020(eq_p & 1, eq_z)
+		var t: int = duel.f546020(eq_p & 1, eq_z)
 		if (t & 0xffff) != 0xffff:
 			return {"target_p": t & 0xff, "target_z": (t >> 8) & 0xff}
 	return {}
@@ -1251,7 +1251,7 @@ static func get_equip_target(duel, eq_p: int, eq_z: int) -> Dictionary:
 # --- Heuristic Target & Pile Selectors ------------------------------------------------------------
 
 static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := true, target_opp := true) -> Dictionary:
-	var sides: Array[int] = [1 - (owner_p & 1), owner_p & 1] if target_opp else [owner_p & 1, 1 - (owner_p & 1)]
+	var sides: Array = [1 - (owner_p & 1), owner_p & 1] if target_opp else [owner_p & 1, 1 - (owner_p & 1)]
 	var best_score := -999999
 	var best := {}
 	for pl in sides:
@@ -1460,7 +1460,7 @@ static func negate_chain_entry(duel, target_entry_idx: int, destroy_card := true
 	var entry := 0xa15e80 + target_entry_idx * 0x14
 	duel.m.set_u8(entry + 4, duel.m.u8(entry + 4) | (0x0c if destroy_card else 0x04))
 	if destroy_card:
-		var flags := duel.m.u16(entry + 2)
+		var flags: int = duel.m.u16(entry + 2)
 		var tp := flags & 1
 		var tloc := (flags >> 4) & 0x3f
 		if tloc <= 10:

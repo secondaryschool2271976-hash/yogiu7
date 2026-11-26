@@ -855,7 +855,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				if has_ankh or CustomDuelOps.pay_lp(duel, p, 2000):
 					var mz := CustomDuelOps.free_monster_zone(duel, p)
 					if mz >= 0:
-						var tmp := duel.m.local(4)
+						var tmp: int = duel.m.local(4)
 						duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 						if CustomDuelOps.is_joey(duel):
 							duel.f570790(p, z, 0)
@@ -958,7 +958,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					if eq_z >= 0 and tidx > 0:
 						var tatk := CustomDuelOps.base_atk(duel, tidx)
 						var tdef := CustomDuelOps.base_def(duel, tidx)
-						var tmp := duel.m.local(4)
+						var tmp: int = duel.m.local(4)
 						duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, opp, int(pick["z"])))
 						if CustomDuelOps.is_joey(duel):
 							duel.f570790(opp, int(pick["z"]), 0)
@@ -1038,7 +1038,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			var eq_z := CustomDuelOps.free_st_zone(duel, p)
 			if not pick.is_empty() and eq_z >= 0:
 				var tz := int(pick["z"])
-				var tmp := duel.m.local(4)
+				var tmp: int = duel.m.local(4)
 				duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 				if CustomDuelOps.is_joey(duel):
 					duel.f570790(p, z, 0)
@@ -1101,7 +1101,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					tz = CustomDuelOps.find_zone_of_id(duel, p, 2690, true)
 				var eq_z := CustomDuelOps.free_st_zone(duel, p)
 				if tz >= 0 and eq_z >= 0:
-					var tmp := duel.m.local(4)
+					var tmp: int = duel.m.local(4)
 					duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 					if CustomDuelOps.is_joey(duel):
 						duel.f570790(p, z, 0)
@@ -1113,7 +1113,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			elif loc == CustomDuelOps.LOC_FIELD_ST:
 				var mz := CustomDuelOps.free_monster_zone(duel, p)
 				if mz >= 0:
-					var tmp := duel.m.local(4)
+					var tmp: int = duel.m.local(4)
 					duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 					if CustomDuelOps.is_joey(duel):
 						duel.f570790(p, z, 0)
@@ -1939,7 +1939,7 @@ static func modify_continuous(duel, p: int, z: int, cid: int, out: Dictionary) -
 	# Global aura modifiers from Wicked Dreadroot, Cyber Dragon Vier, Hunter, etc.
 	if cid != 2662 and (CustomDuelOps.has_faceup_id(duel, 0, 2662) or CustomDuelOps.has_faceup_id(duel, 1, 2662)):
 		out["half"] = true
-	if cid in CustomDuelOps.CYBER_DRAGON_IDS or bool(zf.get("name_cyber_dragon_turn", -1)) == t:
+	if cid in CustomDuelOps.CYBER_DRAGON_IDS or int(zf.get("name_cyber_dragon_turn", -1)) == t:
 		var vier_n := CustomDuelOps.count_faceup_id(duel, p, 2536)
 		out["atk_delta"] = int(out.get("atk_delta", 0)) + vier_n * 500
 		out["def_delta"] = int(out.get("def_delta", 0)) + vier_n * 500
@@ -2222,7 +2222,7 @@ static func _count_other_monsters_hand_field(duel, p: int, skip_hand_slot: int) 
 	return n
 
 
-static func _find_armed_lv10_combo(duel, p: int) -> Array[Dictionary]:
+static func _find_armed_lv10_combo(duel, p: int) -> Array:
 	for z in 5:
 		var idx := CustomDuelOps.zone_idx(duel, p, z)
 		if idx != 0 and CustomDuelOps.raw_id(duel, idx) in [2508, 2509]:

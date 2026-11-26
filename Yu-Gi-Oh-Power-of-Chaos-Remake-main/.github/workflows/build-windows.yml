@@ -39,6 +39,7 @@ jobs:
           python -m unittest discover -s tools/tests -p test_updater.py -v
           python -m unittest discover -s tools/tests -p test_card_translations.py -v
           python -m unittest discover -s tools/tests -p test_reviewed_card_pack.py -v
+          python -m unittest discover -s tools/tests -p test_ygojson_and_extra_effects.py -v
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.tool_cache }}/poc-godot-4.7.2
@@ -238,28 +239,19 @@ jobs:
           }
           if (-not $uploaded) { throw "Failed to upload release assets to $tag" }
           Write-Host "Published $($files.Count) files to GitHub Release: $tag"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        continue-on-error: true
-        with:
-          name: PowerOfChaos-Windows
-          path: |
-            dist/windows/PowerOfChaos.exe
-            dist/windows/PowerOfChaos.exe.sha256
-            dist/windows/BUILD_MANIFEST.json
-            dist/windows/PowerOfChaos-Android.apk
-            dist/windows/PowerOfChaos-Android.apk.sha256
-            dist/windows/ANDROID_RELEASE.json
-          if-no-files-found: error
-          retention-days: 1
-      - name: Conservar diagnóstico de compilación
+      - name: Mostrar diagnóstico de compilación en consola
         if: failure()
         continue-on-error: true
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: windows-build-logs
-          path: |
-            dist/windows/logs/
-            ${{ runner.temp }}/android/work/build/*.log
-            ${{ runner.temp }}/android/work/build/*.json
-          if-no-files-found: ignore
-          retention-days: 1
+        run: |
+          $logRoots = @(
+            "dist/windows/logs",
+            (Join-Path $env:RUNNER_TEMP "android/work/build")
+          )
+          foreach ($dir in $logRoots) {
+            if (Test-Path $dir) {
+              Get-ChildItem -Path $dir -Filter "*.log" -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | ForEach-Object {
+                Write-Host "===== $($_.FullName) ====="
+                Get-Content -Path $_.FullName -Tail 120 -ErrorAction SilentlyContinue
+              }
+            }
+          }

@@ -154,12 +154,12 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 	return true
 
 
-static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int) -> void:
+static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, _is_direct := false) -> void:
 	CustomEffectsMonsters1.on_damage_calc(duel, atk_p, atk_z, def_p, def_z)
 	CustomEffectsMonsters2.on_damage_calc(duel, atk_p, atk_z, def_p, def_z)
 
 
-static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct: bool) -> void:
+static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct := false) -> void:
 	CustomEffectsMonsters1.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 	CustomEffectsMonsters2.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 
@@ -187,20 +187,24 @@ static func on_draw(duel, draw_p: int, count: int) -> void:
 	CustomEffectsMonsters1.on_draw(duel, draw_p, count)
 
 
-static func can_attack(duel, p: int, z: int, cid: int) -> bool:
-	return CustomEffectsMonsters1.can_attack(duel, p, z, cid) and CustomEffectsMonsters2.can_attack(duel, p, z, cid)
+static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
+	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	return CustomEffectsMonsters1.can_attack(duel, p, z, id) and CustomEffectsMonsters2.can_attack(duel, p, z, id)
 
 
-static func can_direct_attack(duel, p: int, z: int, cid: int) -> bool:
-	return CustomEffectsMonsters1.can_direct_attack(duel, p, z, cid) or CustomEffectsMonsters2.can_direct_attack(duel, p, z, cid)
+static func can_direct_attack(duel, p: int, z: int, cid := -1) -> bool:
+	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	return CustomEffectsMonsters1.can_direct_attack(duel, p, z, id) or CustomEffectsMonsters2.can_direct_attack(duel, p, z, id)
 
 
-static func has_pierce(duel, p: int, z: int, cid: int) -> bool:
-	return CustomEffectsMonsters1.has_pierce(duel, p, z, cid) or CustomEffectsMonsters2.has_pierce(duel, p, z, cid)
+static func has_pierce(duel, p: int, z: int, cid := -1) -> bool:
+	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	return CustomEffectsMonsters1.has_pierce(duel, p, z, id) or CustomEffectsMonsters2.has_pierce(duel, p, z, id)
 
 
-static func max_attacks(duel, p: int, z: int, cid: int) -> int:
-	return maxi(CustomEffectsMonsters1.max_attacks(duel, p, z, cid), CustomEffectsMonsters2.max_attacks(duel, p, z, cid))
+static func max_attacks(duel, p: int, z: int, cid := -1) -> int:
+	var id := cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	return maxi(CustomEffectsMonsters1.max_attacks(duel, p, z, id), CustomEffectsMonsters2.max_attacks(duel, p, z, id))
 
 
 static func check_win(duel) -> int:

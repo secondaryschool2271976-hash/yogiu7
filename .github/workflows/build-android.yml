@@ -212,25 +212,14 @@ jobs:
           }
           if (-not $uploaded) { throw "Failed to upload Android APK to release $tag" }
           Write-Host "Published Android APK to GitHub Release: $tag"
-      - name: Upload Android APK
-        continue-on-error: true
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: PowerOfChaos-Android-APK
-          path: |
-            ${{ runner.temp }}/android/PowerOfChaos-Android.apk
-            ${{ runner.temp }}/android/PowerOfChaos-Android.apk.sha256
-            ${{ runner.temp }}/android/ANDROID_RELEASE.json
-          if-no-files-found: error
-          retention-days: 1
-      - name: Upload Android build diagnostics
+      - name: Print Android build diagnostics on failure
         if: failure()
         continue-on-error: true
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: android-build-logs
-          path: |
-            ${{ runner.temp }}/android/work/build/*.log
-            ${{ runner.temp }}/android/work/build/*.json
-          if-no-files-found: ignore
-          retention-days: 1
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP "android/work/build"
+          if (Test-Path $dir) {
+            Get-ChildItem -Path $dir -Filter "*.log" -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | ForEach-Object {
+              Write-Host "===== $($_.FullName) ====="
+              Get-Content -Path $_.FullName -Tail 120 -ErrorAction SilentlyContinue
+            }
+          }
