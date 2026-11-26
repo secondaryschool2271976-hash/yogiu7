@@ -217,10 +217,16 @@ func _confirm() -> void:
 	queue_free()
 
 
-## Solo letras, numeros, espacio, guion y guion bajo: el nombre es el del archivo.
+## Permite letras/numeros Unicode (incl. arabe), espacio, guion y guion bajo; excluye caracteres prohibidos de archivo.
 static func _clean(text: String) -> String:
+	const FORBIDDEN := "/\\:*?\"<>|"
 	var out := ""
 	for ch in text.strip_edges():
-		if ch.is_valid_identifier() or ch.is_valid_int() or ch in " -_":
-			out += ch
-	return out.strip_edges()
+		var code := ch.unicode_at(0)
+		if code < 32 or code == 127 or ch in FORBIDDEN:
+			continue
+		out += ch
+	out = out.strip_edges()
+	while out.ends_with("."):
+		out = out.left(out.length() - 1).strip_edges()
+	return out

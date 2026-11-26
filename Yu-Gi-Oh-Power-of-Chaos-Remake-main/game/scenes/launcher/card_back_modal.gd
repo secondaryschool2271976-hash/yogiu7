@@ -275,7 +275,11 @@ func _build_ui() -> void:
 	_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	_file_dialog.use_native_dialog = true
-	_file_dialog.filters = PackedStringArray(["*.png,*.jpg,*.jpeg,*.webp,*.bmp;Images;image/png,image/jpeg,image/webp"])
+	_file_dialog.size = Vector2i(640, 460)
+	_file_dialog.filters = PackedStringArray([
+		"*.png,*.jpg,*.jpeg,*.webp,*.bmp,*.tga;Images;image/*",
+		"*.*;All Files;*/*"
+	])
 	_file_dialog.file_selected.connect(_on_custom_image_selected)
 	add_child(_file_dialog)
 
@@ -339,6 +343,8 @@ func _pick_custom_image() -> void:
 
 
 func _on_custom_image_selected(path: String) -> void:
+	if path.strip_edges().is_empty():
+		return
 	var err: String = LauncherSettings.save_custom_card_back(path)
 	if err != "":
 		_status_label.add_theme_color_override("font_color", Color(1.0, 0.52, 0.48))

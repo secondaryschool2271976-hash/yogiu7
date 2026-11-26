@@ -38,6 +38,8 @@ MODIFIED_ENGINE_FILES = [
 	JOEY_DIR / "joey_port_u.gd",
 	JOEY_DIR / "joey_port_w.gd",
 	JOEY_DIR / "joey_port_y.gd",
+	JOEY_DIR / "joey_port_zb.gd",
+	JOEY_DIR / "joey_port_zi.gd",
 ]
 
 
@@ -376,6 +378,193 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		joey_normal_text = joey_normal_path.read_text(encoding="utf-8")
 		self.assertIn("0xa57804", joey_normal_text, "Joey _native_phase_hover must yield while card action menu is open")
 		self.assertIn("Lan._poll()", joey_normal_text, "Joey paused network loop must poll Lan before f5bd2d0")
+
+	def test_custom_card_back_import_android_safe(self) -> None:
+		settings_path = REPO_ROOT / "game" / "autoload" / "launcher_settings.gd"
+		art_path = REPO_ROOT / "game" / "core" / "card_back_art.gd"
+		modal_path = REPO_ROOT / "game" / "scenes" / "launcher" / "card_back_modal.gd"
+
+		for path in (settings_path, art_path, modal_path):
+			text = path.read_text(encoding="utf-8")
+			for lineno, line in enumerate(text.splitlines(), start=1):
+				if not line.strip():
+					continue
+				leading = line[: len(line) - len(line.lstrip(" \t"))]
+				if leading and " " in leading and "\t" in leading:
+					self.fail(f"Mixed tabs and spaces at {path.name}:{lineno}")
+			stripped = _strip_comments_and_strings(text)
+			stack: list[tuple[str, int]] = []
+			pairs = {")": "(", "]": "[", "}": "{"}
+			cur_line = 1
+			for ch in stripped:
+				if ch == "\n":
+					cur_line += 1
+				elif ch in "([{":
+					stack.append((ch, cur_line))
+				elif ch in ")]}":
+					if not stack or stack[-1][0] != pairs[ch]:
+						self.fail(f"Unbalanced '{ch}' at {path.name}:{cur_line}")
+					stack.pop()
+			if stack:
+				self.fail(f"Unclosed '{stack[-1][0]}' at {path.name}:{stack[-1][1]}")
+
+		settings_text = settings_path.read_text(encoding="utf-8")
+		for required in (
+			"static func _read_file_bytes(",
+			"static func decode_image_bytes(",
+			"static func load_image_from_any_path(",
+			"load_png_from_buffer",
+			"load_jpg_from_buffer",
+			"load_webp_from_buffer",
+			"load_bmp_from_buffer",
+			"save_png_to_buffer",
+			"user://custom_card_back.png",
+		):
+			self.assertIn(required, settings_text, f"Missing {required} in launcher_settings.gd")
+
+		art_text = art_path.read_text(encoding="utf-8")
+		self.assertIn("LauncherSettings.load_image_from_any_path", art_text)
+
+		modal_text = modal_path.read_text(encoding="utf-8")
+		self.assertIn("image/*", modal_text, "FileDialog must use image/* MIME type for Android SAF gallery compatibility")
+		self.assertIn("*/*", modal_text, "FileDialog should include All Files fallback filter")
+
+	def test_custom_effects_visual_sync_prompts_and_race_attr_ids(self) -> None:
+		cce_text = (CORE_DIR / "custom_card_effects.gd").read_text(encoding="utf-8")
+		ops_text = (CORE_DIR / "custom_duel_ops.gd").read_text(encoding="utf-8")
+		m1_text = (CORE_DIR / "custom_effects_monsters_1.gd").read_text(encoding="utf-8")
+		m2_text = (CORE_DIR / "custom_effects_monsters_2.gd").read_text(encoding="utf-8")
+		traps_text = (CORE_DIR / "custom_effects_traps.gd").read_text(encoding="utf-8")
+
+		# Event builders and flip kind normalization
+		for sym in ("func map_core_event(", "func map_joey_event(", "func build_core_ctx(", "func build_joey_ctx("):
+			self.assertIn(sym, cce_text)
+		self.assertIn('"flip_summon" if kind == "flip"', cce_text)
+
+		# Visual sync pipeline
+		self.assertIn("static func sync_visuals(", ops_text)
+		self.assertIn('"table_sync"', ops_text)
+		table_path = REPO_ROOT / "game/scenes/duel/duel_card_table.gd"
+		pres_path = REPO_ROOT / "game/scenes/duel/duel_presentation.gd"
+		adapter_path = REPO_ROOT / "game/scenes/duel/joey_presentation_adapter.gd"
+		self.assertIn("func sync_from_memory(", table_path.read_text(encoding="utf-8"))
+		self.assertIn('"table_sync"', pres_path.read_text(encoding="utf-8"))
+		self.assertIn('"table_sync"', adapter_path.read_text(encoding="utf-8"))
+
+		# Core resolution, prompts, summon & battle-destruction hooks
+		port_f = (CORE_DIR / "duel_port_f.gd").read_text(encoding="utf-8")
+		self.assertIn("f541cb0(0xa15fdc, f5419b0(cp, cz, clast))", port_f)
+		self.assertIn("issue((cflags << 15) | 0x78, cz, 0, 0)", port_f)
+		self.assertIn("CustomCardEffects.build_core_ctx(", port_f)
+
+		port_h = (CORE_DIR / "duel_port_h.gd").read_text(encoding="utf-8")
+		self.assertLess(
+			port_h.index("if row < 0 and CustomCardEffects.handles(raw_id):"),
+			port_h.index("if (m.u16(e + 2) & 0xfc00) == 0x4400:"),
+			"Core f551a40 must evaluate custom cards before native Damage Step allowlist",
+		)
+		self.assertIn("CustomCardEffects.build_core_ctx(", port_h)
+
+		port_l = (CORE_DIR / "duel_port_l.gd").read_text(encoding="utf-8")
+		self.assertIn("if CustomCardEffects.handles(cards.id_of(index) & 0xffff):\n\t\treturn 1", port_l)
+		self.assertIn("and not CustomCardEffects.handles(cards.id_of(index) & 0xffff) and (flags & 2) != 0:", port_l)
+
+		port_n = (CORE_DIR / "duel_port_n.gd").read_text(encoding="utf-8")
+		self.assertIn('sum_kind = "tribute" if (desc & ((1 << 25) | (1 << 26))) != 0 else "normal"', port_n)
+		self.assertIn("CustomCardEffects.on_summon_or_flip(self, p, z, cards.id_of(entry & 0xfff) & 0xffff, sum_kind)", port_n)
+
+		port_m = (CORE_DIR / "duel_port_m.gd").read_text(encoding="utf-8")
+		self.assertIn("CustomCardEffects.on_destroyed(self, p, atk_raw, true, false)", port_m)
+		self.assertIn("CustomCardEffects.on_destroyed(self, defender, def_raw, true, false)", port_m)
+		self.assertIn("CustomDuelOps.LOC_FIELD_SPELL if z + 5 == 10 else CustomDuelOps.LOC_FIELD_ST", port_m)
+
+		# Joey menu, prompts, Damage Step & battle-destruction hooks
+		j_zi = (JOEY_DIR / "joey_port_zi.gd").read_text(encoding="utf-8")
+		self.assertGreaterEqual(j_zi.count("CustomCardEffects.handles(cards.id_of(card & 0xffff) & 0xffff)"), 4)
+		j_zb = (JOEY_DIR / "joey_port_zb.gd").read_text(encoding="utf-8")
+		self.assertIn("if CustomCardEffects.handles(cards.id_of(index) & 0xffff):\n\t\treturn 1", j_zb)
+		j_y = (JOEY_DIR / "joey_port_y.gd").read_text(encoding="utf-8")
+		self.assertIn("CustomCardEffects.build_joey_ctx(", j_y)
+		self.assertIn("and not CustomCardEffects.handles(cards.id_of(m.u16(effect)) & 0xffff) and f5683f0(", j_y)
+		j_w = (JOEY_DIR / "joey_port_w.gd").read_text(encoding="utf-8")
+		self.assertIn("CustomCardEffects.build_joey_ctx(", j_w)
+		j_t = (JOEY_DIR / "joey_port_t.gd").read_text(encoding="utf-8")
+		self.assertIn("CustomCardEffects.on_destroyed(self, p, atk_raw, true, false)", j_t)
+		self.assertIn("CustomCardEffects.on_destroyed(self, other, def_raw, true, false)", j_t)
+
+		# Verify PoC race/attribute ID fixes (Machine=7, Spellcaster=18, Aqua=14, Zombie=2, Insect=10, Plant=13, Fairy=17, LIGHT=1, DARK=2, WATER=3)
+		self.assertIn("CustomDuelOps.monster_race(duel, idx_tmp) != 7", m1_text)
+		self.assertIn("CustomDuelOps.monster_race(d, idx) == 7 and (CustomDuelOps.base_atk(d, idx) == 2100", m1_text)
+		self.assertIn("var need_race := 18 if cid == 2635 else 15", m1_text)
+		self.assertIn("CustomDuelOps.monster_attr(duel, def_idx) == 2 and CustomDuelOps.monster_race(duel, def_idx) == 3", m1_text)
+		self.assertIn("CustomDuelOps.monster_attr(duel, idx) != 1", m1_text)
+		self.assertIn("CustomDuelOps.monster_race(duel, idx) == 14 and CustomDuelOps.monster_level(duel, idx) == 10", m1_text)
+
+		self.assertIn("_collect_attr_indices_in_gy(duel, p, 3)", m2_text)
+		self.assertIn("_collect_attr_indices_in_gy(duel, p, 1)", m2_text)
+		self.assertNotIn("CustomDuelOps.monster_race(d, idx) == 4", m2_text)
+		self.assertNotIn("CustomDuelOps.monster_race(d, idx) == 9", m2_text)
+		self.assertNotIn("CustomDuelOps.monster_race(d, idx) == 7", m2_text)
+		self.assertIn('if kind == "normal" or kind == "tribute" or kind == "normal_summon":', m2_text)
+
+		# Trap event matching accepts normal_summon and damage_step
+		self.assertIn('(ev == "summon" or ev == "normal_summon")', traps_text)
+		self.assertIn('(ev == "damage_calc" or ev == "damage_step")', traps_text)
+
+	def test_original_cards_protected_and_field_visual_fallback(self) -> None:
+		cce_text = (CORE_DIR / "custom_card_effects.gd").read_text(encoding="utf-8")
+		self.assertIn("if cid < 2500:\n\t\treturn false", cce_text)
+
+		fv_path = REPO_ROOT / "game/scenes/duel/duel_field_visual.gd"
+		fv_text = fv_path.read_text(encoding="utf-8")
+		self.assertIn("static func banner_texture_for(", fv_text)
+		self.assertIn('"fie_normal"', fv_text)
+		self.assertIn("banner_texture_for(game, id)", fv_text)
+		self.assertIn('for fallback_game: String in ["joey", "kaiba", "yugi"]:', fv_text)
+
+	def test_deck_persistence_cross_pack_and_unicode_names(self) -> None:
+		save_path = REPO_ROOT / "game/autoload/save_data.gd"
+		dlg_path = REPO_ROOT / "game/scenes/deck_editor/deck_file_dialog.gd"
+		ed_path = REPO_ROOT / "game/scenes/deck_editor/deck_editor.gd"
+		fv_path = REPO_ROOT / "game/scenes/duel/duel_field_visual.gd"
+		table_path = REPO_ROOT / "game/scenes/duel/duel_card_table.gd"
+		pres_path = REPO_ROOT / "game/scenes/duel/duel_presentation.gd"
+
+		for path in (save_path, dlg_path, ed_path, fv_path, table_path, pres_path):
+			text = path.read_text(encoding="utf-8")
+			for lineno, line in enumerate(text.splitlines(), start=1):
+				if not line.strip():
+					continue
+				leading = line[: len(line) - len(line.lstrip(" \t"))]
+				if leading and " " in leading and "\t" in leading:
+					self.fail(f"Mixed tabs and spaces at {path.name}:{lineno}")
+			stripped = _strip_comments_and_strings(text)
+			stack: list[tuple[str, int]] = []
+			pairs = {")": "(", "]": "[", "}": "{"}
+			cur_line = 1
+			for ch in stripped:
+				if ch == "\n":
+					cur_line += 1
+				elif ch in "([{":
+					stack.append((ch, cur_line))
+				elif ch in ")]}":
+					if not stack or stack[-1][0] != pairs[ch]:
+						self.fail(f"Unbalanced '{ch}' at {path.name}:{cur_line}")
+					stack.pop()
+			if stack:
+				self.fail(f"Unclosed '{stack[-1][0]}' at {path.name}:{stack[-1][1]}")
+
+		save_text = save_path.read_text(encoding="utf-8")
+		self.assertIn('preload("res://core/native_deck_import.gd").filter(', save_text)
+		self.assertIn("_startup_checked[game] = true", save_text)
+
+		dlg_text = dlg_path.read_text(encoding="utf-8")
+		self.assertIn("const FORBIDDEN :=", dlg_text)
+		self.assertNotIn('(c >= "a" and c <= "z")', dlg_text)
+
+		ed_text = ed_path.read_text(encoding="utf-8")
+		self.assertIn("SaveData.set_deck(game, _deck.duplicate(true))", ed_text)
+		self.assertGreaterEqual(ed_text.count("_autosave_deck()"), 4)
 
 
 if __name__ == "__main__":

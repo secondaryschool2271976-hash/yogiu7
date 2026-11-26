@@ -30,6 +30,8 @@ func f5975c0(at: int, p: int, kind: int, z: int) -> int:
 	return 0
 
 func f5976f0(p: int, index: int, event: int) -> int:
+	if CustomCardEffects.handles(cards.id_of(index) & 0xffff):
+		return 1
 	match event:
 		1:
 			if _jv_ai(p):

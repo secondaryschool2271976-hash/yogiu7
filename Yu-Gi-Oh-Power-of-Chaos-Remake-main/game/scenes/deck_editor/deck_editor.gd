@@ -2350,8 +2350,8 @@ func _leave() -> void:
 		return
 	_leaving = true
 	set_process(false)
-	if _dirty:
-		SaveData.set_deck(game, _deck.duplicate(true))
+	SaveData.set_deck(game, _deck.duplicate(true))
+	_dirty = false
 	_save_settings()
 	SaveData.save()
 	Audio.play_sfx("%s/voice/internal/return.wav" % game)
@@ -2780,6 +2780,7 @@ func _open_external_ydc_exporter() -> void:
 		exporter.queue_free()
 		var res := SaveData.export_ydc_deck(selected_path, game, _deck)
 		if bool(res.get("ok", false)):
+			_autosave_deck()
 			_message("success", "dlg_ok_ok_export", Vector2(-1, -1), PackedStringArray(), func():
 				if is_instance_valid(_file_dialog):
 					_file_dialog.queue_free()
@@ -2809,6 +2810,7 @@ func _export(name: String, confirmed := false) -> void:
 		_open_modal(d)
 		return
 	if Ydc.save(path, _deck, SaveData.deck_file_header()):
+		_autosave_deck()
 		_message("success", "dlg_ok_ok_export", Vector2(-1,-1), PackedStringArray(), func():
 			if is_instance_valid(_file_dialog): _file_dialog.queue_free()
 			_file_dialog = null)
@@ -2863,6 +2865,7 @@ func _accept_import(deck: Dictionary) -> void:
 	_undo_at = 0
 	_dirty = true
 	_deck_cursor = {"zone": "main", "index": 0}
+	_autosave_deck()
 	Audio.play_sfx("%s/voice/internal/decide.wav" % game)
 
 

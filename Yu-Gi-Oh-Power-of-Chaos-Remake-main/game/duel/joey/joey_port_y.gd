@@ -278,17 +278,13 @@ func f59dd90(effect: int, target: int, flag: int) -> int:
 	var idx := m.u16(effect)
 	var row := _s32(f59dbe0(idx))
 	if row < 0:
-		var raw_id := cards.id_of(idx) & 0xffff
+		var raw_id: int = cards.id_of(idx) & 0xffff
 		if CustomCardEffects.handles(raw_id):
-			var bits := m.u16(effect + 2)
-			var cp := ((bits >> 14) & 1) ^ (bits & 1)
-			var cz := (bits >> 1) & 31
-			var cloc := CustomDuelOps.LOC_HAND if flag != 0 or cz == 11 else (CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz <= 10 else CustomDuelOps.LOC_GRAVE))
-			var ctx := {"other": target, "hand": flag}
-			if target != 0:
-				var tbits := m.u16(target + 2)
-				ctx["chain_p"] = ((tbits >> 14) & 1) ^ (tbits & 1)
-				ctx["chain_cid"] = cards.id_of(m.u16(target)) & 0xffff
+			var bits: int = m.u16(effect + 2)
+			var cp: int = ((bits >> 14) & 1) ^ (bits & 1)
+			var cz: int = (bits >> 1) & 31
+			var cloc: int = CustomDuelOps.LOC_HAND if flag != 0 or cz == 11 else (CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz < 10 else (CustomDuelOps.LOC_FIELD_SPELL if cz == 10 else CustomDuelOps.LOC_GRAVE)))
+			var ctx: Dictionary = CustomCardEffects.build_joey_ctx(self, effect, target, flag)
 			return 1 if CustomCardEffects.can_activate(self, cp, raw_id, cloc, cz if cz <= 10 else -1, ctx) else 0
 		return 0
 	var at := 0x5ed0a8 + row * 24
@@ -562,7 +558,7 @@ func f57e880(effect: int, target: int) -> int:
 			return 0
 		if f57ea00(bits & 1, (bits >> 1) & 0x1f) != 0:
 			return 0
-	if m.u32(0xa577ec) & 1 and f5683f0(m.u16(effect), (m.u16(effect + 2) & 0xfc0) >> 6) == 0:
+	if m.u32(0xa577ec) & 1 and not CustomCardEffects.handles(cards.id_of(m.u16(effect)) & 0xffff) and f5683f0(m.u16(effect), (m.u16(effect + 2) & 0xfc0) >> 6) == 0:
 		if p == m.u32(JoeyMem.MODE) & 1:
 			f45e240(0x15)
 		return 0

@@ -598,11 +598,14 @@ func f5bb720() -> int:
 			var effect := _s32(f59dbe0(entry_idx))
 			if effect < 0 or m.u32(0x5ed0ac + effect * 24) == 0:
 				if effect < 0 and CustomCardEffects.handles(raw_id) and (m.u16(at + 4) & 4) == 0:
-					var cref := m.u16(at + 2)
-					var cp := ((cref >> 14) & 1) ^ (cref & 1)
-					var cz := (cref >> 1) & 31
-					var cloc := CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz <= 10 else (CustomDuelOps.LOC_HAND if cz == 11 else CustomDuelOps.LOC_GRAVE))
-					CustomCardEffects.resolve_chain_link(self, cp, raw_id, cloc, cz if cz <= 10 else -1, {"chain_entry": at, "prev_entry": prev})
+					var cref: int = m.u16(at + 2)
+					var cp: int = ((cref >> 14) & 1) ^ (cref & 1)
+					var cz: int = (cref >> 1) & 31
+					var cloc: int = CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz < 10 else (CustomDuelOps.LOC_FIELD_SPELL if cz == 10 else (CustomDuelOps.LOC_HAND if cz == 11 else CustomDuelOps.LOC_GRAVE)))
+					var cctx: Dictionary = CustomCardEffects.build_joey_ctx(self, at, prev, 1 if cz == 11 else 0)
+					cctx["chain_entry"] = at
+					cctx["prev_entry"] = prev
+					CustomCardEffects.resolve_chain_link(self, cp, raw_id, cloc, cz if cz <= 10 else -1, cctx)
 				m.set_u32(0xa58260, m.u32(0xa58260) | 0x100000)
 				_jw_state(0xa55c88, 0xf0, 14)
 				return 1

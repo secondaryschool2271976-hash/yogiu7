@@ -125,16 +125,131 @@ func card_style_label(style: String, lang: String) -> String:
 	return "المتطور (المبارزون العرب)" if ar else ("Moderno (Arab Duelists)" if es else "Modern (Arab Duelists)")
 
 
+static func _read_file_bytes(src_path: String, max_bytes := 32 * 1024 * 1024) -> PackedByteArray:
+	var bytes := PackedByteArray()
+	var f := FileAccess.open(src_path, FileAccess.READ)
+	if f != null:
+		var total: int = f.get_length()
+		if total > 0 and total <= max_bytes:
+			bytes = f.get_buffer(total)
+		else:
+			while not f.eof_reached() and bytes.size() < max_bytes:
+				var chunk := f.get_buffer(262144)
+				if chunk.is_empty():
+					break
+				bytes.append_array(chunk)
+		f.close()
+	if bytes.is_empty():
+		bytes = FileAccess.get_file_as_bytes(src_path)
+	return bytes
+
+
+static func _is_heif_or_avif(bytes: PackedByteArray) -> bool:
+	if bytes.size() < 12:
+		return false
+	if bytes[4] != 0x66 or bytes[5] != 0x74 or bytes[6] != 0x79 or bytes[7] != 0x70:
+		return false
+	var brand := bytes.slice(8, 12).get_string_from_ascii().to_lower()
+	return brand in ["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1", "avif", "avis"]
+
+
+static func decode_image_bytes(bytes: PackedByteArray) -> Image:
+	if bytes.size() < 4:
+		return null
+	var order: Array[String] = []
+	if bytes[0] == 0x89 and bytes[1] == 0x50 and bytes[2] == 0x4e and bytes[3] == 0x47:
+		order.append("png")
+	elif bytes[0] == 0xff and bytes[1] == 0xd8 and bytes[2] == 0xff:
+		order.append("jpg")
+	elif bytes.size() >= 12 and bytes[0] == 0x52 and bytes[1] == 0x49 and bytes[2] == 0x46 and bytes[3] == 0x46 and bytes[8] == 0x57 and bytes[9] == 0x45 and bytes[10] == 0x42 and bytes[11] == 0x50:
+		order.append("webp")
+	elif bytes[0] == 0x42 and bytes[1] == 0x4d:
+		order.append("bmp")
+	var looks_svg := false
+	var head_len := mini(bytes.size(), 64)
+	for i in head_len:
+		var b := bytes[i]
+		if b == 0x20 or b == 0x09 or b == 0x0a or b == 0x0d or (i < 3 and b in [0xef, 0xbb, 0xbf]):
+			continue
+		looks_svg = (b == 0x3c)
+		break
+	if looks_svg:
+		order.append("svg")
+	for fmt: String in ["png", "jpg", "webp", "bmp", "tga"]:
+		if fmt not in order:
+			order.append(fmt)
+	for fmt: String in order:
+		var img := Image.new()
+		var err: int = ERR_UNAVAILABLE
+		match fmt:
+			"png":
+				err = img.load_png_from_buffer(bytes)
+			"jpg":
+				err = img.load_jpg_from_buffer(bytes)
+			"webp":
+				err = img.load_webp_from_buffer(bytes)
+			"bmp":
+				err = img.load_bmp_from_buffer(bytes)
+			"tga":
+				err = img.load_tga_from_buffer(bytes)
+			"svg":
+				err = img.load_svg_from_buffer(bytes)
+		if err == OK and not img.is_empty():
+			if img.is_compressed():
+				img.decompress()
+			if img.get_format() not in [Image.FORMAT_RGB8, Image.FORMAT_RGBA8]:
+				img.convert(Image.FORMAT_RGBA8)
+			return img
+	return null
+
+
+static func load_image_from_any_path(src_path: String) -> Image:
+	if src_path.strip_edges().is_empty():
+		return null
+	var bytes := _read_file_bytes(src_path)
+	if not bytes.is_empty():
+		var decoded := decode_image_bytes(bytes)
+		if decoded != null and not decoded.is_empty():
+			return decoded
+	var direct := Image.load_from_file(src_path)
+	if direct != null and not direct.is_empty():
+		if direct.is_compressed():
+			direct.decompress()
+		if direct.get_format() not in [Image.FORMAT_RGB8, Image.FORMAT_RGBA8]:
+			direct.convert(Image.FORMAT_RGBA8)
+		return direct
+	return null
+
+
+static func _write_bytes_to_path(dest: String, data: PackedByteArray) -> int:
+	if dest.is_empty() or data.is_empty():
+		return ERR_INVALID_PARAMETER
+	if not dest.begins_with("user://"):
+		DirAccess.make_dir_recursive_absolute(dest.get_base_dir())
+	var f := FileAccess.open(dest, FileAccess.WRITE)
+	if f == null:
+		return FileAccess.get_open_error()
+	f.store_buffer(data)
+	var err: int = f.get_error()
+	f.close()
+	return err
+
+
 func custom_card_back_path(for_write := false) -> String:
-	var user_path := ProjectSettings.globalize_path("user://custom_card_back.png")
+	var user_virtual := "user://custom_card_back.png"
+	var user_path := ProjectSettings.globalize_path(user_virtual)
 	if is_instance_valid(Paths) and not Paths.storage_error and not Paths.storage_dir.is_empty():
 		var in_storage := Paths.storage_dir.path_join("custom_card_back.png")
 		if for_write or FileAccess.file_exists(in_storage):
 			return in_storage
 		if user_path != "" and FileAccess.file_exists(user_path):
 			return user_path
+		if FileAccess.file_exists(user_virtual):
+			return user_virtual
 		return in_storage
-	return user_path
+	if not for_write and not user_path.is_empty() and FileAccess.file_exists(user_path):
+		return user_path
+	return user_path if not user_path.is_empty() else user_virtual
 
 
 func has_custom_card_back() -> bool:
@@ -154,18 +269,33 @@ func set_card_back(style: String) -> void:
 
 
 func save_custom_card_back(src_path: String) -> String:
-	var img := Image.load_from_file(src_path)
+	var is_ar := is_instance_valid(Assets) and Assets.lang == "a"
+	var is_es := is_instance_valid(Assets) and Assets.lang == "s"
+	if src_path.strip_edges().is_empty():
+		return "لم يتم اختيار أي ملف صورة." if is_ar else ("No se seleccionó ninguna imagen." if is_es else "No image file selected.")
+	var raw_bytes := _read_file_bytes(src_path)
+	var img: Image = decode_image_bytes(raw_bytes) if not raw_bytes.is_empty() else null
 	if img == null or img.is_empty():
-		return "تعذر قراءة ملف الصورة المحدد." if is_instance_valid(Assets) and Assets.lang == "a" else "Could not load the selected image file."
+		img = load_image_from_any_path(src_path)
+	if img == null or img.is_empty():
+		if _is_heif_or_avif(raw_bytes):
+			return "صيغة هذه الصورة (HEIC/AVIF) غير مدعومة، يرجى اختيار صورة PNG أو JPG أو WebP." if is_ar else ("Formato HEIC/AVIF no compatible; elige una imagen PNG, JPG o WebP." if is_es else "HEIC/AVIF images are not supported; please choose a PNG, JPG, or WebP image.")
+		return "تعذر قراءة ملف الصورة المحدد." if is_ar else ("No se pudo leer la imagen seleccionada." if is_es else "Could not load the selected image file.")
 	if img.get_width() != 200 or img.get_height() != 290:
 		img.resize(200, 290, Image.INTERPOLATE_LANCZOS)
+	var png_bytes := img.save_png_to_buffer()
+	if png_bytes.is_empty():
+		return "تعذر تجهيز الصورة للحفظ." if is_ar else ("No se pudo preparar la imagen." if is_es else "Could not encode the image.")
 	var dest := custom_card_back_path(true)
-	if dest.is_empty():
-		dest = ProjectSettings.globalize_path("user://custom_card_back.png")
-	DirAccess.make_dir_recursive_absolute(dest.get_base_dir())
-	var err := img.save_png(dest)
+	var err: int = _write_bytes_to_path(dest, png_bytes)
 	if err != OK:
-		return ("تعذر حفظ الصورة: " + error_string(err)) if is_instance_valid(Assets) and Assets.lang == "a" else ("Failed to save image: " + error_string(err))
+		var fallback := ProjectSettings.globalize_path("user://custom_card_back.png")
+		if fallback != dest:
+			err = _write_bytes_to_path(fallback, png_bytes)
+		if err != OK:
+			err = _write_bytes_to_path("user://custom_card_back.png", png_bytes)
+	if err != OK:
+		return ("تعذر حفظ الصورة: " + error_string(err)) if is_ar else (("No se pudo guardar la imagen: " + error_string(err)) if is_es else ("Failed to save image: " + error_string(err)))
 	card_back = "custom"
 	save_preferences()
 	if is_instance_valid(Assets):

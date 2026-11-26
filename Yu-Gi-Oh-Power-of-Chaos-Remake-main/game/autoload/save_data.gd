@@ -362,26 +362,18 @@ func _ensure_startup_deck(game: String) -> bool:
 		_startup_checked[game] = true
 		return true
 	var previous: Dictionary = data.decks[game]
-	var has_extended := false
-	for zone: String in ["main", "fusion", "side"]:
-		for raw_id in previous.get(zone, []):
-			var c := CardDB.by_id(int(raw_id))
-			if int(raw_id) >= 2500 or int(c.get("index", 0)) >= SystemDat.CARD_SLOTS:
-				has_extended = true
-				break
-		if has_extended:
-			break
-	if has_extended:
+	var prev_main: Array = previous.get("main", [])
+	var prev_fusion: Array = previous.get("fusion", [])
+	var prev_side: Array = previous.get("side", [])
+	if not prev_main.is_empty() or not prev_fusion.is_empty() or not prev_side.is_empty():
 		var native_ext: Dictionary = data.get("native_system", {})
 		var limit_fn := func(id: int) -> int: return NativeCardLimits.copy_limit(game, id, native_ext)
 		var ext_result: Dictionary = preload("res://core/native_deck_import.gd").filter(
 			previous, game, data.collection, limit_fn, NativeCardLimits.COPY_VARIANTS, CardDB.by_id)
 		var cleaned: Dictionary = ext_result.get("deck", {})
-		var ok_ext: bool = cleaned.get("main", []).size() >= 40 and cleaned.get("main", []).size() <= 80 \
-			and cleaned.get("fusion", []).size() <= 15 and cleaned.get("side", []).size() <= 15
-		if ok_ext:
+		if not cleaned.is_empty():
 			if cleaned != previous:
-				_preserve_startup_deck(game, previous, "extended_deck_prune")
+				_preserve_startup_deck(game, previous, "deck_startup_prune")
 				data["decks"][game] = cleaned
 				_startup_checked[game] = true
 				return true
@@ -393,17 +385,7 @@ func _ensure_startup_deck(game: String) -> bool:
 		return false
 	for i in block.size():
 		duel.m.set_u8(0xa10120 + i, block[i])
-	var resolve_input := previous
-	if has_extended:
-		var stripped := {"main": [], "fusion": [], "side": []}
-		for zone: String in ["main", "fusion", "side"]:
-			for raw_id in previous.get(zone, []):
-				var rid := int(raw_id)
-				var rc := CardDB.by_id(rid)
-				if rid < 2500 and int(rc.get("index", 0)) < SystemDat.CARD_SLOTS:
-					stripped[zone].append(rid)
-		resolve_input = stripped
-	var resolved := _resolve_startup_deck(duel, game, resolve_input)
+	var resolved := _resolve_startup_deck(duel, game, previous)
 	for i in block.size():
 		block[i] = duel.m.u8(0xa10120 + i)
 	SystemDat.seal(block)
@@ -498,6 +480,7 @@ func deck(game: String) -> Dictionary:
 
 func set_deck(game: String, deck_data: Dictionary) -> void:
 	data["decks"][game] = deck_data
+	_startup_checked[game] = true
 
 
 func _new_game(initial_game := "") -> Dictionary:

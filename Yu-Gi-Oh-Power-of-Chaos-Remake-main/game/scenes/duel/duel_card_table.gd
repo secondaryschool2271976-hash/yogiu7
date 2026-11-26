@@ -106,6 +106,25 @@ func sync(duel: Duel) -> void:
 		for loc in PILES: piles[p][loc] = memory_pile(duel, p, loc)
 
 
+## Sincroniza la tabla visual desde la memoria del motor preservando animaciones nativas en vuelo.
+func sync_from_memory(duel: Duel) -> void:
+	revision += 1
+	for p in 2:
+		for z in 11:
+			var expected := memory_zone(duel, p, z)
+			var key := "%d:%d" % [p, z]
+			if expected.is_empty() and detached.has(key):
+				continue
+			field[p][z] = expected
+			if not expected.is_empty():
+				detached.erase(key)
+		hand[p] = memory_hand(duel, p)
+		for loc in PILES:
+			if inflight[p].has(loc):
+				continue
+			piles[p][loc] = memory_pile(duel, p, loc)
+
+
 ## Compara al terminar una secuencia. Las cartas separadas por 0x78 siguen
 ## siendo objetos válidos aunque su índice lógico haya desaparecido.
 func compare_memory(duel: Duel) -> Array[Dictionary]:

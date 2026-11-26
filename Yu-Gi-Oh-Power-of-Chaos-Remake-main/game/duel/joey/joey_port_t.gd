@@ -666,6 +666,14 @@ func f5a31a0(p: int) -> int:
 						f5747e0(p, f402460(0x52f), (_jt_atk() << 8 | p & 0xff) & 0x7ff, arg)
 					elif card == 0x53c:
 						f579790(p, f402460(0x53c), (JoeyMem.ident(m.u32(dst)) & 0xff) << 8 | 3)
+			if dead_a:
+				var atk_raw: int = cards.id_of(m.u16(a + 2) & 0xfff) & 0xffff
+				if atk_raw > 0:
+					CustomCardEffects.on_destroyed(self, p, atk_raw, true, false)
+			if dead_b and (m.u32(_JT_B) & 4) == 0:
+				var def_raw: int = cards.id_of(m.u16(b + 2) & 0xfff) & 0xffff
+				if def_raw > 0:
+					CustomCardEffects.on_destroyed(self, other, def_raw, true, false)
 			CustomCardEffects.on_battle_end(self, p, za, other, -1 if (m.u32(_JT_B) & 4) != 0 else zb, dead_a, dead_b)
 		1:
 			f579810()

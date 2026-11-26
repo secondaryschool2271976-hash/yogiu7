@@ -903,6 +903,8 @@ func f56e600(p: int) -> int:
 func f569500(p: int, index: int, kind: int) -> int:
 	if p != 0:
 		return 1
+	if CustomCardEffects.handles(cards.id_of(index) & 0xffff):
+		return 1
 	var id := effect_card_id(index)
 	match kind:
 		1: return int((m.u8(0xa133f2) & 1) != 0 and ctype(index) == 0x15)
@@ -932,7 +934,7 @@ func f5691b0(entry: int, p: int, z: int) -> int:
 	var index := m.u16(a) & 0xfff
 	if index == 0 or ctype(index) < 0x15:
 		return 0
-	if effect_card_id(index) not in [0x594, 0x3f9, 0x52c, 0x5fc] and (flags & 2) != 0:
+	if effect_card_id(index) not in [0x594, 0x3f9, 0x52c, 0x5fc] and not CustomCardEffects.handles(cards.id_of(index) & 0xffff) and (flags & 2) != 0:
 		return 0
 	if p == 0:
 		f4437a0(4)  # FUN_004437a0: ayuda del original.
@@ -1338,8 +1340,9 @@ func f56e6e0(mode: int, alternate: int) -> int:
 				_l_summon_done(mode, true, f543360(p), 0)
 				return 0
 			# 0x56e92f: el nivel se calcula con el u32 de 0xa13404 en ESI.
+			var custom_tribs: int = CustomCardEffects.normal_tribute_requirement(cards.id_of(index) & 0xffff)
 			var level := f4457d0(m.u32(0xa13404))
-			if level <= 4:
+			if custom_tribs == 0 or (custom_tribs < 0 and level <= 4):
 				_l_summon_done(mode, alternate != 0, f543360(p), 0)
 				if effect_card_id(index) == 0x5f0 and ((m.u32(0xa13408) >> 2) & 15) in [10, 11]:
 					var other := 1 - p
@@ -1347,7 +1350,7 @@ func f56e6e0(mode: int, alternate: int) -> int:
 						f53baa0(((((m.u32(0xa1340e) & 0xffffff1c) << 7) | ((m.u32(0xa13410) >> 8) & 0x1f) | 0xe40) << 16) | index, 0)
 						_l_action_end()
 				return 0
-			if level <= 6:
+			if custom_tribs == 1 or (custom_tribs < 0 and level <= 6):
 				_l_tribute_question(0x5ad288, 10)
 				return 0
 			_l_tribute_question(0x5ad28c, 1)

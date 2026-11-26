@@ -31,7 +31,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		return false
 	match cid:
 		2521: # Bottomless Trap Hole
-			return ev == "summon" and int(ctx.get("summon_p", -1)) == opp and int(ctx.get("summon_atk", 0)) >= 1500
+			return (ev == "summon" or ev == "normal_summon") and int(ctx.get("summon_p", -1)) == opp and int(ctx.get("summon_atk", 0)) >= 1500
 		2529: # Compulsory Evacuation Device
 			return CustomDuelOps.count_total_monsters_on_field(duel) > 0
 		2553, 2631, 2832, 2955, 3075, 3104, 3108:
@@ -79,11 +79,11 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		2718: # Last Turn
 			return CustomDuelOps.turn_player(duel) == opp and CustomDuelOps.get_lp(duel, p) <= 1000 and CustomDuelOps.count_monsters(duel, p, false) > 0
 		2720: # Nutrient Z
-			return ev == "damage_calc" and int(ctx.get("recv_p", -1)) == p and int(ctx.get("amount", 0)) >= 2000
+			return (ev == "damage_calc" or ev == "damage_step") and int(ctx.get("recv_p", -1)) == p and int(ctx.get("amount", 2000)) >= 2000
 		2724: # Ready for Intercepting
 			return not CustomDuelOps.choose_zone(duel, p, func(d, _pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, _pl, zz) and (CustomDuelOps.monster_race(d, idx) == 15 or CustomDuelOps.monster_race(d, idx) == 18)).is_empty()
 		2737: # Bark of Dark Ruler
-			return ev == "damage_step" and CustomDuelOps.can_pay_lp(duel, p, 100) and _battling_has_race(duel, p, 3, ctx)
+			return (ev == "damage_step" or ev == "damage_calc") and CustomDuelOps.can_pay_lp(duel, p, 100) and _battling_has_race(duel, p, 3, ctx)
 		2747: # Drop Off
 			return ev == "draw" and int(ctx.get("draw_p", -1)) == opp and CustomDuelOps.phase(duel) == CustomDuelOps.PHASE_DP and CustomDuelOps.pile_count(duel, opp, CustomDuelOps.LOC_HAND) > 0
 		2751: # Bubble Crash
@@ -157,7 +157,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		2944: # Anti-Spell
 			return ev == "chain_negate" and bool(ctx.get("is_spell", false)) and CustomDuelOps.total_spell_counters(duel, p) >= 2
 		2951: # Adhesion Trap Hole
-			return ev == "summon" and int(ctx.get("summon_p", -1)) == opp
+			return (ev == "summon" or ev == "normal_summon") and int(ctx.get("summon_p", -1)) == opp
 		2952: # Physical Double
 			return CustomDuelOps.turn_player(duel) == opp and CustomDuelOps.count_monsters(duel, opp, true) > 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0
 		2953: # Meteorain

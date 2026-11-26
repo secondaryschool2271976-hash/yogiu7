@@ -256,6 +256,21 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 	if kind == "lp_set":
 		displayed_lp[p] = int(e["value"])
 		return
+	if kind == "table_sync":
+		table.sync_from_memory(duel)
+		for lp_p in 2:
+			displayed_lp[lp_p] = duel.m.u16(DuelMem.pl(lp_p))
+		_render_frame()
+		return
+	if kind == "summon_special":
+		table.sync_from_memory(duel)
+		Audio.play_sfx("%s/voice/internal/reborn.wav" % game)
+		_render_frame()
+		return
+	if kind == "zone_clear":
+		table.sync_from_memory(duel)
+		_render_frame()
+		return
 	if kind in ["joey_field_shuffle", "joey_hand_shuffle"]:
 		var effect := e.duplicate(true)
 		effect["centers"] = {}

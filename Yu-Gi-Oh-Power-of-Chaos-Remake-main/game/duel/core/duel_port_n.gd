@@ -987,6 +987,11 @@ func f57c440() -> int:
 			trigger = 5 if desc & 0x4000 else 8
 		elif kind == 3:
 			trigger = 6
+		if face and (trigger == 5 or trigger == 7):
+			var sum_kind: String = "special"
+			if trigger == 5:
+				sum_kind = "tribute" if (desc & ((1 << 25) | (1 << 26))) != 0 else "normal"
+			CustomCardEffects.on_summon_or_flip(self, p, z, cards.id_of(entry & 0xfff) & 0xffff, sum_kind)
 		f56a380(1 - p, trigger, (z << 8) | p)
 	if (m.u8(0xa15bee) & 2) and not (m.u32(0xa15be0) & 1):
 		f53ed60(0xf05b, 0, 0, 0)

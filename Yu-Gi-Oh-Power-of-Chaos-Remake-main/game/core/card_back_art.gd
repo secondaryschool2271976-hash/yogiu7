@@ -217,7 +217,7 @@ static func _load_custom_texture(mini: bool) -> Texture2D:
 	var path: String = LauncherSettings.custom_card_back_path()
 	if path == "" or not FileAccess.file_exists(path):
 		return null
-	var img := Image.load_from_file(path)
+	var img: Image = LauncherSettings.load_image_from_any_path(path)
 	if img == null or img.is_empty():
 		return null
 	var target := MINI_SIZE if mini else FULL_SIZE

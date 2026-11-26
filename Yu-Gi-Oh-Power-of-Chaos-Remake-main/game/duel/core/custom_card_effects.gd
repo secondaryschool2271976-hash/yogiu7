@@ -19,12 +19,147 @@ static func all_registered_ids() -> Array[int]:
 
 
 static func handles(cid: int) -> bool:
+	if cid < 2500:
+		return false
 	return (
 		CustomEffectsTraps.handles(cid)
 		or CustomEffectsSpells.handles(cid)
 		or CustomEffectsMonsters1.handles(cid)
 		or CustomEffectsMonsters2.handles(cid)
 	)
+
+
+static func map_core_event(reason: int, other: int) -> String:
+	if other != 0:
+		return "chain_negate"
+	match reason:
+		5:
+			return "normal_summon"
+		6, 7:
+			return "summon"
+		13, 14, 15:
+			return "effect_damage_incoming"
+		16:
+			return "attack_declare"
+		17:
+			return "damage_step"
+		18:
+			return "destroyed_battle_gy"
+		19:
+			return "damage_calc"
+		20, 21, 27, 30:
+			return "destroyed_set"
+		25, 26, 29:
+			return "draw"
+	return "free"
+
+
+static func map_joey_event(ev_code: int, target: int) -> String:
+	if target != 0:
+		return "chain_negate"
+	match ev_code:
+		5:
+			return "normal_summon"
+		6, 7:
+			return "summon"
+		13, 14, 19, 20, 21:
+			return "damage_step"
+		16:
+			return "effect_damage_incoming"
+		18:
+			return "attack_declare"
+		22:
+			return "draw"
+		28:
+			return "destroyed_battle_gy"
+	return "free"
+
+
+static func build_core_ctx(duel, e: int, other: int, hand: int) -> Dictionary:
+	var flags: int = duel.m.u16(e + 2)
+	var p: int = flags & 1
+	var reason: int = (flags >> 10) & 0x3f
+	var ev: String = map_core_event(reason, other)
+	var ctx: Dictionary = {"event": ev, "other": other, "hand": hand}
+	if other != 0:
+		var oidx: int = duel.m.u16(other) & 0xfff
+		ctx["chain_p"] = duel.m.u8(other + 2) & 1
+		ctx["chain_cid"] = duel.cards.id_of(oidx) & 0xffff
+		var ot: int = CustomDuelOps.ctype(duel, oidx)
+		ctx["is_spell"] = (ot == 0x16)
+		ctx["is_trap"] = (ot == 0x15)
+		ctx["is_monster"] = (ot < 0x15)
+	if ev == "normal_summon" or ev == "summon":
+		var sdesc: int = duel.m.u32(0xa15be0)
+		var sp: int = sdesc & 1
+		var sz: int = (sdesc >> 1) & 31
+		ctx["summon_p"] = sp
+		ctx["summon_z"] = sz
+		ctx["summon_atk"] = CustomDuelOps.eff_atk(duel, sp, sz) if sz < 5 and CustomDuelOps.zone_idx(duel, sp, sz) != 0 else 0
+	elif ev == "attack_declare" or ev == "damage_step" or ev == "damage_calc":
+		var bflags: int = duel.m.u32(0xa114c0)
+		var ap: int = bflags & 1
+		var az: int = (bflags >> 8) & 7
+		var dp: int = (bflags >> 1) & 1
+		var dz: int = (bflags >> 11) & 7
+		ctx["atk_p"] = ap
+		ctx["atk_z"] = az
+		ctx["def_p"] = dp
+		ctx["def_z"] = dz
+		ctx["recv_p"] = p
+		if az < 5:
+			ctx["tribute_summoned"] = bool(CustomDuelOps.zflags(duel, ap, az).get("tribute_summoned", false))
+	elif ev == "draw":
+		ctx["draw_p"] = CustomDuelOps.turn_player(duel)
+	elif ev == "effect_damage_incoming":
+		ctx["recv_p"] = p
+	elif ev == "destroyed_battle_gy":
+		ctx["owner_p"] = p
+	return ctx
+
+
+static func build_joey_ctx(duel, effect: int, target: int, flag: int) -> Dictionary:
+	var bits: int = duel.m.u16(effect + 2)
+	var p: int = ((bits >> 14) & 1) ^ (bits & 1)
+	var ev_code: int = (bits >> 6) & 0x3f
+	var ev: String = map_joey_event(ev_code, target)
+	var ctx: Dictionary = {"event": ev, "other": target, "hand": flag}
+	if target != 0:
+		var tidx: int = duel.m.u16(target) & 0xfff
+		var tbits: int = duel.m.u16(target + 2)
+		ctx["chain_p"] = ((tbits >> 14) & 1) ^ (tbits & 1)
+		ctx["chain_cid"] = duel.cards.id_of(tidx) & 0xffff
+		var tt: int = CustomDuelOps.ctype(duel, tidx)
+		ctx["is_spell"] = (tt == 0x16)
+		ctx["is_trap"] = (tt == 0x15)
+		ctx["is_monster"] = (tt < 0x15)
+	if ev == "normal_summon" or ev == "summon":
+		var sdesc: int = duel.m.u32(0xa55080)
+		var sp: int = sdesc & 1
+		var sz: int = (sdesc >> 1) & 0x1f
+		ctx["summon_p"] = sp
+		ctx["summon_z"] = sz
+		ctx["summon_atk"] = CustomDuelOps.eff_atk(duel, sp, sz) if sz < 5 and CustomDuelOps.zone_idx(duel, sp, sz) != 0 else 0
+	elif ev == "attack_declare" or ev == "damage_step" or ev == "damage_calc":
+		var bflags: int = duel.m.u32(0xa57840)
+		var ap: int = bflags & 1
+		var az: int = (bflags >> 8) & 7
+		var dp: int = (bflags >> 1) & 1
+		var dz: int = (bflags >> 11) & 7
+		ctx["atk_p"] = ap
+		ctx["atk_z"] = az
+		ctx["def_p"] = dp
+		ctx["def_z"] = dz
+		ctx["recv_p"] = p
+		if az < 5:
+			ctx["tribute_summoned"] = bool(CustomDuelOps.zflags(duel, ap, az).get("tribute_summoned", false))
+	elif ev == "draw":
+		ctx["draw_p"] = CustomDuelOps.turn_player(duel)
+	elif ev == "effect_damage_incoming":
+		ctx["recv_p"] = p
+	elif ev == "destroyed_battle_gy":
+		ctx["owner_p"] = p
+	return ctx
 
 
 static func on_duel_reset(duel) -> void:
@@ -61,6 +196,7 @@ static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := 
 	if handled:
 		on_continuous_enforce(duel)
 		check_and_apply_win(duel)
+		CustomDuelOps.sync_visuals(duel)
 	return handled
 
 
@@ -95,14 +231,20 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 	if z >= 0:
 		on_continuous_enforce(duel)
 		check_and_apply_win(duel)
+		CustomDuelOps.sync_visuals(duel)
 	return z
 
 
 static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> void:
-	CustomEffectsMonsters1.on_summon_or_flip(duel, p, z, cid, kind)
-	CustomEffectsMonsters2.on_summon_or_flip(duel, p, z, cid, kind)
+	var norm_kind: String = "flip_summon" if kind == "flip" else kind
+	if norm_kind == "tribute" and z >= 0 and z < 5:
+		CustomDuelOps.zflags(duel, p & 1, z)["tribute_summoned"] = true
+	CustomEffectsMonsters1.on_summon_or_flip(duel, p, z, cid, norm_kind)
+	CustomEffectsMonsters2.on_summon_or_flip(duel, p, z, cid, norm_kind)
 	on_continuous_enforce(duel)
 	check_and_apply_win(duel)
+	if handles(cid):
+		CustomDuelOps.sync_visuals(duel)
 
 
 static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
@@ -162,18 +304,22 @@ static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int,
 static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct := false) -> void:
 	CustomEffectsMonsters1.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 	CustomEffectsMonsters2.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
+	CustomDuelOps.sync_visuals(duel)
 
 
 static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, atk_destroyed: bool, def_destroyed: bool) -> void:
 	CustomEffectsMonsters1.on_battle_end(duel, atk_p, atk_z, def_p, def_z, atk_destroyed, def_destroyed)
 	CustomEffectsMonsters2.on_battle_end(duel, atk_p, atk_z, def_p, def_z, atk_destroyed, def_destroyed)
 	check_and_apply_win(duel)
+	CustomDuelOps.sync_visuals(duel)
 
 
 static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect := false, was_tributed_for_p := -1) -> void:
 	CustomEffectsMonsters1.on_destroyed(duel, p, cid, by_battle, opp_effect, was_tributed_for_p)
 	CustomEffectsMonsters2.on_destroyed(duel, p, cid, by_battle, opp_effect, was_tributed_for_p)
 	check_and_apply_win(duel)
+	if handles(cid):
+		CustomDuelOps.sync_visuals(duel)
 
 
 static func on_sent_to_gy(duel, p: int, cid: int, from_loc: int, opp_effect := false) -> void:
@@ -181,6 +327,8 @@ static func on_sent_to_gy(duel, p: int, cid: int, from_loc: int, opp_effect := f
 	CustomEffectsMonsters1.on_sent_to_gy(duel, p, cid, from_loc, opp_effect)
 	CustomEffectsMonsters2.on_sent_to_gy(duel, p, cid, from_loc, opp_effect)
 	check_and_apply_win(duel)
+	if handles(cid):
+		CustomDuelOps.sync_visuals(duel)
 
 
 static func on_draw(duel, draw_p: int, count: int) -> void:
@@ -349,3 +497,4 @@ static func _execute_delayed(duel, task: Dictionary) -> void:
 		"helpoemer_discard":
 			if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 2866) >= 0:
 				CustomDuelOps.discard_random(duel, 1 - p, 1)
+	CustomDuelOps.sync_visuals(duel)

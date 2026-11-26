@@ -1378,13 +1378,38 @@ func f53ca00() -> int:
 			m.set_u16(0xa15fd4, at) # ASM 53cb59: mov word ptr; 0xa15fd6 se conserva
 			if at < 0:
 				if CustomCardEffects.handles(raw_id):
-					var cflags := m.u16(entry + 2)
-					var cp := cflags & 1
-					var cz := (cflags >> 4) & 0x3f
-					var cloc := CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz <= 10 else (CustomDuelOps.LOC_HAND if cz == 11 else CustomDuelOps.LOC_GRAVE))
+					var cflags: int = m.u16(entry + 2)
+					var cp: int = cflags & 1
+					var cz: int = (cflags >> 4) & 0x3f
+					var ckind: int = ctype(entry_idx)
+					if ckind >= 0x15:
+						var csupp: bool = false
+						if (cflags & 0xe) != 6 and cz <= 10 and (m.u8(DuelMem.zone(cp, cz) + 0x8f) & 4) != 0:
+							csupp = true
+						var csub_t: int = f53b880(entry_idx)
+						var cglob: int = m.u32(0xa133ec)
+						if csub_t == 2 and (cglob & 0x200) != 0:
+							csupp = true
+						if csub_t == 3 and (cglob & 0x180) != 0:
+							csupp = true
+						if ckind == 0x15:
+							csupp = csupp or (cglob & 0x40) != 0 or (csub_t == 4 and (cglob & 0x800) != 0)
+						elif ckind == 0x16:
+							csupp = csupp or (cglob & 0x20) != 0 or (csub_t == 4 and (cglob & 0x400) != 0)
+						if csupp:
+							issue((cflags << 15) | 0xb1, cz, 1, 0)
+							m.set_u8(entry + 4, m.u8(entry + 4) | 4)
+					var clast: int = m.u8(0xa11948 + cp * PS) - 1 if (cflags & 0x3f0) == 0xe0 else 0
+					f541cb0(0xa15fdc, f5419b0(cp, cz, clast))
+					var cloc: int = CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz < 10 else (CustomDuelOps.LOC_FIELD_SPELL if cz == 10 else (CustomDuelOps.LOC_HAND if cz == 11 else CustomDuelOps.LOC_GRAVE)))
+					var cprev: int = 0 if count < 2 else entry - 0x14
+					var cctx: Dictionary = CustomCardEffects.build_core_ctx(self, entry, cprev, 1 if cz == 11 else 0)
+					cctx["chain_entry"] = entry
+					cctx["prev_entry"] = cprev
 					if (m.u8(entry + 4) & 4) == 0:
-						CustomCardEffects.resolve_chain_link(self, cp, raw_id, cloc, cz if cz <= 10 else -1, {"chain_entry": entry, "prev_entry": 0 if count < 2 else entry - 0x14})
+						CustomCardEffects.resolve_chain_link(self, cp, raw_id, cloc, cz if cz <= 10 else -1, cctx)
 					if f53bb70(entry) != 0:
+						issue((cflags << 15) | 0x78, cz, 0, 0)
 						_f_resolve_remove(entry, false)
 				_f_resolve_finish_effect()
 				return 1

@@ -95,7 +95,7 @@ static func can_special_summon(duel, p: int, cid: int, loc: int, _slot: int) -> 
 		3028: # Guardian Grarl: only card in hand
 			return loc == CustomDuelOps.LOC_HAND and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) == 1
 		3085: # Fenrir: banish 2 WATER monsters from GY
-			return loc == CustomDuelOps.LOC_HAND and _collect_attr_indices_in_gy(duel, p, 4).size() >= 2
+			return loc == CustomDuelOps.LOC_HAND and _collect_attr_indices_in_gy(duel, p, 3).size() >= 2
 	return false
 
 
@@ -117,7 +117,7 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 				on_summon_or_flip(duel, p, z, cid, "special")
 			return z
 		3085:
-			var wis := _collect_attr_indices_in_gy(duel, p, 4)
+			var wis := _collect_attr_indices_in_gy(duel, p, 3)
 			wis.sort()
 			CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, wis[wis.size() - 1])
 			CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, wis[wis.size() - 2])
@@ -192,7 +192,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_opt(duel, p, 3084, z)
 		3100: # Freed the Brave Wanderer: banish 2 LIGHT from GY -> destroy monster w/ higher ATK
 			var my_atk := CustomDuelOps.eff_atk(duel, p, z)
-			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_opt(duel, p, 3100, z) and _collect_attr_indices_in_gy(duel, p, 2).size() >= 2 and not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_atk(d, pl, zz) > my_atk, true, true).is_empty()
+			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_opt(duel, p, 3100, z) and _collect_attr_indices_in_gy(duel, p, 1).size() >= 2 and not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_atk(d, pl, zz) > my_atk, true, true).is_empty()
 		3122: # Levia-Dragon - Daedalus: send face-up Umi -> destroy all other cards
 			return loc == CustomDuelOps.LOC_FIELD_MONSTER and (CustomDuelOps.has_faceup_id(duel, p, CustomDuelOps.NATIVE_UMI) or CustomDuelOps.has_faceup_id(duel, p, 2697))
 	return false
@@ -369,7 +369,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		3100: # Freed the Brave Wanderer
 			CustomDuelOps.mark_opt(duel, p, 3100, z)
 			var my_atk := CustomDuelOps.eff_atk(duel, p, z)
-			var lis := _collect_attr_indices_in_gy(duel, p, 2)
+			var lis := _collect_attr_indices_in_gy(duel, p, 1)
 			if lis.size() >= 2:
 				lis.sort()
 				CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, lis[lis.size() - 1])
@@ -404,7 +404,7 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				return
 
 	# Reactive Insect Princess forces opponent Insect monsters to ATK position
-	if CustomDuelOps.has_faceup_id(duel, opp, 3123) and CustomDuelOps.monster_race(duel, CustomDuelOps.zone_idx(duel, p, z)) == 9:
+	if CustomDuelOps.has_faceup_id(duel, opp, 3123) and CustomDuelOps.monster_race(duel, CustomDuelOps.zone_idx(duel, p, z)) == 10:
 		CustomDuelOps.change_position(duel, p, z, 0, -1)
 
 	if CustomDuelOps.is_skill_drain_active(duel):
@@ -468,7 +468,7 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.bounce_zone(duel, opp, int(pick["z"]))
 		2833: # Fushioh Richie flipped: SS 1 Zombie from GY
 			if (kind == "flip_summon" or kind == "flipped") and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var gi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 4, true)
+				var gi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 2, true)
 				if gi >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, true, false)
 		2835: # Guardian Sphinx Flip Summon -> bounce all opp monsters
@@ -621,10 +621,10 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 		3123: # Insect Princess: Summon -> opp Insects ATK pos
 			for zz in 5:
 				var idx := CustomDuelOps.zone_idx(duel, opp, zz)
-				if idx != 0 and CustomDuelOps.is_face_up(duel, opp, zz) and CustomDuelOps.monster_race(duel, idx) == 9:
+				if idx != 0 and CustomDuelOps.is_face_up(duel, opp, zz) and CustomDuelOps.monster_race(duel, idx) == 10:
 					CustomDuelOps.change_position(duel, opp, zz, 0, -1)
 		2991: # Maju Garzett: ATK = combined original ATK of the 2 Tributed monsters
-			if kind == "normal_summon":
+			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
 				var gy_n := CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
 				var total_atk := 0
 				var found := 0
@@ -637,7 +637,7 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 							break
 				CustomDuelOps.set_stat_val(duel, p, z, total_atk, -1, false)
 		3030: # Great Maju Garzett: ATK = 2x original ATK of the 1 Tributed monster
-			if kind == "normal_summon":
+			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
 				var gy_n2 := CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
 				var trib_atk := 0
 				for i in range(gy_n2 - 1, -1, -1):
@@ -797,7 +797,7 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 			CustomDuelOps.damage(duel, def_p, CustomDuelOps.base_atk(duel, def_idx), false)
 		if acid == 3085: # Fenrir: skip opp next Draw Phase
 			CustomDuelOps.pflags(duel, def_p)["skip_dp_turn"] = t + 1
-		if acid == 3123 and CustomDuelOps.monster_race(duel, def_idx) == 9: # Insect Princess +500 ATK
+		if acid == 3123 and CustomDuelOps.monster_race(duel, def_idx) == 10: # Insect Princess +500 ATK
 			CustomDuelOps.add_stat_mod(duel, atk_p, atk_z, 500, 0, false)
 
 
@@ -825,7 +825,7 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 				CustomDuelOps.schedule_delayed(duel, CustomDuelOps.turn_number(duel), CustomDuelOps.PHASE_M2, p, 2866, "helpoemer_discard", {})
 		2870: # Pyramid Turtle: SS Zombie <= 2000 DEF from Deck
 			if by_battle and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var zi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 4 and CustomDuelOps.base_def(d, idx) <= 2000, true)
+				var zi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 2 and CustomDuelOps.base_def(d, idx) <= 2000, true)
 				if zi >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, zi, p, true, false)
 		2877: # Kryuel: coin toss destroy 1 opp monster
@@ -835,7 +835,7 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
 		2903: # Apprentice Magician: SS Lv<=2 Spellcaster FD DEF
 			if by_battle and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var si := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 2 and CustomDuelOps.monster_level(d, idx) <= 2, true)
+				var si := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 18 and CustomDuelOps.monster_level(d, idx) <= 2, true)
 				if si >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, si, p, false, true)
 		2931: # Pixie Knight: Spell from GY to top of Deck
@@ -855,7 +855,7 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 				var droll := CustomDuelOps.dice_roll(duel, p)
 				var pred_agido := func(d, idx, _s):
 					var lv := CustomDuelOps.monster_level(d, idx)
-					return CustomDuelOps.monster_race(d, idx) == 7 and (lv == droll or (droll == 6 and lv >= 6))
+					return CustomDuelOps.monster_race(d, idx) == 17 and (lv == droll or (droll == 6 and lv >= 6))
 				var fi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, pred_agido, true)
 				if fi >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, fi, p, true, false)
@@ -877,7 +877,7 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 			CustomDuelOps.damage(duel, opp, 400, false)
 		3127: # Lord Poison: SS Plant from GY except Lord Poison
 			if by_battle and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var pi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 10 and CustomDuelOps.raw_id(d, idx) != 3127, true)
+				var pi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 13 and CustomDuelOps.raw_id(d, idx) != 3127, true)
 				if pi >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, pi, p, true, false)
 
@@ -906,7 +906,7 @@ static func on_sent_to_gy(duel, p: int, cid: int, from_loc: int, opp_effect: boo
 			pass
 		3115: # Pinch Hopper: sent from field to GY -> SS Insect from hand
 			if from_loc < 11 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var hi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 9, true)
+				var hi := CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 10, true)
 				if hi >= 0:
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
 
@@ -1029,7 +1029,7 @@ static func modify_continuous(duel, p: int, z: int, cid: int, out: Dictionary) -
 		2840: # Arsenal Bug: if no other Insect -> ATK/DEF 1000
 			var has_other := false
 			for zz in 5:
-				if zz != z and CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.is_face_up(duel, p, zz) and CustomDuelOps.monster_race(duel, CustomDuelOps.zone_idx(duel, p, zz)) == 9:
+				if zz != z and CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.is_face_up(duel, p, zz) and CustomDuelOps.monster_race(duel, CustomDuelOps.zone_idx(duel, p, zz)) == 10:
 					has_other = true
 					break
 			if not has_other:
@@ -1046,7 +1046,7 @@ static func modify_continuous(duel, p: int, z: int, cid: int, out: Dictionary) -
 		3066: # Mudora: +200 per Fairy in GY
 			var fc := 0
 			for i in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE):
-				if CustomDuelOps.monster_race(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)) == 7:
+				if CustomDuelOps.monster_race(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)) == 17:
 					fc += 1
 			out["atk_delta"] = int(out.get("atk_delta", 0)) + fc * 200
 		3086: # Chaos Necromancer: 300 * monsters in GY

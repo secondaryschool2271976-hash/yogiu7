@@ -597,6 +597,16 @@ func _collect_native_events() -> void:
 		_native_event_pos += 1
 		var args: Array = event.get("args", [])
 		match str(event.get("kind", "")):
+			"table_sync":
+				for lp_p in 2:
+					_lp_targets[lp_p] = engine.m.u16(JoeyMem.pl(lp_p) + JoeyMem.P_LP)
+				_emit("table_sync")
+			"summon_special":
+				for lp_p in 2:
+					_lp_targets[lp_p] = engine.m.u16(JoeyMem.pl(lp_p) + JoeyMem.P_LP)
+				_emit("summon_special", {"p": int(event.get("p", 0)), "zone": int(event.get("zone", 0)), "card": int(event.get("card", 0))})
+			"zone_clear":
+				_emit("zone_clear", {"p": int(event.get("p", 0)), "zone": int(event.get("zone", 0))})
 			"native_hand_shuffle":
 				var before := {}
 				for i in event.before:

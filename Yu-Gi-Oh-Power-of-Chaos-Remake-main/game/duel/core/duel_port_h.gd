@@ -789,20 +789,17 @@ func f551a40(e: int, other: int, hand: int) -> int:
 		var speed := f551990(idx)
 		if speed < f551990(m.u16(other)) or speed == 1:
 			return 0
+	var p := m.u8(e + 2) & 1
+	var raw_id := cards.id_of(idx) & 0xffff
+	if row < 0 and CustomCardEffects.handles(raw_id):
+		var z_raw: int = (m.u16(e + 2) >> 4) & 0x3f
+		var loc: int = CustomDuelOps.LOC_HAND if hand != 0 or z_raw == 11 else (CustomDuelOps.LOC_FIELD_MONSTER if z_raw < 5 else (CustomDuelOps.LOC_FIELD_ST if z_raw < 10 else (CustomDuelOps.LOC_FIELD_SPELL if z_raw == 10 else CustomDuelOps.LOC_GRAVE)))
+		var ctx: Dictionary = CustomCardEffects.build_core_ctx(self, e, other, hand)
+		return 1 if CustomCardEffects.can_activate(self, p, raw_id, loc, z_raw if z_raw <= 10 else -1, ctx) else 0
 	if (m.u16(e + 2) & 0xfc00) == 0x4400:
 		var id := effect_card_id(idx)
 		if not (id in [1099, 0x28a, 0x291, 0x2b0, 0x3f7, 0x3f8, 0x433, 0x434, 0x43a, 0x522, 0x49a, 0x4b3, 0x4b4, 0x587, 0x5fe]):
 			return 0
-	var p := m.u8(e + 2) & 1
-	var raw_id := cards.id_of(idx) & 0xffff
-	if row < 0 and CustomCardEffects.handles(raw_id):
-		var z_raw := (m.u16(e + 2) >> 4) & 0x3f
-		var loc := CustomDuelOps.LOC_HAND if hand != 0 or z_raw == 11 else (CustomDuelOps.LOC_FIELD_MONSTER if z_raw < 5 else (CustomDuelOps.LOC_FIELD_ST if z_raw <= 10 else CustomDuelOps.LOC_GRAVE))
-		var ctx := {"other": other, "hand": hand}
-		if other != 0:
-			ctx["chain_p"] = m.u8(other + 2) & 1
-			ctx["chain_cid"] = cards.id_of(m.u16(other)) & 0xffff
-		return 1 if CustomCardEffects.can_activate(self, p, raw_id, loc, z_raw if z_raw <= 10 else -1, ctx) else 0
 	var cost := f551230(p, idx)
 	if hand:
 		cost += (f542f30(1, 0x436) + f542f30(0, 0x436)) * 500

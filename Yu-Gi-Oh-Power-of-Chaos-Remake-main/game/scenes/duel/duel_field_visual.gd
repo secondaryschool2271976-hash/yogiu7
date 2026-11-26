@@ -69,10 +69,46 @@ static func _texture(game: String, filename: String) -> Texture2D:
 	return assets.texture("%s/duel/field/%s.png" % [game, filename])
 
 static func texture_for(game: String, id: int) -> Texture2D:
-	# IDs sin entrada nativa no son archivos perdidos. Una entrada válida sigue
-	# pasando por Assets.texture, que avisa si falta su PNG esperado.
-	if id < 0 or id >= int(TERRAIN_COUNTS.get(game, 0)): return null
-	return _texture(game, resource_name(id))
+	var fname := resource_name(id)
+	if id >= 0 and id < int(TERRAIN_COUNTS.get(game, 0)):
+		var native_tex := _texture(game, fname)
+		if native_tex != null:
+			return native_tex
+	if id >= 0 and id < NAMES.size():
+		for fallback_game: String in ["joey", "kaiba", "yugi"]:
+			if fallback_game == game:
+				continue
+			if id < int(TERRAIN_COUNTS.get(fallback_game, 0)):
+				var fb_tex := _texture(fallback_game, fname)
+				if fb_tex != null:
+					return fb_tex
+	var normal_tex := _texture(game, "fie_normal")
+	if normal_tex != null:
+		return normal_tex
+	for fallback_game: String in ["joey", "kaiba", "yugi"]:
+		if fallback_game == game:
+			continue
+		var fb_normal := _texture(fallback_game, "fie_normal")
+		if fb_normal != null:
+			return fb_normal
+	return null
+
+
+static func banner_texture_for(game: String, id: int) -> Texture2D:
+	var fname := resource_name(id) + "_f?"
+	if id >= 0 and id < int(TERRAIN_COUNTS.get(game, 0)):
+		var native_tex := _texture(game, fname)
+		if native_tex != null:
+			return native_tex
+	if id >= 0 and id < NAMES.size():
+		for fallback_game: String in ["joey", "kaiba", "yugi"]:
+			if fallback_game == game:
+				continue
+			if id < int(TERRAIN_COUNTS.get(fallback_game, 0)):
+				var fb_tex := _texture(fallback_game, fname)
+				if fb_tex != null:
+					return fb_tex
+	return null
 
 static func intermediate_texture(game: String) -> Texture2D:
 	# Recurso 0 de field.txt; null.bmp de Joey representa ausencia de dibujo.
@@ -223,7 +259,7 @@ static func render(owner: Node2D, event: Dictionary, frame: int) -> bool:
 		var sine := Math.sin_fx(value * 2)
 		var alpha := sine >> 8
 		if alpha <= 0: return true
-		var texture := _texture(game, resource_name(id) + "_f?")
+		var texture := banner_texture_for(game, id)
 		if texture == null: return true
 		var sprite := _sprite(owner, texture, 1, alpha / 256.0)
 		if sprite != null:

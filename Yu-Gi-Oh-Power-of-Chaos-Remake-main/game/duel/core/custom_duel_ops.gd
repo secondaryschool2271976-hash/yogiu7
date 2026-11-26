@@ -847,7 +847,17 @@ static func move_pile_card(duel, from_p: int, from_loc: int, i: int, to_p: int, 
 	if to_loc == LOC_GRAVE:
 		var list: Array = state(duel)["sent_gy_this_turn"][to_p]
 		list.append(raw_id(duel, idx))
+	sync_visuals(duel)
 	return idx
+
+
+static func sync_visuals(duel) -> void:
+	if duel == null:
+		return
+	if is_joey(duel):
+		duel.events.append({"kind": "table_sync"})
+	elif duel.has_method("present"):
+		duel.present("table_sync", {})
 
 
 static func discard_hand_slot(duel, p: int, hand_i: int, trigger := 1) -> int:
@@ -898,6 +908,7 @@ static func send_zone_to_gy(duel, p: int, z: int) -> bool:
 			duel.issue(pbit | 0x90, z, 0, 0)
 	clear_zone_state(duel, p, z)
 	state(duel)["sent_gy_this_turn"][p].append(cid)
+	sync_visuals(duel)
 	return true
 
 
@@ -980,6 +991,7 @@ static func spin_zone(duel, p: int, z: int, to_bottom := false) -> bool:
 		else:
 			duel.f54e510(p, z)
 	clear_zone_state(duel, p, z)
+	sync_visuals(duel)
 	return true
 
 
@@ -1044,6 +1056,8 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 		shuffle_deck(duel, src_p)
 	var cid := raw_id(duel, idx)
 	state(duel)["summoned_this_turn"][target_p].append(cid)
+	if is_joey(duel):
+		duel.events.append({"kind": "summon_special", "p": target_p, "zone": z, "card": cid})
 	return z
 
 
@@ -1069,6 +1083,10 @@ static func special_summon_by_id(duel, p: int, cid: int, atk := -1, def_val := -
 			duel.m.set_u8(zn + 6, duel.m.u8(zn + 6) | 2)
 	if atk >= 0 or def_val >= 0:
 		set_stat_val(duel, p, z, atk, def_val, false)
+	if is_joey(duel):
+		duel.events.append({"kind": "summon_special", "p": p, "zone": z, "card": cid})
+	elif duel.has_method("present"):
+		duel.present("summon_special", {"p": p, "zone": z, "card": cid, "face_up": face_up, "def": def_pos})
 	return z
 
 
@@ -1115,6 +1133,7 @@ static func activate_trap_as_monster(duel, p: int, st_z: int, atk := 0, def_val 
 	state(duel)["trap_monsters"]["%d:%d" % [p, mz]] = {
 		"card_id": cid, "type": type_id, "attr": attr, "lv": lv, "atk": atk, "def": def_val,
 	}
+	sync_visuals(duel)
 	return mz
 
 
@@ -1145,6 +1164,7 @@ static func set_st_from_pile(duel, src_p: int, loc: int, i: int, target_p: int, 
 			duel.f5423a0(target_p, tz - 5, tmp, 1 if face_up else 0)
 	if loc == LOC_DECK:
 		shuffle_deck(duel, src_p)
+	sync_visuals(duel)
 	return tz
 
 
@@ -1169,6 +1189,7 @@ static func change_position(duel, p: int, z: int, def_pos: int, face_up := -1) -
 	if not is_joey(duel):
 		if def_pos >= 0:
 			duel.f54e660(p, z, def_pos, 1)
+	sync_visuals(duel)
 
 
 static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_until_ep := true) -> int:
@@ -1186,6 +1207,7 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 	if is_joey(duel):
 		duel.f570790(from_p, from_z, 0)
 		duel.f568610(to_p, to_z, tmp, 1 if was_face else 0, 1 if was_def else 0)
+		sync_visuals(duel)
 	else:
 		var origin := ((from_z & 0xff) << 8) | from_p
 		var target := ((to_z & 0xff) << 8) | to_p
@@ -1213,6 +1235,7 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 		duel.f570790(1, z1, 0)
 		duel.f568610(1, z1, t0, 1 if f0 else 0, 1 if d0 else 0)
 		duel.f568610(0, z0, t1, 1 if f1 else 0, 1 if d1 else 0)
+		sync_visuals(duel)
 	else:
 		duel.f54d6c0(0, (z0 << 8) | 0, (z1 << 8) | 1)
 	return true

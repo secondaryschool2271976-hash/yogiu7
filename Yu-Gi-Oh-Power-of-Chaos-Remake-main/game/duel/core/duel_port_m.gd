@@ -1160,8 +1160,9 @@ func f570e50(p: int = -1, z: int = -1, index: int = -1) -> int:
 			elif f551cb0(0, z + 5, 0) != 0:
 				mask = 8
 	if mask == 0 and (m.u8(a + 6) & 2) != 0:
-		var raw_st := cards.id_of(index) & 0xffff
-		if CustomCardEffects.handles(raw_st) and CustomCardEffects.can_activate(self, 0, raw_st, CustomDuelOps.LOC_FIELD_ST, z + 5, {}):
+		var raw_st: int = cards.id_of(index) & 0xffff
+		var st_loc: int = CustomDuelOps.LOC_FIELD_SPELL if z + 5 == 10 else CustomDuelOps.LOC_FIELD_ST
+		if CustomCardEffects.handles(raw_st) and CustomCardEffects.can_activate(self, 0, raw_st, st_loc, z + 5, {}):
 			mask = 8
 	if type > 20 and type < 23 and (m.u16(0xa1194a) & 0xc000) != 0: mask = 0
 	return mask
@@ -1363,7 +1364,17 @@ func f574420(p: int) -> int:
 				if (record & 0x40) != 0 and (record & 8) == 0:
 					var ref := ((source << 8) | p) if owner == p else ((target << 8) | defender)
 					f54c860(p, f401ad0(0x49e), ref, 3)
-			CustomCardEffects.on_battle_end(self, p, source, defender, -1 if (flags & 4) != 0 else target, (m.u8(0xa114c4 + p * 12) & 8) != 0, (m.u8(0xa114d0 - p * 12) & 8) != 0)
+			var atk_dead: bool = (m.u8(0xa114c4 + p * 12) & 8) != 0
+			var def_dead: bool = (m.u8(0xa114d0 - p * 12) & 8) != 0
+			if atk_dead:
+				var atk_raw: int = cards.id_of(m.u16(0xa114c6 + p * 12) & 0xfff) & 0xffff
+				if atk_raw > 0:
+					CustomCardEffects.on_destroyed(self, p, atk_raw, true, false)
+			if def_dead and (flags & 4) == 0:
+				var def_raw: int = cards.id_of(m.u16(0xa114d2 - p * 12) & 0xfff) & 0xffff
+				if def_raw > 0:
+					CustomCardEffects.on_destroyed(self, defender, def_raw, true, false)
+			CustomCardEffects.on_battle_end(self, p, source, defender, -1 if (flags & 4) != 0 else target, atk_dead, def_dead)
 			return 1
 
 func f5736f0(p: int) -> int:
