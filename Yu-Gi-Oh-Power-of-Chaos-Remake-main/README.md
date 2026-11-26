@@ -4,14 +4,31 @@
 
 # Yu-Gi-Oh! Power of Chaos Remake
 
-> **🤖 دليل الشات الجديد للمطور / الذكاء الاصطناعي (AI Assistant Handoff — Read First):**
-> عند بدء أي محادثة جديدة، اقرأ ملف [`/README.md`](../README.md) وملف المرجع الكامل للمستودعات [`docs/EXTERNAL_REPOSITORIES_REFERENCE.md`](docs/EXTERNAL_REPOSITORIES_REFERENCE.md) أولاً:
-> 1. **المستودع الأكثر إفادة والأولوية الأولى:** هو **`ProjectIgnis/CardScripts`** (`https://github.com/ProjectIgnis/CardScripts`) لأنه يحتوي على الكود البرمجي الفعلي (`c<password>.lua`) لكل بطاقة مقترناً بحقل `"password"` الموجود داخل `game/assets/cards/extra_cards.json`، ويُستخدم لمراجعة وإصلاح منطق وشروط تفعيل البطاقات داخل `game/duel/core/custom_effects_*.gd`.
-> 2. **بقية المستودعات المعتمدة والموثقة في المشروع:**
->    - `ProjectIgnis/BabelCDB`: `https://github.com/ProjectIgnis/BabelCDB` (قاعدة بيانات SQLite للنصوص والأرقام الرسمية).
->    - `iconmaster5326/YGOJSON`: `https://github.com/iconmaster5326/YGOJSON` (قاعدة بيانات JSON المجمعة للبطاقات).
->    - `YGOPRODeck API v7`: `https://db.ygoprodeck.com/api/v7/cardinfo.php` (مع الالتزام بتحميل الصور محلياً وعدم ربطها مباشرة أثناء اللعب).
-> 3. **خطوات الفحص الإلزامية بالترتيب:** راجع [`/README.md`](../README.md) للتعرف على هيكل المحركين (`core` و `joey`)، وقواعد Godot 4.7 الصارمة للأنواع، وتشغيل اختبارات `tools/tests/test_ygojson_and_extra_effects.py`.
+> **🤖 دليل استكمال المشروع للشات الجديد (AI Assistant Handoff & Repositories Guide — اقرأ هذا القسم أولاً):**
+>
+> **أولاً: خطوات العمل الإلزامية بالترتيب لأي شات جديد:**
+> 1. **استخدام المستودع المرجعي الأكثر إفادة (`ProjectIgnis/CardScripts`):**
+>    - الرابط: `https://github.com/ProjectIgnis/CardScripts`
+>    - **لماذا هو الأكثر إفادة؟** لأن قاعدة بيانات مشروعنا (`game/assets/cards/extra_cards.json`) تحتوي بالفعل على جميع بيانات الـ 630 بطاقة الإضافية (`2500..3129`) من `YGOJSON` (الأسماء والوصف بـ 7 لغات منها العربية، الهجوم، الدفاع، الصور المحلية `.webp`، وحقل `"password"` المكون من 8 أرقام لكل بطاقة). كل `"password"` يطابق مباشرة ملف `c<password>.lua` في مستودع `ProjectIgnis/CardScripts`، والذي يشرح برمجياً شروط التفعيل (`SetCondition`)، التكلفة (`SetCost`)، الأهداف (`SetTarget`)، والتنفيذ (`SetOperation`).
+> 2. **قائمة المستودعات والمصادر المرجعية المعتمدة في المشروع:**
+>    - **1. `ProjectIgnis/CardScripts` (الأكثر إفادة — منطق التأثيرات بلغة Lua):** `https://github.com/ProjectIgnis/CardScripts`
+>    - **2. `ProjectIgnis/BabelCDB` (قاعدة بيانات SQLite للنصوص والأرقام الرسمية):** `https://github.com/ProjectIgnis/BabelCDB`
+>    - **3. `iconmaster5326/YGOJSON` (قاعدة بيانات JSON المجمعة — فرع `aggregate`):** `https://github.com/iconmaster5326/YGOJSON`
+>    - **4. `YGOPRODeck JSON API v7` (بيانات وصور البطاقات):** `https://db.ygoprodeck.com/api/v7/cardinfo.php` *(تنبيه: يجب دائماً حفظ الصور محلياً داخل المشروع وعدم سحبها من الرابط مباشرة أثناء اللعب لتجنب حظر الـ IP)*.
+> 3. **خريطة ملفات المحركين (Core + Joey) وتأثيرات البطاقات:**
+>    - الموزع الرئيسي للتأثيرات المخصصة (`cid >= 2500` فقط لحماية البطاقات الأصلية `0..2499`): `game/duel/core/custom_card_effects.gd`
+>    - العمليات والأنيميشن الموحدة للمحركين: `game/duel/core/custom_duel_ops.gd`
+>    - تأثيرات الفخاخ المخصصة (97 بطاقة): `game/duel/core/custom_effects_traps.gd`
+>    - تأثيرات السحر المخصصة (146 بطاقة): `game/duel/core/custom_effects_spells.gd`
+>    - تأثيرات الوحوش المخصصة 1 (`2500..2799`، 184 بطاقة): `game/duel/core/custom_effects_monsters_1.gd`
+>    - تأثيرات الوحوش المخصصة 2 (`2800..3129`، 162 بطاقة): `game/duel/core/custom_effects_monsters_2.gd`
+>    - قواعد الدمج والطقوس الإضافية: `game/duel/core/extra_card_effects.gd`
+>    - أرقام العناصر في المحرك (`CustomDuelOps.monster_attr`): `1`=LIGHT, `2`=DARK, `3`=WATER, `4`=FIRE, `5`=EARTH, `6`=WIND, `7`=DIVINE.
+>    - أرقام الفصائل في المحرك (`CustomDuelOps.monster_race`): `1`=Dragon, `2`=Zombie, `3`=Fiend, `4`=Pyro, `5`=Sea Serpent, `6`=Rock, `7`=Machine, `8`=Fish, `9`=Dinosaur, `10`=Insect, `11`=Beast, `12`=Beast-Warrior, `13`=Plant, `14`=Aqua, `15`=Warrior, `16`=Winged Beast, `17`=Fairy, `18`=Spellcaster, `19`=Thunder, `20`=Reptile, `24`=Divine-Beast.
+> 4. **قواعد البناء الصارمة (Godot 4.7 & CI Audit):**
+>    - لا تستخدم `:=` مع قيم `Variant` غير محددة النوع في GDScript.
+>    - لا تضف ملفات جديدة غير مدرجة في `tools/prepare_public.py` حتى لا يفشل فحص `python tools/build_windows.py --audit`.
+>    - شغّل دائماً اختبارات التحقق قبل إنهاء أي مهمة: `python3 -m unittest tools/tests/test_ygojson_and_extra_effects.py -v`.
 
 **English** | [Español](README.es.md)
 
