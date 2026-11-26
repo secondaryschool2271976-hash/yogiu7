@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 432 432">
+  <defs>
+    <radialGradient id="cosmic" cx="0.5" cy="0.5" r="0.72">
+      <stop offset="0" stop-color="#1d4490"/>
+      <stop offset="0.55" stop-color="#0b102b"/>
+      <stop offset="1" stop-color="#04050e"/>
+    </radialGradient>
+  </defs>
+  <rect width="432" height="432" fill="url(#cosmic)"/>
+</svg>

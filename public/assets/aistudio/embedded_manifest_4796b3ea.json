@@ -1,0 +1,95 @@
+{
+  "format": 1,
+  "pack_filename": "bundled_data.pck",
+  "total_bytes": 307552788,
+  "sha256": "a92ffd84fbf6bb71d696fb2a596f5f4cfc718f00b14ca852ab1a54fe3cd3f55a",
+  "chunk_size_bytes": 67108864,
+  "parts": [
+    {
+      "name": "pack_000.part",
+      "bytes": 67108864,
+      "sha256": "5fbf2b1700acb699169096198a0cc8cd8bdda8a3b6b964e71bf9a13de4f01e88"
+    },
+    {
+      "name": "pack_001.part",
+      "bytes": 67108864,
+      "sha256": "8b7fe823fad64d31ec271a092e278f2fb705a6b3d444097eac994f7227202403"
+    },
+    {
+      "name": "pack_002.part",
+      "bytes": 67108864,
+      "sha256": "9cc664e1631adc84a0c30af82306c4ea97646a8a4d02bb7be2c66cd582214994"
+    },
+    {
+      "name": "pack_003.part",
+      "bytes": 67108864,
+      "sha256": "d1cacac826733ccdd997e1698f1e77be427ce3963b47655d541ce8a0e6f81c4b"
+    },
+    {
+      "name": "pack_004.part",
+      "bytes": 39117332,
+      "sha256": "22d2c3962018bcca12520c9aadc4687c058c0decafb707918acc7c59317bad98"
+    }
+  ],
+  "games": [
+    "yugi",
+    "kaiba",
+    "joey"
+  ],
+  "cards_total": 771,
+  "validation_receipt": {
+    "content_pack": "bundled_data.pck",
+    "sha256": "a92ffd84fbf6bb71d696fb2a596f5f4cfc718f00b14ca852ab1a54fe3cd3f55a",
+    "original_game_data_included": true,
+    "games": [
+      "yugi",
+      "kaiba",
+      "joey"
+    ],
+    "cards_total": 771,
+    "card_slots_total": 1114,
+    "files": 8336,
+    "inventory": {
+      "games": {
+        "yugi": {
+          "data_entries": 2774,
+          "voice_entries": 118,
+          "region": "X"
+        },
+        "kaiba": {
+          "data_entries": 3226,
+          "voice_entries": 119,
+          "region": "\u001a"
+        },
+        "joey": {
+          "data_entries": 3568,
+          "voice_entries": 132,
+          "region": "\u0011"
+        }
+      },
+      "card_pools": {
+        "yugi": 155,
+        "kaiba": 315,
+        "joey": 350
+      },
+      "cards_total": 1114,
+      "cards_with_art": 775,
+      "converted": {
+        "txt": 515,
+        "png": 6778,
+        "png_keyed": 2328,
+        "deck": 85,
+        "raw": 66,
+        "wav": 366
+      },
+      "layouts": 504,
+      "dialogs": 4315,
+      "master": "joey",
+      "duel_images": {
+        "yugi": 86016,
+        "kaiba": 86016,
+        "joey": 4734976
+      }
+    }
+  }
+}

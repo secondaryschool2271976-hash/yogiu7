@@ -1,0 +1,17 @@
+{
+  "name": "poc-online-relay",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Online platform, player profiles, friends, and WebSocket duel relay server for Yu-Gi-Oh Power of Chaos Remake",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  }
+}

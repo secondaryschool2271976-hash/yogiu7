@@ -1,0 +1,1116 @@
+extends Node2D
+## Botones propios del selector: ajustes y sonido abajo a la izquierda, salir a la derecha.
+## Medallones dorados. La
+## configuracion: musica, aspecto, FPS y velocidad de simulacion.
+## Audio en SaveData; aspecto, FPS y simulacion en LauncherSettings (content.cfg).
+
+signal changed
+signal exit_requested
+signal update_requested
+signal card_code_requested
+signal github_repo_requested
+var update_available := false
+
+const DialogTheme = preload("res://scenes/launcher/dialog_theme.gd")
+const _CardBackArt = preload("res://core/card_back_art.gd")
+const RADIUS := 23.0
+const MARGIN := 18.0
+const ICON_SIZE := 21.0
+const GOLD := DialogTheme.GOLD
+const GOLD_LIGHT := DialogTheme.GOLD_LIGHT
+const GOLD_DARK := DialogTheme.GOLD_DARK
+const BRONZE := Color(0.18, 0.56, 0.78)
+const STONE := DialogTheme.BG_VOID
+const OUTLINE := DialogTheme.OUTLINE
+const CYAN := DialogTheme.CYAN
+const CYAN_SOFT := DialogTheme.CYAN_SOFT
+const PANEL_SIZE := Vector2(560, 588)
+const ROW_TOP := 82.0             # primera fila bajo la cabecera del panel
+const ROW_PITCH := 43.0
+const CONTROL_X := 224.0          # columna de valores, alineada en todas las filas
+const KEY_STEP := 0.05
+const OPTION_KEYS := ["aspect", "fps", "speed", "fast_play", "translations", "card_style", "bg_style", "card_back"]
+const Tips = preload("res://scenes/launcher/tooltip_texts.gd")
+const TOOLTIP_DELAY := 0.45
+
+# Iconos de linea estilo Feather (viewBox 24), trazo blanco para tintarlos al dibujar.
+const SVG_HEAD := "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"
+const SVG_SOUND := SVG_HEAD + "<polygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'/><path d='M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07'/></svg>"
+const SVG_MUTED := SVG_HEAD + "<polygon points='11 5 6 9 2 9 2 15 6 15 11 19 11 5'/><line x1='23' y1='9' x2='17' y2='15'/><line x1='17' y1='9' x2='23' y2='15'/></svg>"
+const SVG_GEAR := SVG_HEAD + "<circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>"
+const SVG_CLOSE := SVG_HEAD + "<line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg>"
+const SVG_EXIT := SVG_HEAD + "<path d='M18.36 6.64a9 9 0 1 1-12.73 0'/><line x1='12' y1='2' x2='12' y2='12'/></svg>"
+const SVG_UPDATE := SVG_HEAD + "<path d='M20 7a9 9 0 1 0 1 9'/><polyline points='20 2 20 8 14 8'/></svg>"
+const SVG_CLOUD := SVG_HEAD + "<path d='M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z'/><polyline points='10 13 12 11 14 13'/><line x1='12' y1='11' x2='12' y2='16'/></svg>"
+
+const DEFAULT_VOLUME := 0.5
+var volume := DEFAULT_VOLUME
+var muted := false
+var pointer_mode := "menu"
+var panel_open := false
+
+var _icons := {}             # nombre -> {tex, offset} (offset = centrado optico medido)
+var _hover := ""             # "sound", "settings", "close", "slider", "mute"
+var _dragging := false
+var _focused_row := 0
+var _time := 0.0
+var _tip_key := ""
+var _tip_point := Vector2.ZERO
+var _tip_at := 0.0
+var _tip_text := ""
+var _tip_paragraph := TextParagraph.new()
+var _font: Font = Assets.ui_font(700)
+var _reset_dialog := ConfirmationDialog.new()
+var _reset_result := AcceptDialog.new()
+var _export_dialog := FileDialog.new()
+var _import_dialog := FileDialog.new()
+var _ydc_dialog := FileDialog.new()
+var _ydc_export_dialog := FileDialog.new()
+var _cloud_dialog: AcceptDialog = preload("res://scenes/launcher/cloud_dialog.gd").new()
+const SaveStore = preload("res://core/save_store.gd")
+var _save_choice := "reset"  # fila Partida: "reset" o "pack" (Importar .pck, solo Android)
+var _backup_choice := "export"
+
+
+func _ready() -> void:
+	z_index = 10
+	add_child(_reset_dialog)
+	add_child(_reset_result)
+	_reset_dialog.confirmed.connect(_confirm_reset)
+	_export_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	_export_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_export_dialog.use_native_dialog = true
+	_export_dialog.current_file = "system.json"
+	_export_dialog.filters = PackedStringArray(["*.json;Save JSON;application/json"])
+	_export_dialog.file_selected.connect(_on_export_save)
+	add_child(_export_dialog)
+	_import_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_import_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_import_dialog.use_native_dialog = true
+	_import_dialog.filters = PackedStringArray(["*.json;Save JSON;application/json", "*.*;All files;*/*"])
+	_import_dialog.file_selected.connect(_on_import_save)
+	add_child(_import_dialog)
+	_ydc_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_ydc_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_ydc_dialog.use_native_dialog = true
+	_ydc_dialog.filters = PackedStringArray(["*.ydc,*.YDC;YDC Deck File;application/octet-stream", "*.*;All files;*/*"])
+	_ydc_dialog.file_selected.connect(_on_import_ydc)
+	add_child(_ydc_dialog)
+	_ydc_export_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	_ydc_export_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_ydc_export_dialog.use_native_dialog = true
+	_ydc_export_dialog.current_file = "Deck.ydc"
+	_ydc_export_dialog.filters = PackedStringArray(["*.ydc;YDC Deck File;application/octet-stream"])
+	_ydc_export_dialog.file_selected.connect(_on_export_ydc)
+	add_child(_ydc_export_dialog)
+	add_child(_cloud_dialog)
+	DialogTheme.apply(_reset_dialog, true)
+	DialogTheme.apply(_reset_result)
+	DialogTheme.apply(_cloud_dialog)
+	_reset_result.ok_button_text = "OK"
+	CloudSync.changed.connect(_cloud_changed)
+	get_window().mouse_exited.connect(_clear_tooltip)
+	get_viewport().size_changed.connect(_clear_tooltip)
+	# Los iconos se rasterizan grandes y se dibujan reducidos: con mipmaps no se ven dentados.
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	var saved: Dictionary = SaveData.data.get("launcher", {})
+	var config := ConfigFile.new()
+	config.load(Paths.settings_path())
+	volume = clampf(float(config.get_value("launcher", "music_volume", saved.get("music_volume", DEFAULT_VOLUME))), 0.0, 1.0)
+	muted = bool(config.get_value("launcher", "music_muted", saved.get("music_muted", false)))
+	pointer_mode = "menu"
+	for pair in [["sound", SVG_SOUND], ["muted", SVG_MUTED], ["gear", SVG_GEAR],
+			["close", SVG_CLOSE], ["exit", SVG_EXIT], ["update", SVG_UPDATE], ["cloud", SVG_CLOUD]]:
+		_icons[pair[0]] = _rasterize(pair[1])
+	_icons["reimport"] = _rasterize(SVG_UPDATE.replace("stroke-width='2'", "stroke-width='3.4'"))
+
+
+## Volumen efectivo de la musica (0..1).
+func level() -> float:
+	return 0.0 if muted else volume
+
+
+func _process(delta: float) -> void:
+	_time += delta
+	queue_redraw()
+
+
+# --- geometria -----------------------------------------------------------------------------
+
+## Pantalla visible: el selector se estira al ancho del monitor (aspecto EXPAND), asi que los
+## botones van a las esquinas reales y el panel al centro real.
+func _screen() -> Vector2:
+	return get_viewport_rect().size
+
+
+func _sound_center() -> Vector2:
+	return _settings_center() + Vector2(RADIUS * 2.0 + 14.0, 0)
+
+
+func _exit_center() -> Vector2:
+	return Vector2(_screen().x - MARGIN - RADIUS, _screen().y - MARGIN - RADIUS)
+
+
+## Google Drive: medallon propio junto al de salir (antes en el panel de ajustes).
+func _cloud_center() -> Vector2:
+	return _exit_center() - Vector2(RADIUS * 2.0 + 14.0, 0)
+
+
+func _update_center() -> Vector2:
+	return _cloud_center() - Vector2(RADIUS * 2.0 + 14.0, 0)
+
+
+func _settings_center() -> Vector2:
+	return Vector2(MARGIN + RADIUS, _screen().y - MARGIN - RADIUS)
+
+
+func _panel_rect() -> Rect2:
+	var panel_size := Vector2(560, 590) if _mobile_controls() else Vector2(560, 580)
+	return Rect2((_screen() - panel_size) / 2.0, panel_size)
+
+
+func _row_top() -> float:
+	return 62.0 if _mobile_controls() else 66.0
+
+
+func _row_pitch() -> float:
+	return 34.0 if _mobile_controls() else 36.0
+
+
+func _mobile_controls() -> bool:
+	return OS.has_feature("mobile") or Paths.cmdline_value("mobile-controls") == "true"
+
+
+func _mode_rect(mode: String) -> Rect2:
+	return _control_rect(OPTION_KEYS.size() + 1) if mode == "menu" else Rect2()
+
+
+func _reset_row() -> int:
+	return (OPTION_KEYS.size() + 2) if _mobile_controls() else (OPTION_KEYS.size() + 1)
+
+
+func _backup_row() -> int:
+	return _reset_row() + 1
+
+
+func _code_row() -> int:
+	return _reset_row() + 2
+
+
+func _repo_row() -> int:
+	return _reset_row() + 3
+
+
+## Recursos por paquete .pck: Importar .pck sustituye el paquete (p. ej. para añadir Kaiba).
+func _pack_available() -> bool:
+	return FileAccess.file_exists(Paths.user_content_pack_path())
+
+
+## Fila Partida: reiniciar; en Android con recursos, a la derecha Importar .pck.
+func _save_rect(choice: String) -> Rect2:
+	var box := _control_rect(_reset_row())
+	if not _pack_available():
+		return box if choice == "reset" else Rect2()
+	var width := (box.size.x - 8.0) / 2.0
+	return Rect2(box.position + Vector2(width + 8.0 if choice == "pack" else 0.0, 0), Vector2(width, box.size.y))
+
+
+## Fila Respaldo: Export .json / Import .json / Import .ydc / Export .ydc para transferir cartas, progreso y mazos.
+func _backup_rect(choice: String) -> Rect2:
+	var box := _control_rect(_backup_row())
+	var gap := 5.0
+	var width := (box.size.x - gap * 3.0) / 4.0
+	var idx := 0
+	if choice == "import_save":
+		idx = 1
+	elif choice == "import_ydc":
+		idx = 2
+	elif choice == "export_ydc":
+		idx = 3
+	return Rect2(box.position + Vector2((width + gap) * float(idx), 0), Vector2(width, box.size.y))
+
+
+func _close_center() -> Vector2:
+	var r := _panel_rect()
+	return Vector2(r.end.x - 34, r.position.y + 36)
+
+
+## Fila completa del panel: 0 = musica, 1..5 = selectores.
+func _row_rect(row: int) -> Rect2:
+	var r := _panel_rect()
+	var pitch := _row_pitch()
+	return Rect2(r.position.x + 18, r.position.y + _row_top() + row * pitch, r.size.x - 36, pitch - 6)
+
+
+## Caja de valor de una fila, con la misma columna y anchura para musica y selectores.
+func _control_rect(row: int) -> Rect2:
+	var line := _row_rect(row)
+	var x := _panel_rect().position.x + CONTROL_X
+	return Rect2(x, line.get_center().y - 14.5, line.end.x - 14 - x, 29)
+
+
+func _slider_rect() -> Rect2:
+	var box := _control_rect(0)
+	return Rect2(box.position.x + 14, box.get_center().y - 4, box.size.x - 86, 8)
+
+
+func _option_rect(row: int) -> Rect2:
+	return _control_rect(row + 1)
+
+
+func _hit(pos: Vector2) -> String:
+	if panel_open:
+		if _control_rect(_code_row()).has_point(pos):
+			return "card_code"
+		for choice in ["export_save", "import_save", "import_ydc", "export_ydc"]:
+			if _backup_rect(choice).has_point(pos):
+				return choice
+		for choice in ["reset", "pack"]:
+			if _save_rect(choice).has_point(pos):
+				return choice
+		if _mobile_controls() and _mode_rect("menu").has_point(pos):
+			return "menu"
+		if pos.distance_to(_close_center()) <= 16:
+			return "close"
+		if _slider_rect().grow_individual(8, 12, 8, 12).has_point(pos):
+			return "slider"
+		for row in OPTION_KEYS.size():
+			if _option_rect(row).has_point(pos):
+				return OPTION_KEYS[row]
+		return "panel" if _panel_rect().has_point(pos) else "outside"
+	if pos.distance_to(_sound_center()) <= RADIUS:
+		return "sound"
+	if pos.distance_to(_settings_center()) <= RADIUS:
+		return "settings"
+	if pos.distance_to(_exit_center()) <= RADIUS:
+		return "exit"
+	if pos.distance_to(_cloud_center()) <= RADIUS:
+		return "cloud"
+	if update_available and pos.distance_to(_update_center()) <= RADIUS:
+		return "update"
+	return ""
+
+
+# --- entrada -------------------------------------------------------------------------------
+
+## _input: va antes que el _unhandled_input del selector, que asi no mueve la seleccion
+## ni abre un juego mientras se usan estos botones o el panel.
+func _input(event: InputEvent) -> void:
+	if _dialog_visible():
+		_clear_tooltip()
+		return
+	if event is InputEventMouseButton or event is InputEventKey or event is InputEventScreenTouch:
+		_clear_tooltip()
+	var local_pos := Vector2.ZERO
+	if event is InputEventMouse:
+		local_pos = get_global_transform_with_canvas().affine_inverse() * event.position
+	if event is InputEventMouseMotion:
+		_hover = _hit(local_pos)
+		if event.device != InputEvent.DEVICE_ID_EMULATION and not _dragging and event.button_mask == 0:
+			_track_tooltip(local_pos)
+		else:
+			_clear_tooltip()
+		if _dragging:
+			_set_volume_from(local_pos.x)
+		if panel_open or _hover != "":
+			get_viewport().set_input_as_handled()
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if not event.pressed:
+			if _dragging:
+				_dragging = false
+				_save()
+			if panel_open:
+				get_viewport().set_input_as_handled()
+			return
+		match _hit(local_pos):
+			"sound":
+				_toggle_mute()
+			"settings":
+				_open_panel(true)
+			"exit":
+				exit_requested.emit()
+			"update":
+				update_requested.emit()
+			"reset":
+				_focused_row = _reset_row()
+				_save_choice = "reset"
+				_request_reset()
+			"cloud":
+				_cloud_dialog.popup_centered()
+			"pack":
+				_focused_row = _reset_row()
+				_save_choice = "pack"
+				_import_pack()
+			"export_save":
+				_focused_row = _backup_row()
+				_backup_choice = "export"
+				_request_export_save()
+			"import_save":
+				_focused_row = _backup_row()
+				_backup_choice = "import"
+				_request_import_save()
+			"import_ydc":
+				_focused_row = _backup_row()
+				_backup_choice = "ydc"
+				open_ydc_import()
+			"export_ydc":
+				_focused_row = _backup_row()
+				_backup_choice = "export_ydc"
+				open_ydc_export()
+			"card_code":
+				_focused_row = _code_row()
+				_open_panel(false)
+				card_code_requested.emit()
+			"menu":
+				pointer_mode = "menu"
+				_focused_row = OPTION_KEYS.size() + 1
+				_save_pointer_mode()
+			"close", "outside":
+				_open_panel(false)
+			"slider":
+				_focused_row = 0
+				_dragging = true
+				_set_volume_from(local_pos.x)
+			"aspect", "fps", "speed", "fast_play", "translations", "card_style", "bg_style", "card_back":
+				_focused_row = OPTION_KEYS.find(_hit(local_pos)) + 1
+				_cycle_option(_focused_row - 1, 1)
+			"panel":
+				pass
+			_:
+				return
+		get_viewport().set_input_as_handled()
+		return
+	if not panel_open:
+		return
+	# Arriba/abajo eligen fila; izquierda/derecha cambian su valor.
+	if event.is_action_pressed("ui_cancel"):
+		_open_panel(false)
+	elif event.is_action_pressed("ui_up"):
+		_focused_row = wrapi(_focused_row - 1, 0, _code_row() + 1)
+	elif event.is_action_pressed("ui_down"):
+		_focused_row = wrapi(_focused_row + 1, 0, _code_row() + 1)
+	elif event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		var step := -1 if event.is_action_pressed("ui_left") else 1
+		if _focused_row == 0:
+			_set_volume(volume + KEY_STEP * step)
+			_save()
+		elif _focused_row < _reset_row():
+			_cycle_option(_focused_row - 1, step)
+		elif _focused_row == _reset_row() and _pack_available():
+			_save_choice = "pack" if _save_choice == "reset" else "reset"
+		elif _focused_row == _backup_row():
+			var choices := ["export", "import", "ydc", "export_ydc"]
+			_backup_choice = choices[wrapi(choices.find(_backup_choice) + step, 0, choices.size())]
+	elif event.is_action_pressed("ui_accept"):
+		if _focused_row == _code_row():
+			_open_panel(false)
+			card_code_requested.emit()
+		elif _focused_row == _backup_row():
+			if _backup_choice == "import":
+				_request_import_save()
+			elif _backup_choice == "ydc":
+				open_ydc_import()
+			elif _backup_choice == "export_ydc":
+				open_ydc_export()
+			else:
+				_request_export_save()
+		elif _focused_row == _reset_row():
+			if _save_choice == "pack" and _pack_available():
+				_import_pack()
+			else:
+				_request_reset()
+		elif _focused_row >= 1:
+			_cycle_option(_focused_row - 1, 1)
+	get_viewport().set_input_as_handled()
+
+
+func _import_pack() -> void:
+	var setup: Control = load("res://scenes/launcher/android_content_setup.gd").new()
+	setup.replace = true
+	Game.goto(setup)
+
+
+func _request_export_save() -> void:
+	_export_dialog.current_file = "system.json"
+	_export_dialog.popup_file_dialog()
+
+
+func _request_import_save() -> void:
+	_import_dialog.popup_file_dialog()
+
+
+func open_ydc_import() -> void:
+	_ydc_dialog.popup_file_dialog()
+
+
+func open_ydc_export() -> void:
+	_ydc_export_dialog.current_file = "Deck.ydc"
+	_ydc_export_dialog.popup_file_dialog()
+
+
+func _count_collection(save: Dictionary) -> Vector2i:
+	var total := 0
+	var coll: Dictionary = save.get("collection", {})
+	for key in coll:
+		total += int(coll[key])
+	return Vector2i(coll.size(), total)
+
+
+func _tr(ar: String, es: String, en: String) -> String:
+	if Assets.lang == "a":
+		return ar
+	return es if Assets.lang == "s" else en
+
+
+func _on_export_save(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		_reset_result.title = _tr("فشل التصدير", "Error al exportar", "Export failed")
+		_reset_result.dialog_text = _tr("تعذر حفظ الملف: ", "No se pudo guardar el archivo: ", "Could not write file: ") + error_string(FileAccess.get_open_error())
+		_reset_result.popup_centered()
+		return
+	file.store_string(JSON.stringify(SaveData.data, "\t"))
+	file.flush()
+	var err := file.get_error()
+	file.close()
+	if err != OK:
+		_reset_result.title = _tr("فشل التصدير", "Error al exportar", "Export failed")
+		_reset_result.dialog_text = _tr("خطأ في الكتابة: ", "Error al escribir la partida: ", "Write error: ") + error_string(err)
+	else:
+		var counts := _count_collection(SaveData.data)
+		_reset_result.title = _tr("تم تصدير الحفظ", "Partida exportada", "Save exported")
+		_reset_result.dialog_text = _tr(
+			"تم الحفظ بنجاح (%d بطاقة مميزة، %d إجمالاً).",
+			"Guardado correctamente (%d cartas distintas, %d en total).",
+			"Exported successfully (%d unique cards, %d total)."
+		) % [counts.x, counts.y]
+	_reset_result.popup_centered()
+
+
+func _resolve_card_id(entry: Variant) -> int:
+	if CardDB.cards.is_empty():
+		CardDB.load_db()
+	if entry is int or entry is float:
+		var numeric_id: int = int(entry)
+		if not CardDB.by_id(numeric_id).is_empty():
+			return numeric_id
+	var raw: String = str(entry).strip_edges()
+	if raw.is_empty():
+		return -1
+	if raw.is_valid_int():
+		var parsed_id: int = raw.to_int()
+		if not CardDB.by_id(parsed_id).is_empty():
+			return parsed_id
+	var padded_pwd: String = raw.lpad(8, "0") if raw.is_valid_int() else ""
+	var needle: String = raw.to_lower()
+	for card: Dictionary in CardDB.cards:
+		var cid: int = int(card.get("internal_id", -1))
+		if cid <= 0:
+			continue
+		if padded_pwd != "":
+			var card_pwd: String = str(card.get("password", "")).strip_edges()
+			if card_pwd != "" and (card_pwd == raw or card_pwd.lpad(8, "0") == padded_pwd):
+				return cid
+		if CardDB.name_of(cid, "eng").strip_edges().to_lower() == needle \
+				or CardDB.name_of(cid, "ara").strip_edges().to_lower() == needle \
+				or CardDB.name_of(cid, "spa").strip_edges().to_lower() == needle:
+			return cid
+	return -1
+
+
+func _import_card_pack(parsed: Dictionary) -> void:
+	if CardDB.cards.is_empty():
+		CardDB.load_db()
+	if SaveData.data.is_empty():
+		SaveData.load_or_create()
+	var added_unique: int = 0
+	if bool(parsed.get("unlock_all", false)):
+		SaveData.unlock_all()
+		added_unique = CardDB.cards.size()
+	var spec: Variant = parsed.get("add_cards", null)
+	if spec is Dictionary:
+		SaveData.data.erase("starter_pending")
+		var coll: Dictionary = SaveData.data.get_or_add("collection", {})
+		for raw_key: Variant in (spec as Dictionary).keys():
+			var cid: int = _resolve_card_id(raw_key)
+			if cid <= 0:
+				continue
+			var wanted: int = clampi(int((spec as Dictionary)[raw_key]), 1, 99)
+			coll[str(cid)] = maxi(wanted, SaveData.card_count(cid))
+			added_unique += 1
+		SaveData.save()
+	elif spec is Array:
+		SaveData.data.erase("starter_pending")
+		var coll: Dictionary = SaveData.data.get_or_add("collection", {})
+		for item: Variant in (spec as Array):
+			var cid: int = _resolve_card_id(item)
+			if cid <= 0:
+				continue
+			coll[str(cid)] = maxi(3, SaveData.card_count(cid))
+			added_unique += 1
+		SaveData.save()
+	changed.emit()
+	var counts := _count_collection(SaveData.data)
+	_reset_result.title = _tr("تمت إضافة البطاقات", "Cartas añadidas", "Cards added")
+	_reset_result.dialog_text = _tr(
+		"تمت إضافة %d بطاقة إلى مجموعتك مع الحفاظ على تقدمك (%d بطاقة مميزة، %d إجمالاً).",
+		"Se añadieron %d cartas conservando tu progreso (%d distintas, %d en total).",
+		"Added %d cards while keeping your progress (%d unique, %d total)."
+	) % [added_unique, counts.x, counts.y]
+	_reset_result.popup_centered()
+
+
+func _on_import_save(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		_reset_result.title = _tr("فشل الاستيراد", "Error al importar", "Import failed")
+		_reset_result.dialog_text = _tr("تعذر فتح الملف: ", "No se pudo abrir el archivo: ", "Could not open file: ") + error_string(FileAccess.get_open_error())
+		_reset_result.popup_centered()
+		return
+	var text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if parsed is Dictionary and (parsed.has("add_cards") or bool(parsed.get("unlock_all", false))):
+		_import_card_pack(parsed)
+		return
+	if not SaveStore.valid(parsed):
+		_reset_result.title = _tr("ملف غير صالح", "Archivo no válido", "Invalid save file")
+		_reset_result.dialog_text = _tr(
+			"الملف المحدد ليس ملف system.json أو ملف بطاقات صالحاً.",
+			"El archivo seleccionado no es un system.json ni un archivo de cartas válido.",
+			"The selected file is not a valid system.json save or card pack."
+		)
+		_reset_result.popup_centered()
+		return
+	if SaveData.data.has("launcher"):
+		parsed["launcher"] = SaveData.data["launcher"]
+	var err := SaveStore.write_save(SaveData.path(), parsed)
+	if err != OK:
+		_reset_result.title = _tr("فشل الاستيراد", "Error al importar", "Import failed")
+		_reset_result.dialog_text = _tr("تعذر كتابة ملف الحفظ: ", "No se pudo escribir la partida: ", "Could not write save: ") + error_string(err)
+		_reset_result.popup_centered()
+		return
+	SaveData.load_or_create()
+	SaveData.saved.emit()
+	changed.emit()
+	var counts := _count_collection(SaveData.data)
+	_reset_result.title = _tr("تم استيراد الحفظ", "Partida importada", "Save imported")
+	_reset_result.dialog_text = _tr(
+		"تمت استعادة البطاقات والتقدم (%d بطاقة مميزة، %d إجمالاً).",
+		"Cartas y progreso restaurados (%d cartas distintas, %d en total).",
+		"Cards and progress restored (%d unique cards, %d total)."
+	) % [counts.x, counts.y]
+	_reset_result.popup_centered()
+
+
+func _on_import_ydc(path: String) -> void:
+	var res := SaveData.import_ydc_to_all_games(path)
+	if not bool(res.get("ok", false)):
+		_reset_result.title = "Import .YDC"
+		_reset_result.dialog_text = _tr(
+			"الملف المحدد ليس ملف مجموعة (.ydc) صالحاً.",
+			"El archivo seleccionado no es un mazo (.ydc) válido.",
+			"The selected file is not a valid .ydc deck file."
+		)
+		_reset_result.popup_centered()
+		return
+	SaveData.saved.emit()
+	changed.emit()
+	var deck_name := str(res.get("name", "Deck"))
+	var main_c := int(res.get("main_count", 0))
+	var fusion_c := int(res.get("fusion_count", 0))
+	var side_c := int(res.get("side_count", 0))
+	_reset_result.title = "Import .YDC"
+	_reset_result.dialog_text = _tr(
+		"تم استيراد المجموعة '%s' (%d رئيسية، %d دمج، %d جانبية) وتفعيلها في الأجزاء الثلاثة (Yugi / Kaiba / Joey).",
+		"Mazo '%s' importado (%d principal, %d fusión, %d side) y disponible en los 3 juegos.",
+		"Imported deck '%s' (%d Main, %d Fusion, %d Side) across all 3 games (Yugi / Kaiba / Joey)."
+	) % [deck_name, main_c, fusion_c, side_c]
+	_reset_result.popup_centered()
+
+
+func _on_export_ydc(path: String) -> void:
+	var res := SaveData.export_ydc_deck(path)
+	if not bool(res.get("ok", false)):
+		_reset_result.title = "Export .YDC"
+		_reset_result.dialog_text = _tr(
+			"تعذر استخراج ملف المجموعة (.ydc).",
+			"No se pudo exportar el mazo (.ydc).",
+			"Could not export the .ydc deck file."
+		)
+		_reset_result.popup_centered()
+		return
+	var deck_name := str(res.get("name", "Deck"))
+	var main_c := int(res.get("main_count", 0))
+	var fusion_c := int(res.get("fusion_count", 0))
+	var side_c := int(res.get("side_count", 0))
+	_reset_result.title = "Export .YDC"
+	_reset_result.dialog_text = _tr(
+		"تم استخراج المجموعة '%s.ydc' بنجاح (%d رئيسية، %d دمج، %d جانبية).",
+		"Mazo '%s.ydc' exportado correctamente (%d principal, %d fusión, %d side).",
+		"Exported deck '%s.ydc' successfully (%d Main, %d Fusion, %d Side)."
+	) % [deck_name, main_c, fusion_c, side_c]
+	_reset_result.popup_centered()
+
+
+func _request_reset() -> void:
+	_reset_dialog.title = _tr("إعادة ضبط اللعبة", "Reiniciar juego", "Reset game")
+	_reset_dialog.dialog_text = _tr(
+		"العودة إلى الحالة الأولية؟\nسيتم إعادة ضبط البطاقات والمجموعات والنتائج والتقدم والإعادات والإعدادات.\nستبقى المجموعات المبدئية الثلاث جاهزة، مع الحفاظ على الموارد المستوردة.\nسيتم الاحتفاظ بنسخة احتياطية من الحالة السابقة.",
+		"¿Volver al estado inicial?\nSe reiniciarán cartas, barajas, resultados, progreso, repeticiones y ajustes.\nLas tres barajas iniciales quedarán listas. Tus recursos importados se conservan.\nSe guardará una copia de seguridad del estado anterior.",
+		"Return to the initial state?\nCards, decks, results, progress, replays and settings will be reset.\nAll three starter decks will be ready. Imported resources are preserved.\nA backup of the previous state will be kept."
+	)
+	_reset_dialog.ok_button_text = "YES"
+	_reset_dialog.cancel_button_text = "NO"
+	_reset_dialog.popup_centered()
+	_reset_dialog.get_cancel_button().grab_focus()
+
+
+func _confirm_reset() -> void:
+	var result := SaveData.reset_game()
+	if result.error == "":
+		LauncherSettings.reload_preferences()
+		LauncherSettings.apply_timing()
+		Assets.set_language(Assets.preferred_language())
+		volume = DEFAULT_VOLUME
+		muted = false
+		pointer_mode = "menu"
+		if is_instance_valid(Game._mobile_pointer):
+			Game._mobile_pointer.cancel()
+		_dragging = false
+		_focused_row = 0
+		changed.emit()
+	_reset_result.title = _tr("تمت إعادة الضبط", "Juego reiniciado", "Game reset") if result.error == "" else _tr("فشل إعادة الضبط", "Error al reiniciar", "Reset failed")
+	_reset_result.dialog_text = (_tr("تمت استعادة الحالة الأولية.\nالنسخة الاحتياطية: ", "Estado inicial restaurado.\nCopia de seguridad: ", "Initial state restored.\nBackup: ") + result.backup) if result.error == "" else str(result.error)
+	_reset_result.popup_centered()
+
+
+## Un conflicto surgido al volver al selector se pregunta en cuanto aparece.
+func _cloud_changed() -> void:
+	if CloudSync.state == "conflict" and not _cloud_dialog.visible and not _reset_dialog.visible and not _reset_result.visible:
+		_cloud_dialog.popup_centered()
+
+
+func _cycle_option(row: int, step: int) -> void:
+	match row:
+		0:
+			var choices := LauncherSettings.ASPECTS
+			LauncherSettings.aspect = choices[wrapi(choices.find(LauncherSettings.aspect) + step, 0, choices.size())]
+		1:
+			var choices := LauncherSettings.FRAME_RATES
+			LauncherSettings.frame_rate = choices[wrapi(choices.find(LauncherSettings.frame_rate) + step, 0, choices.size())]
+		2:
+			LauncherSettings.simulation_speed = 2.0 if LauncherSettings.simulation_speed == 1.0 else 1.0
+		3:
+			LauncherSettings.fast_play = not LauncherSettings.fast_play
+		4:
+			LauncherSettings.improved_card_texts = not LauncherSettings.improved_card_texts
+		5:
+			var card_choices := LauncherSettings.CARD_STYLES
+			var next_style: String = card_choices[wrapi(card_choices.find(LauncherSettings.card_style) + step, 0, card_choices.size())]
+			LauncherSettings.set_card_style(next_style)
+			changed.emit()
+			queue_redraw()
+			return
+		6:
+			var bg_choices := LauncherSettings.BG_STYLES
+			var next_bg: String = bg_choices[wrapi(bg_choices.find(LauncherSettings.bg_style) + step, 0, bg_choices.size())]
+			LauncherSettings.set_bg_style(next_bg)
+			changed.emit()
+			queue_redraw()
+			return
+		7:
+			var back_choices := LauncherSettings.CARD_BACKS.duplicate()
+			if not LauncherSettings.has_custom_card_back():
+				back_choices.erase("custom")
+			var back_idx := back_choices.find(LauncherSettings.card_back)
+			LauncherSettings.set_card_back(back_choices[wrapi(back_idx + step, 0, back_choices.size())])
+			changed.emit()
+			queue_redraw()
+			return
+		8:
+			pointer_mode = "menu"
+			_save_pointer_mode()
+	LauncherSettings.save_preferences()
+	if row == 4 and LauncherSettings.improved_card_texts:
+		CardTranslations.ensure_spanish_pack()
+	queue_redraw()
+
+
+func _open_panel(open: bool) -> void:
+	panel_open = open
+	_dragging = false
+	_hover = ""
+	_clear_tooltip()
+
+
+func _toggle_mute() -> void:
+	muted = not muted
+	_save()
+
+
+func _set_volume_from(x: float) -> void:
+	var r := _slider_rect()
+	_set_volume((x - r.position.x) / r.size.x)
+
+
+func _set_volume(v: float) -> void:
+	volume = snappedf(clampf(v, 0.0, 1.0), 0.01)
+	# Subir el volumen desde el panel quita el silencio, como en cualquier mezclador.
+	if volume > 0.0 and muted:
+		muted = false
+	changed.emit()
+
+
+func _save() -> void:
+	var config := ConfigFile.new()
+	config.load(Paths.settings_path())
+	config.set_value("launcher", "music_volume", volume)
+	config.set_value("launcher", "music_muted", muted)
+	var error := config.save(Paths.settings_path())
+	if error != OK:
+		push_error("No se pudo guardar el sonido del launcher: " + error_string(error))
+	changed.emit()
+
+
+func _save_pointer_mode() -> void:
+	SaveData.data.get_or_add("launcher", {})["pointer_mode"] = pointer_mode
+	if Paths.has_data():
+		SaveData.save()
+	changed.emit()
+
+
+# --- dibujo --------------------------------------------------------------------------------
+
+func _draw() -> void:
+	_medallion(_settings_center(), RADIUS, "gear", _hover == "settings" or panel_open)
+	_medallion(_sound_center(), RADIUS, "muted" if muted else "sound", _hover == "sound")
+	_medallion(_exit_center(), RADIUS, "exit", _hover == "exit")
+	_draw_cloud_badge(_cloud_center(), RADIUS, _hover == "cloud")
+	if update_available:
+		_medallion(_update_center(), RADIUS, "update", _hover == "update")
+		draw_circle(_update_center() + Vector2(17, -17), 5, GOLD_LIGHT)
+	if panel_open:
+		_draw_panel()
+	_draw_tooltip()
+
+
+func _draw_cloud_badge(c: Vector2, r: float, hot: bool) -> void:
+	var s := r * (1.10 if hot else 1.0)
+	var pulse := 0.5 + 0.5 * sin(_time * 2.8)
+	var outer_pts := PackedVector2Array()
+	var mid_pts := PackedVector2Array()
+	var inner_pts := PackedVector2Array()
+	for i in 8:
+		var ang := float(i) * (TAU / 8.0) + PI / 8.0
+		var dir := Vector2(cos(ang), sin(ang))
+		outer_pts.append(c + dir * (s + 2.0))
+		mid_pts.append(c + dir * (s - 1.2))
+		inner_pts.append(c + dir * (s - 4.8))
+	outer_pts.append(outer_pts[0])
+	mid_pts.append(mid_pts[0])
+	if hot:
+		draw_circle(c, s + 9.0, Color(CYAN, 0.18), true)
+	draw_colored_polygon(inner_pts, Color(0.05, 0.08, 0.22, 0.96))
+	draw_polyline(outer_pts, GOLD_LIGHT if hot else Color(GOLD, 0.85), 2.2, true)
+	draw_polyline(mid_pts, CYAN_SOFT if hot else Color(CYAN, 0.55 + 0.25 * pulse), 1.6, true)
+	# Corner diamond accents
+	for ang_deg: float in [0.0, 90.0, 180.0, 270.0]:
+		var rad := deg_to_rad(ang_deg)
+		var pt := c + Vector2(cos(rad), sin(rad)) * (s - 0.5)
+		_diamond(pt, 2.4, GOLD_LIGHT if hot else GOLD)
+	draw_icon_on(self, "cloud", c, ICON_SIZE * (1.10 if hot else 1.0), Color.WHITE if hot else CYAN_SOFT)
+	var dot_pos := c + Vector2(16, -16)
+	draw_circle(dot_pos, 6.2, STONE)
+	draw_circle(dot_pos, 4.6, _cloud_dot())
+
+
+func _dialog_visible() -> bool:
+	return _reset_dialog.visible or _reset_result.visible or _cloud_dialog.visible or _export_dialog.visible or _import_dialog.visible or _ydc_dialog.visible or _ydc_export_dialog.visible
+
+
+func _clear_tooltip() -> void:
+	_tip_key = ""
+
+
+func _track_tooltip(point: Vector2) -> void:
+	var key := _hover
+	if key == "panel":
+		# Los rótulos explican el mismo ajuste sin ampliar su área de clic.
+		key = ""
+		for row in OPTION_KEYS.size() + 1:
+			if _row_rect(row).has_point(point):
+				key = "slider" if row == 0 else OPTION_KEYS[row - 1]
+				break
+		if key == "" and _row_rect(_code_row()).has_point(point):
+			key = "card_code"
+	elif key == "outside":
+		key = ""
+	if key != _tip_key:
+		_tip_key = key
+		_tip_at = _time
+	_tip_point = point
+
+
+func _tooltip_text() -> String:
+	if _tip_key.is_empty() or _time - _tip_at < TOOLTIP_DELAY or _dialog_visible():
+		return ""
+	match _tip_key:
+		"sound": return Tips.text("unmute" if muted else "mute", Assets.lang)
+		"update": return Tips.text("update", Assets.lang) % Updates.available if update_available else ""
+	return Tips.text(_tip_key, Assets.lang)
+
+
+func _draw_tooltip() -> void:
+	var text := _tooltip_text()
+	if text.is_empty():
+		return
+	if text != _tip_text:
+		_tip_text = text
+		_tip_paragraph.clear()
+		_tip_paragraph.width = minf(290, ceilf(_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x))
+		_tip_paragraph.add_string(text, _font, 15)
+	var size := _tip_paragraph.get_size().ceil() + Vector2(20, 14)
+	var point := _tip_point + Vector2(14, 20)
+	var screen := _screen()
+	if point.y + size.y > screen.y - 8:
+		point.y = _tip_point.y - size.y - 12
+	point = point.clamp(Vector2(8, 8), (screen - size - Vector2(8, 8)).max(Vector2(8, 8)))
+	_round_rect(Rect2(point, size), Color(0.032, 0.038, 0.095, 0.98), 6, Color(CYAN, 0.6))
+	_tip_paragraph.draw(get_canvas_item(), (point + Vector2(10, 7)).round(), GOLD_LIGHT)
+
+
+## Punto de estado de Drive: gris sin vincular, verde al dia, oro trabajando, rojo error o conflicto.
+func _cloud_dot() -> Color:
+	return {"off": Color(0.42, 0.46, 0.54), "idle": Color(0.28, 0.88, 0.56), "syncing": CYAN,
+		"linking": GOLD}.get(CloudSync.state, Color(0.95, 0.34, 0.32))
+
+
+## Medallon arcano: sombra, bisel dorado/cian, fondo obsidiana.
+func _medallion(c: Vector2, r: float, icon: String, hot: bool) -> void:
+	var s := r * (1.08 if hot else 1.0)
+	if hot:
+		for k in 4:
+			draw_circle(c, s + 10 - k * 2.5, Color(CYAN, 0.07 + k * 0.045), true, -1.0, true)
+	draw_circle(c + Vector2(1.5, 2.5), s + 0.5, Color(0, 0, 0, 0.55), true, -1.0, true)
+	draw_circle(c, s, GOLD_DARK, true, -1.0, true)
+	draw_circle(c, s - 1.5, CYAN.lerp(GOLD, 0.45) if hot else BRONZE.lerp(GOLD, 0.55), true, -1.0, true)
+	draw_circle(c, s - 4.2, Color(0.06, 0.08, 0.18), true, -1.0, true)
+	draw_circle(c, s - 5.6, STONE, true, -1.0, true)
+	draw_arc(c, s - 2.8, PI * 1.15, PI * 1.85, 16, Color(CYAN_SOFT if hot else GOLD_LIGHT, 0.85), 1.5, true)
+	draw_arc(c, s - 8.0, PI * 0.15, PI * 0.85, 16, Color(CYAN, 0.22), 2.5, true)
+	draw_icon_on(self, icon, c, ICON_SIZE * (1.08 if hot else 1.0), Color.WHITE if hot else GOLD)
+
+
+func draw_icon_on(surface: CanvasItem, name: String, center: Vector2, size: float, color: Color) -> void:
+	var icon: Dictionary = _icons[name]
+	var tex: Texture2D = icon["tex"]
+	var k := size / tex.get_width()
+	var rect := Rect2(center - tex.get_size() * k / 2.0 + icon["offset"] * size, tex.get_size() * k)
+	surface.draw_texture_rect(tex, rect, false, color)
+
+
+func _draw_panel() -> void:
+	draw_rect(Rect2(Vector2.ZERO, _screen()), Color(0.01, 0.015, 0.04, 0.78))
+	var r := _panel_rect()
+	var frame := StyleBoxFlat.new()
+	frame.bg_color = DialogTheme.BACKGROUND
+	frame.border_color = CYAN.lerp(GOLD, 0.55)
+	frame.set_border_width_all(2)
+	frame.set_corner_radius_all(14)
+	frame.shadow_color = Color(0, 0, 0, 0.72)
+	frame.shadow_size = 20
+	frame.shadow_offset = Vector2(0, 6)
+	draw_style_box(frame, r)
+	var inner := StyleBoxFlat.new()
+	inner.draw_center = false
+	inner.border_color = Color(CYAN, 0.24)
+	inner.set_border_width_all(1)
+	inner.set_corner_radius_all(10)
+	draw_style_box(inner, r.grow(-7))
+	# Cabecera: titulo y filete con rombo.
+	_title_text(Assets.port_label(1), Vector2(r.get_center().x, r.position.y + 44), 23)
+	_rule(r.get_center().x, r.position.y + 62, r.size.x / 2.0 - 40)
+	_medallion(_close_center(), 15.0, "close", _hover == "close")
+	var arabic := Assets.lang == "a"
+	var spanish := Assets.lang == "s"
+	var names := [Assets.port_label(2)]
+	names.append_array(
+		["نسبة العرض", "FPS", "سرعة اللعب", "لعب سريع", "ترجمة البطاقات", "شكل البطاقات", "شكل الخلفية", "خلفية البطاقة"] if arabic else (
+		["Aspecto", "FPS", "Simulación", "Juego rápido", "Traducciones", "Diseño cartas", "Fondo", "Reverso carta"] if spanish else
+		["Aspect", "FPS", "Simulation", "Quick play", "Translations", "Card style", "Background", "Card back"]))
+	var aspects := (
+		["متوازن (ملء الشاشة)", "ممتد (ملء العرض)", "أصلي بدون خلفية", "إطار جانبي (Overlay)"] if arabic else (
+		["Equilibrado", "Estirado", "Original sin fondo", "Overlay"] if spanish else
+		["Balanced (Fullscreen)", "Stretched", "Original, no background", "Overlay"]))
+	var aspect_idx := LauncherSettings.ASPECTS.find(LauncherSettings.aspect)
+	var trans_label := ("العربية (مفعّلة)" if arabic else (
+		("Mejoradas (ES)" if spanish else "Enhanced (ES)") if LauncherSettings.improved_card_texts else ("Originales" if spanish else "Original")))
+	var card_style_lbl := LauncherSettings.card_style_label(LauncherSettings.card_style, Assets.lang)
+	var bg_label := LauncherSettings.bg_style_label(LauncherSettings.bg_style, Assets.lang)
+	var back_label := _CardBackArt.label_for(LauncherSettings.card_back, Assets.lang)
+	var values := [str(aspects[maxi(0, aspect_idx)]),
+		((("الشاشة (%d Hz)" if arabic else "Display (%d Hz)") % LauncherSettings.display_fps())) if LauncherSettings.frame_rate == 0 else str(LauncherSettings.frame_rate),
+		_tr("عادي", "Normal", "Normal") if LauncherSettings.simulation_speed == 1.0 else "2×",
+		_tr("مفعّل", "Activado", "On") if LauncherSettings.fast_play else _tr("معطّل", "Desactivado", "Off"),
+		trans_label,
+		card_style_lbl,
+		bg_label,
+		back_label]
+	var keys := ["slider"] + OPTION_KEYS
+	for row in OPTION_KEYS.size() + 1:
+		var line := _row_rect(row)
+		var hot: bool = _focused_row == row or _hover == keys[row] or (row == 0 and _dragging)
+		if _focused_row == row:
+			_round_rect(line, Color(CYAN, 0.08), 8)
+		_label_mid(names[row], Vector2(r.position.x + 36, line.get_center().y), 16, GOLD_LIGHT)
+		var box := _control_rect(row)
+		_round_rect(box, Color(0.032, 0.04, 0.095), 7, CYAN if hot else Color(CYAN, 0.35))
+		if row == 0:
+			_draw_slider()
+		else:
+			_draw_selector(box, values[row - 1], hot)
+	if _mobile_controls():
+		_label_mid(_tr("التحكم باللمس", "Control táctil", "Touch controls"), Vector2(r.position.x + 36, _control_rect(OPTION_KEYS.size() + 1).get_center().y), 16, GOLD_LIGHT)
+		var box := _mode_rect("menu")
+		_round_rect(box, Color(CYAN, 0.16), 7, CYAN)
+		var label := _tr("ضغطة واحدة للخيارات", "Un toque → menú", "Tap card → options")
+		var width := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		_label_mid(label, box.get_center() - Vector2(width / 2.0, 0), 15, GOLD_LIGHT)
+	var reset_box := _save_rect("reset")
+	var reset_hot := _hover == "reset" or (_focused_row == _reset_row() and _save_choice == "reset")
+	_label_mid(_tr("بيانات الحفظ", "Partida", "Save data"), Vector2(r.position.x + 36, reset_box.get_center().y), 16, GOLD_LIGHT)
+	_round_rect(reset_box, Color(0.24, 0.04, 0.07), 7, GOLD if reset_hot else Color(GOLD, 0.35))
+	var reset_label := "Reset"
+	_label_mid(reset_label, reset_box.get_center() - Vector2(_font.get_string_size(reset_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x / 2.0, 0), 15, GOLD_LIGHT)
+	if _pack_available():
+		var pack_box := _save_rect("pack")
+		var pack_hot := _hover == "pack" or (_focused_row == _reset_row() and _save_choice == "pack")
+		_round_rect(pack_box, STONE, 7, CYAN if pack_hot else Color(CYAN, 0.35))
+		var pack_label := "Import .pck"
+		_label_mid(pack_label, pack_box.get_center() - Vector2(_font.get_string_size(pack_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x / 2.0, 0), 14, GOLD_LIGHT)
+	var export_box := _backup_rect("export_save")
+	var import_box := _backup_rect("import_save")
+	var ydc_box := _backup_rect("import_ydc")
+	var ydc_exp_box := _backup_rect("export_ydc")
+	var export_hot := _hover == "export_save" or (_focused_row == _backup_row() and _backup_choice == "export")
+	var import_hot := _hover == "import_save" or (_focused_row == _backup_row() and _backup_choice == "import")
+	var ydc_hot := _hover == "import_ydc" or (_focused_row == _backup_row() and _backup_choice == "ydc")
+	var ydc_exp_hot := _hover == "export_ydc" or (_focused_row == _backup_row() and _backup_choice == "export_ydc")
+	_label_mid(_tr("نسخ احتياطي", "Respaldo", "Backup"), Vector2(r.position.x + 36, export_box.get_center().y), 16, GOLD_LIGHT)
+	_round_rect(export_box, STONE, 7, CYAN if export_hot else Color(CYAN, 0.35))
+	var export_label := "Export .json"
+	_label_mid(export_label, export_box.get_center() - Vector2(_font.get_string_size(export_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, 0), 11, GOLD_LIGHT)
+	_round_rect(import_box, STONE, 7, CYAN if import_hot else Color(CYAN, 0.35))
+	var import_label := "Import .json"
+	_label_mid(import_label, import_box.get_center() - Vector2(_font.get_string_size(import_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, 0), 11, GOLD_LIGHT)
+	_round_rect(ydc_box, STONE, 7, GOLD if ydc_hot else Color(CYAN, 0.35))
+	var ydc_label := "Import .ydc"
+	_label_mid(ydc_label, ydc_box.get_center() - Vector2(_font.get_string_size(ydc_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, 0), 11, GOLD_LIGHT)
+	_round_rect(ydc_exp_box, STONE, 7, GOLD if ydc_exp_hot else Color(CYAN, 0.35))
+	var ydc_exp_label := "Export .ydc"
+	_label_mid(ydc_exp_label, ydc_exp_box.get_center() - Vector2(_font.get_string_size(ydc_exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, 0), 11, GOLD_LIGHT)
+	var code_box := _control_rect(_code_row())
+	var code_hot := _hover == "card_code" or _focused_row == _code_row()
+	_label_mid(_tr("كود البطاقة", "Código de carta", "Card code"), Vector2(r.position.x + 36, code_box.get_center().y), 16, CYAN_SOFT)
+	_round_rect(code_box, Color(0.08, 0.22, 0.34, 0.92), 7, GOLD if code_hot else Color(CYAN, 0.55))
+	var code_label := _tr("أدخل كود البطاقة…", "Canjear código…", "Enter card code…")
+	_label_mid(code_label, code_box.get_center() - Vector2(_font.get_string_size(code_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x / 2.0, 0), 15, Color.WHITE if code_hot else GOLD_LIGHT)
+	if LauncherSettings.improved_card_texts or arabic:
+		var foot := r.end.y - 26
+		draw_line(Vector2(r.position.x + 36, foot - 14), Vector2(r.end.x - 36, foot - 14), Color(CYAN, 0.2), 1.0, true)
+		var status: String = CardTranslations.status_text(spanish, arabic)
+		var width := minf(_font.get_string_size(status, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x, r.size.x - 72)
+		draw_string(_font, Vector2(r.get_center().x - width / 2.0, foot + _baseline(12)), status,
+			HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 72, 12, Color(CYAN_SOFT, 0.75))
+
+
+## Selector: valor centrado entre dos chevrones que indican que se puede cambiar.
+func _draw_selector(box: Rect2, value: String, hot: bool) -> void:
+	var color := GOLD_LIGHT if hot else GOLD
+	var y := box.get_center().y
+	for side: float in [-1.0, 1.0]:
+		var x := box.get_center().x + side * (box.size.x / 2.0 - 16)
+		draw_polyline(PackedVector2Array([Vector2(x - side * 3.5, y - 6), Vector2(x + side * 2.5, y), Vector2(x - side * 3.5, y + 6)]),
+				Color(color, 0.9 if hot else 0.55), 2.0, true)
+	var width := _font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	_label_mid(value, Vector2(box.get_center().x - width / 2.0, y), 16, Color.WHITE if hot else GOLD_LIGHT)
+
+
+func _draw_slider() -> void:
+	var t := _slider_rect()
+	var on := not muted
+	_round_rect(t, Color(0.0, 0.0, 0.0, 0.6), 4, Color(GOLD, 0.3))
+	if volume > 0.0:
+		_round_rect(Rect2(t.position, Vector2(maxf(t.size.x * volume, 8.0), t.size.y)), GOLD if on else Color(0.4, 0.35, 0.3), 4)
+	var knob := Vector2(t.position.x + t.size.x * volume, t.get_center().y)
+	var hot := _hover == "slider" or _dragging
+	var radius := 9.0 if hot else 8.0
+	draw_circle(knob + Vector2(1, 2), radius, Color(0, 0, 0, 0.5), true, -1.0, true)
+	draw_circle(knob, radius, GOLD_DARK, true, -1.0, true)
+	draw_circle(knob, radius - 1.5, GOLD_LIGHT if hot else GOLD, true, -1.0, true)
+	draw_circle(knob, 3, GOLD_DARK, true, -1.0, true)
+	var text := "%d%%" % roundi(volume * 100)
+	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	_label_mid(text, Vector2(_control_rect(0).end.x - 16 - width, t.get_center().y), 16, GOLD_LIGHT)
+
+
+## Texto centrado verticalmente en `left_mid.y` (por altura de letra, no por linea base).
+func _label_mid(text: String, left_mid: Vector2, size: int, color: Color) -> void:
+	var pos := Vector2(left_mid.x, left_mid.y + _baseline(size))
+	draw_string_outline(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 4, Color(0, 0, 0, 0.7))
+	draw_string(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
+
+
+func _baseline(size: int) -> float:
+	return (_font.get_ascent(size) - _font.get_descent(size)) / 2.0
+
+
+func _round_rect(rect: Rect2, fill: Color, radius: int, border := Color.TRANSPARENT) -> void:
+	var box := StyleBoxFlat.new()
+	box.bg_color = fill
+	box.set_corner_radius_all(radius)
+	if border.a > 0.0:
+		box.border_color = border
+		box.set_border_width_all(1)
+	draw_style_box(box, rect)
+
+
+## Filete: dos lineas que se desvanecen hacia fuera y un rombo en el centro.
+func _rule(mid: float, y: float, half: float) -> void:
+	for dir: float in [-1.0, 1.0]:
+		draw_polyline_colors(PackedVector2Array([Vector2(mid + dir * 10.0, y), Vector2(mid + dir * half, y)]),
+				PackedColorArray([Color(GOLD, 0.8), Color(GOLD, 0.0)]), 1.5, true)
+	_diamond(Vector2(mid, y), 5.0, GOLD_LIGHT)
+
+
+func _title_text(text: String, center: Vector2, size: int) -> void:
+	var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var pos := Vector2(center.x - w / 2.0, center.y)
+	draw_string_outline(_font, pos + Vector2(2, 3), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 6, Color(0, 0, 0, 0.6))
+	draw_string_outline(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 6, OUTLINE)
+	draw_string(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, GOLD)
+
+
+func _diamond(c: Vector2, d: float, color: Color) -> void:
+	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -d), c + Vector2(d, 0),
+			c + Vector2(0, d), c + Vector2(-d, 0)]), color)
+
+
+## Rasteriza el SVG a 4x y mide su centroide de alfa: `offset` (en fracciones del tamano)
+## desplaza el icono para que su centro visual, no su caja, quede en el centro del medallon.
+static func _rasterize(svg: String) -> Dictionary:
+	var image := Image.new()
+	image.load_svg_from_string(svg, 4.0)
+	var sum := Vector2.ZERO
+	var total := 0.0
+	for y in image.get_height():
+		for x in image.get_width():
+			var a := image.get_pixel(x, y).a
+			if a > 0.0:
+				sum += Vector2(x + 0.5, y + 0.5) * a
+				total += a
+	var size := Vector2(image.get_size())
+	var centroid := sum / total if total > 0.0 else size / 2.0
+	return {"tex": ImageTexture.create_from_image(image), "offset": (size / 2.0 - centroid) / size.x}

@@ -1,0 +1,773 @@
+extends "res://scenes/launcher/launcher.gd"
+## Importacion local: Python convierte en un hilo; nunca se suben archivos a la red.
+
+const REIMPORT_SIZE := 18.0
+
+var _sources := {}
+var _voice_sources := {}
+var _labels := {}
+var _buttons: Array[Button] = []
+var _reimport_buttons: Array[Button] = []
+var _reimport_menu := PopupMenu.new()
+var _reimport_game := ""
+var _dialog := FileDialog.new()
+var _status := Label.new()
+var _python := LineEdit.new()
+var _convert := Button.new()
+var _apk := Button.new() # Crea el paquete privado de recursos (.pck) para Android.
+var _download_apk := Button.new() # El APK público lo compila GitHub Actions.
+var _building_apk := false
+var _apk_directory := ""
+var _back := Button.new()
+var _thread := Thread.new()
+var _pending_game := ""
+var _pending_voice := false
+var _pending_yugi_update := false
+var _yugi_update := ""
+var _target := ""
+var _busy := false
+var _bundled_importer := false
+var _tools_failed := false
+var _error_dialog := AcceptDialog.new()
+var _error_details := TextEdit.new()
+var _error_link := LinkButton.new()
+var _resources := Button.new()
+var _android := Button.new()
+var _android_menu := AcceptDialog.new()
+var _resource_import: Node
+var _error_log_button: Button
+var _error_copy_button: Button
+var _error_log_path := ""
+var _update_media_buttons := HBoxContainer.new()
+var _import_pck := Button.new()
+var _pck_dialog := FileDialog.new()
+var _importing_pck := false
+const PACK := preload("res://core/android_content_pack.gd")
+
+
+const COPY := {
+	"a": ["أضف مواردك", "أضف لعبة وابدأ اللعب", "غير محدد", "استيراد موارد إضافية", "إنشاء", "حرّك المؤشر على لعبة للبدء.", "رجوع", "التراخيص", "جارٍ تجهيز ألعابك… يُرجى الانتظار.", "تعذر الاستيراد. تحقق من الملفات وحاول مجدداً.", "تم التحديد", "حزم أصوات إضافية"],
+	"s": ["SUBE TUS RECURSOS", "Añade un juego y empieza a jugar", "Sin seleccionar", "Importar más recursos", "Compilar", "Pasa el mouse sobre un juego para comenzar.", "Volver", "Licencias", "Preparando tus juegos… Espera a que termine.", "No se pudo importar. Revisa los archivos y vuelve a intentarlo.", "Seleccionado", "Doblajes adicionales"],
+	"e": ["ADD YOUR RESOURCES", "Add a game and start playing", "Not selected", "Import more resources", "Build", "Move over a game to get started.", "Back", "Licenses", "Preparing your games… Please wait.", "Could not import. Check your files and try again.", "Selected", "Additional voice packs"],
+	"g": ["RESSOURCEN HINZUFÜGEN", "Füge ein Spiel hinzu und leg los", "Nicht ausgewählt", "Weitere Ressourcen importieren", "Kompilieren", "Bewege die Maus über ein Spiel.", "Zurück", "Lizenzen", "Spiele werden vorbereitet… Bitte warten.", "Import fehlgeschlagen. Prüfe die Dateien und versuche es erneut.", "Ausgewählt", "Zusätzliche Sprachpakete"],
+	"f": ["AJOUTE TES RESSOURCES", "Ajoute un jeu et commence à jouer", "Non sélectionné", "Importer plus de ressources", "Compiler", "Passe la souris sur un jeu pour commencer.", "Retour", "Licences", "Préparation des jeux… Patiente un instant.", "Échec de l’importation. Vérifie les fichiers et réessaie.", "Sélectionné", "Doublages supplémentaires"],
+	"i": ["AGGIUNGI LE TUE RISORSE", "Aggiungi un gioco e inizia a giocare", "Non selezionato", "Importa altre risorse", "Compila", "Passa il mouse su un gioco per iniziare.", "Indietro", "Licenze", "Preparazione dei giochi… Attendi.", "Importazione non riuscita. Controlla i file e riprova.", "Selezionato", "Doppiaggi aggiuntivi"],
+	"j": ["リソースを追加", "ゲームを追加してプレイしましょう", "未選択", "リソースを追加でインポート", "ビルド", "ゲームにカーソルを合わせてください。", "戻る", "ライセンス", "ゲームを準備しています… お待ちください。", "インポートできませんでした。ファイルを確認して再試行してください。", "選択済み", "追加音声"]
+}
+var _subtitle := Label.new()
+var _rows: Array[VBoxContainer] = []
+var _revealed := {}
+var _keyboard_reveal := false
+var _pointer := Vector2(-1000, -1000)
+var _pointer_inside := true
+const LIBRARY := {"a": "ألعابك", "s": "TUS JUEGOS", "e": "YOUR GAMES", "g": "DEINE SPIELE", "f": "TES JEUX", "i": "I TUOI GIOCHI", "j": "マイゲーム"}
+const LIBRARY_HINT := {"a": "اختر لعبة أو أضف أخرى", "s": "Elige un juego o añade otro", "e": "Choose a game or add another", "g": "Wähle ein Spiel oder füge ein weiteres hinzu", "f": "Choisis un jeu ou ajoute-en un autre", "i": "Scegli un gioco o aggiungine un altro", "j": "ゲームを選ぶか、新しく追加しましょう"}
+const TEXTS := preload("res://scenes/launcher/import_texts.gd")
+const STORAGE_ERROR := {"a": "انقل المشغّل إلى مجلد يمكنك الحفظ فيه ثم أعد فتحه.", "s": "Mueve el launcher a una carpeta donde puedas guardar archivos y vuelve a abrirlo.", "e": "Move the launcher to a folder where you can save files, then reopen it.", "g": "Verschiebe den Launcher in einen beschreibbaren Ordner und öffne ihn erneut.", "f": "Déplace le lanceur dans un dossier accessible en écriture, puis rouvre-le.", "i": "Sposta il launcher in una cartella scrivibile e riaprilo.", "j": "書き込み可能なフォルダーにランチャーを移動して、開き直してください。"}
+
+
+func _init() -> void:
+	import_mode = true
+	logo_y = 224.0
+	heading_y = 96.0
+
+
+func _text(key: String) -> String:
+	return TEXTS.text(key, Assets.lang)
+
+
+func _copy(index: int) -> String:
+	return COPY.get(Assets.lang, COPY["e"])[index]
+
+
+func _ready() -> void:
+	super._ready()
+	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_subtitle.add_theme_font_override("font", Assets.ui_font(700))
+	_subtitle.add_theme_color_override("font_color", CYAN_SOFT)
+	_subtitle.add_theme_font_size_override("font_size", 15)
+	add_child(_subtitle)
+	for game in Game.GAMES:
+		var column := VBoxContainer.new()
+		column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		column.add_theme_constant_override("separation", 7)
+		column.size = Vector2(SLOT.x, 95)
+		add_child(column)
+		_rows.append(column)
+		var row := HBoxContainer.new()
+		row.visible = false
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		column.add_child(row)
+		for kind in ["ISO", "folder"]:
+			var button := Button.new()
+			button.name = kind
+			_style_control(button)
+			button.pressed.connect(_browse.bind(game, kind == "ISO"))
+			row.add_child(button)
+			_buttons.append(button)
+		var path_label := Label.new()
+		path_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		path_label.add_theme_font_override("font", Assets.ui_font())
+		path_label.add_theme_font_size_override("font_size", 13)
+		path_label.add_theme_color_override("font_color", GOLD_LIGHT)
+		path_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		add_child(path_label)
+		_labels[game] = path_label
+		var reimport := Button.new()
+		_style_control(reimport)
+		for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+			var style := reimport.get_theme_stylebox(state) as StyleBoxFlat
+			style.set_content_margin_all(0)
+			style.set_corner_radius_all(3)
+		reimport.draw.connect(func() -> void:
+			_controls.draw_icon_on(reimport, "reimport", reimport.size / 2.0, 12.0, GOLD_LIGHT))
+		reimport.focus_mode = Control.FOCUS_NONE
+		reimport.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		reimport.hide()
+		reimport.pressed.connect(_open_reimport_menu.bind(game, reimport))
+		add_child(reimport)
+		_reimport_buttons.append(reimport)
+	_python.text = "python"
+	_python.placeholder_text = "Python 3.12+ · pocx"
+	_style_control(_python)
+	add_child(_python)
+	var bundled := OS.get_executable_path().get_base_dir().path_join("pocx-import.exe")
+	if FileAccess.file_exists(BundledTools.MANIFEST):
+		# La extracción y verificación se hacen en el hilo de importación, al necesitarlas.
+		_bundled_importer = true
+	elif not OS.has_feature("editor") and FileAccess.file_exists(bundled):
+		_bundled_importer = true
+	if _bundled_importer:
+		_python.text = bundled
+	_python.visible = not _bundled_importer and not _tools_failed
+	_style_control(_convert)
+	_convert.disabled = true
+	_convert.pressed.connect(_start)
+	add_child(_convert)
+	_style_control(_android)
+	_android.text = "Android"
+	_android.pressed.connect(_open_android)
+	add_child(_android)
+	add_child(_android_menu)
+	DialogTheme.apply(_android_menu)
+	_android_menu.wrap_controls = false
+	var android_actions := VBoxContainer.new()
+	android_actions.add_theme_constant_override("separation", 12)
+	_android_menu.add_child(android_actions)
+	android_actions.add_child(_apk)
+	android_actions.add_child(_download_apk)
+	_apk.pressed.connect(func() -> void:
+		_android_menu.hide()
+		_start(false, true))
+	_download_apk.pressed.connect(_open_apk_download)
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.add_theme_font_override("font", Assets.ui_font())
+	_status.add_theme_color_override("font_color", GOLD_LIGHT.darkened(0.2))
+	_status.add_theme_font_size_override("font_size", 14)
+	add_child(_status)
+	_style_control(_back)
+	_back.visible = false
+	_back.pressed.connect(Game.open_launcher)
+	add_child(_back)
+	_style_control(_import_pck)
+	_import_pck.pressed.connect(_browse_pck)
+	add_child(_import_pck)
+	_pck_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_pck_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_pck_dialog.use_native_dialog = true
+	_pck_dialog.file_selected.connect(_start_pck_import)
+	add_child(_pck_dialog)
+	_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_dialog.use_native_dialog = true
+	_dialog.file_selected.connect(_selected)
+	_dialog.dir_selected.connect(_selected)
+	add_child(_dialog)
+	_error_details.editable = false
+	_error_details.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	_error_details.custom_minimum_size = Vector2(590, 300)
+	_error_details.add_theme_font_size_override("font_size", 14)
+	var error_content := VBoxContainer.new()
+	_error_dialog.add_child(error_content)
+	error_content.add_child(_error_details)
+	_error_details.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	error_content.add_child(_update_media_buttons)
+	for iso: bool in [true, false]:
+		var button := Button.new()
+		button.name = "ISO" if iso else "Disc"
+		button.pressed.connect(_browse_yugi_update.bind(iso))
+		_update_media_buttons.add_child(button)
+	_error_copy_button = _error_dialog.add_button("Copiar detalles", false, "copy")
+	_error_log_button = _error_dialog.add_button("Abrir registro", false, "log")
+	_error_dialog.custom_action.connect(func(action: StringName) -> void:
+		if action == "copy":
+			DisplayServer.clipboard_set(_error_details.text)
+		elif action == "log":
+			OS.shell_open(_error_log_path))
+	add_child(_error_dialog)
+	DialogTheme.apply(_error_dialog)
+	_error_link.visible = false
+	_error_link.pressed.connect(func() -> void: _error_dialog.popup_centered(Vector2i(650, 400)))
+	add_child(_error_link)
+	_style_control(_resources)
+	add_child(_resources)
+	_resource_import = load("res://scenes/launcher/resource_import_dialog.gd").new()
+	add_child(_resource_import)
+	_resources.pressed.connect(_open_resources)
+	_resource_import.voice_requested.connect(_browse_voice)
+	var menu_panel := StyleBoxFlat.new()
+	menu_panel.bg_color = DialogTheme.BACKGROUND
+	menu_panel.border_color = Color(CYAN, 0.72)
+	menu_panel.set_border_width_all(1)
+	menu_panel.set_corner_radius_all(8)
+	menu_panel.set_content_margin_all(6)
+	var menu_hover := StyleBoxFlat.new()
+	menu_hover.bg_color = Color(CYAN, 0.16)
+	menu_hover.set_corner_radius_all(4)
+	_reimport_menu.add_theme_stylebox_override("panel", menu_panel)
+	_reimport_menu.add_theme_stylebox_override("hover", menu_hover)
+	_reimport_menu.add_theme_color_override("font_color", GOLD_LIGHT)
+	_reimport_menu.add_theme_color_override("font_hover_color", Color.WHITE)
+	_reimport_menu.add_theme_font_size_override("font_size", 15)
+	add_child(_reimport_menu)
+	_reimport_menu.id_pressed.connect(func(id: int) -> void: _browse(_reimport_game, id == 0))
+
+	get_tree().root.close_requested.connect(_close)
+	get_tree().root.mouse_exited.connect(_pointer_left_window)
+	get_tree().root.mouse_entered.connect(_pointer_entered_window)
+	_language_updated()
+	_layout()
+	if Paths.migration_source != "" and not Paths.storage_error:
+		_start.call_deferred(true)
+
+
+func _language_updated() -> void:
+	super._language_updated()
+	_subtitle.text = (str(LIBRARY[Assets.lang]) + " · " + str(LIBRARY_HINT[Assets.lang])) if Paths.has_data() else (_copy(0) + " · " + _copy(1))
+	_convert.text = _copy(4)
+	_convert.tooltip_text = Tips.text("extract", Assets.lang)
+	_apk.tooltip_text = _text("apk_tooltip")
+	_download_apk.tooltip_text = _text("download_tooltip")
+	_python.tooltip_text = Tips.text("python", Assets.lang)
+	_back.tooltip_text = Tips.text("back", Assets.lang)
+	_refresh_actions()
+	_apk.text = {"a": "إنشاء .pck", "s": "Crear .pck", "e": "Create .pck", "g": ".pck erstellen", "f": "Créer le .pck", "i": "Crea .pck", "j": ".pckを作成"}.get(Assets.lang, "Create .pck")
+	_download_apk.text = {"a": "تنزيل APK", "s": "Descargar APK", "e": "Download APK", "g": "APK herunterladen", "f": "Télécharger l'APK", "i": "Scarica APK", "j": "APKをダウンロード"}.get(Assets.lang, "Download APK")
+	_import_pck.text = {"a": "استيراد .pck", "s": "Importar .pck", "e": "Import .pck", "g": ".pck importieren", "f": "Importer .pck", "i": "Importa .pck", "j": ".pckをインポート"}.get(Assets.lang, "Import .pck")
+	_import_pck.tooltip_text = Tips.text("pack", Assets.lang)
+	_pck_dialog.filters = PackedStringArray(["*.pck,*.bppck,*.pak;" + _text("pack_filter") + ";application/octet-stream"])
+	_resources.text = _copy(3)
+	_resources.tooltip_text = _text("resources_tooltip")
+	_android.tooltip_text = _text("android_tooltip")
+	_android_menu.title = "Android"
+	_android_menu.ok_button_text = _resource_import.text("close") if _resource_import != null else "Close"
+	if not _busy:
+		_status.text = _copy(5)
+	_back.text = _copy(6)
+	for i in _rows.size():
+		var game: String = Game.GAMES[i]
+		var buttons := _rows[i].get_child(0)
+		buttons.get_node("ISO").text = "ISO"
+		buttons.get_node("folder").text = _folder_label()
+		buttons.get_node("ISO").tooltip_text = Tips.text("iso", Assets.lang) % Game.TITLES[game]
+		buttons.get_node("folder").tooltip_text = Tips.text("folder", Assets.lang) % Game.TITLES[game]
+		var installed := Paths.has_game(game)
+		buttons.get_node("ISO").visible = not installed
+		buttons.get_node("folder").visible = not installed
+		_labels[game].text = _sources[game].get_file() if _sources.has(game) else "+ " + _copy(2)
+		_labels[game].visible = not installed or _sources.has(game)
+		_reimport_buttons[i].tooltip_text = _text("reimport") + " · " + Game.TITLES[game]
+	if _tools_failed:
+		_status.text = _copy(9)
+	if Paths.storage_error:
+		_status.text = str(STORAGE_ERROR[Assets.lang])
+		_convert.disabled = true
+	_layout.call_deferred()
+
+
+func _layout() -> void:
+	super._layout()
+	if _back.visible:
+		var back_w := clampf(_back.get_combined_minimum_size().x, 76.0, 120.0)
+		_back.size = Vector2(back_w, 32)
+		_back.position = Vector2(142, 12)
+		var next_x := _back.position.x + back_w + 10.0
+		var right_limit := (_resume_button.position.x - 10.0) if _resume_button.visible else (_language.position.x - 10.0)
+		var max_online_w := maxf(120.0, right_limit - next_x)
+		_online_button.size = Vector2(clampf(_online_button.get_combined_minimum_size().x + 6.0, 120.0, minf(224.0, max_online_w)), 32)
+		_online_button.position = Vector2(next_x, 12)
+	_subtitle.position = _origin + Vector2(20, 126)
+	_subtitle.size = Vector2(760, 24)
+	for i in _rows.size():
+		var row: Control = _rows[i].get_child(0)
+		var center := _import_center(i)
+		_rows[i].position = center - Vector2(SLOT.x / 2.0, row.get_combined_minimum_size().y / 2.0)
+		var label: Label = _labels[Game.GAMES[i]]
+		label.position = _logos[i].position + Vector2(-SLOT.x / 2.0, SLOT.y * 0.5 + 12.0)
+		label.size = Vector2(SLOT.x, 20)
+		_reimport_buttons[i].position = _logos[i].position + Vector2(SLOT.x / 2.0 - REIMPORT_SIZE - 4.0, -SLOT.y / 2.0 + 4.0)
+		_reimport_buttons[i].size = Vector2(REIMPORT_SIZE, REIMPORT_SIZE)
+	# Dock 1: Online Mode + Lucky Wheel + Ready Decks / Sets Wheel + Card Code
+	_layout_feature_dock(_origin.y + 338.0)
+	# Dock 2: Resources & Android setup (clean gap below 2-row Dock 1)
+	var actions_y := 468.0 if _python.visible else 438.0
+	_python.position = _origin + Vector2(250, 430)
+	_python.size = Vector2(300, 30)
+	var actions: Array[Button] = [_resources, _android]
+	if _import_pck.visible: actions.push_front(_import_pck)
+	if _convert.visible: actions.push_front(_convert)
+	var min_btn_w := 148.0 if actions.size() >= 3 else 190.0
+	var total_width := 14.0 * (actions.size() - 1)
+	for action in actions:
+		action.size = Vector2(maxf(min_btn_w, action.get_combined_minimum_size().x), 34)
+		total_width += action.size.x
+	var x := (800.0 - total_width) * 0.5
+	for action in actions:
+		action.position = _origin + Vector2(x, actions_y)
+		x += action.size.x + 14.0
+	_status.position = _origin + Vector2(90, actions_y + 42)
+	_status.size = Vector2(620, 22)
+	if _error_link.visible:
+		_status.size.x = 510
+	_error_link.position = _origin + Vector2(622, actions_y + 45)
+
+
+func _choose(index: int) -> void:
+	if _busy or Paths.storage_error:
+		return
+	if Paths.has_game(Game.GAMES[index]):
+		super._choose(index)
+	else:
+		_browse(Game.GAMES[index], true)
+
+
+func _has_pending() -> bool:
+	if not _sources.is_empty():
+		return true
+	for game: String in _voice_sources:
+		if Paths.has_game(game):
+			return true
+	return false
+
+
+func _card_revealed(index: int) -> bool:
+	return _revealed.get(index, false)
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouse:
+		_pointer = event.position
+		_keyboard_reveal = false
+	elif event is InputEventKey and event.pressed:
+		_keyboard_reveal = true
+
+
+func _pointer_left_window() -> void:
+	_pointer_inside = false
+	_keyboard_reveal = false
+
+
+func _pointer_entered_window() -> void:
+	_pointer_inside = true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_keyboard_reveal = false
+	elif event is InputEventKey and event.pressed:
+		_keyboard_reveal = true
+	super._unhandled_input(event)
+
+
+func _browse(game: String, iso: bool) -> void:
+	if _busy or _leaving or _tools_failed or Paths.storage_error:
+		return
+	_pending_game = game
+	_pending_voice = false
+	_pending_yugi_update = false
+	_browse_media(Game.TITLES[game], iso)
+
+
+func _open_reimport_menu(game: String, button: Button) -> void:
+	_reimport_game = game
+	_reimport_menu.clear()
+	_reimport_menu.add_item("ISO", 0)
+	_reimport_menu.add_item(_folder_label(), 1)
+	_reimport_menu.set_item_tooltip(0, Tips.text("iso", Assets.lang) % Game.TITLES[game])
+	_reimport_menu.set_item_tooltip(1, Tips.text("folder", Assets.lang) % Game.TITLES[game])
+	var position := button.get_screen_position() + Vector2(0, button.size.y + 4)
+	_reimport_menu.popup(Rect2i(Vector2i(position), Vector2i.ZERO))
+
+
+func _browse_media(title: String, iso: bool) -> void:
+	_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE if iso else FileDialog.FILE_MODE_OPEN_DIR
+	_dialog.filters = PackedStringArray(["*.iso ; ISO"]) if iso else PackedStringArray()
+	_dialog.title = title
+	_dialog.popup_centered_ratio(0.8)
+
+
+func _browse_yugi_update(iso: bool) -> void:
+	_error_dialog.hide()
+	_pending_yugi_update = true
+	_pending_voice = false
+	_browse_media(_text("stage_yugi_update") + " · " + Game.TITLES["kaiba"], iso)
+
+
+## A dub belongs to a game that is prepared or selected in this same import.
+func _voice_games() -> Array[String]:
+	var games: Array[String] = []
+	for game: String in Game.GAMES:
+		if Paths.has_game(game) or _sources.has(game):
+			games.append(game)
+	return games
+
+
+func _refresh_actions() -> void:
+	_convert.visible = not _sources.is_empty()
+	_convert.disabled = _busy or _tools_failed or Paths.storage_error or _sources.is_empty()
+	_import_pck.visible = not Paths.has_data() or FileAccess.file_exists(Paths.user_content_pack_path())
+	_import_pck.disabled = _busy or Paths.storage_error
+	_resources.disabled = _busy or Paths.storage_error or (not Paths.has_data() and _sources.is_empty())
+	_android.disabled = _busy
+	_apk.disabled = _busy or _tools_failed or Paths.storage_error or (not _has_pending() and not Paths.has_data())
+	_download_apk.disabled = _busy
+
+
+func _open_android() -> void:
+	_refresh_actions()
+	_android_menu.popup_centered_clamped(Vector2i(375, 180), 0.85)
+
+
+func _open_resources() -> void:
+	var games: Array[String] = []
+	if not _tools_failed:
+		games = _voice_games()
+	_resource_import.open(games)
+
+
+func _browse_voice(game: String) -> void:
+	_pending_game = game
+	_pending_voice = true
+	_pending_yugi_update = false
+	_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_dialog.filters = PackedStringArray(["*.dat ; Voice.dat"])
+	_dialog.title = "%s · %s" % [Game.TITLES[game], _copy(11)]
+	_dialog.popup_centered_ratio(0.8)
+
+
+func _selected(path: String) -> void:
+	if _pending_yugi_update:
+		_pending_yugi_update = false
+		_yugi_update = path
+		_start(false, _building_apk)
+		return
+	if _pending_voice:
+		var packs: Array = _voice_sources.get_or_add(_pending_game, [])
+		if not packs.has(path):
+			packs.append(path)
+		_status.text = "%s · %s: %s" % [Game.TITLES[_pending_game], _copy(11), packs.size()]
+		_refresh_actions()
+		if _sources.is_empty():
+			_start.call_deferred()
+		return
+	if _pending_game == "yugi":
+		_yugi_update = ""
+	_sources[_pending_game] = path
+	_labels[_pending_game].text = path.get_file()
+	_labels[_pending_game].tooltip_text = path
+	_labels[_pending_game].show()
+	_status.text = "%s: %s" % [_copy(10), _sources.size()]
+	_refresh_actions()
+	_layout()
+
+
+func _start(migrate := false, build_apk := false) -> void:
+	if _busy or _tools_failed or Paths.storage_error or (not migrate and not _has_pending() and not (build_apk and Paths.has_data())):
+		return
+	_building_apk = build_apk
+	_error_dialog.hide()
+	_error_link.hide()
+	_status.tooltip_text = ""
+	_apk_directory = ProjectSettings.globalize_path("res://").path_join("..").simplify_path() if OS.has_feature("editor") else OS.get_executable_path().get_base_dir()
+	var launcher_override := Paths.cmdline_value("launcher-dir")
+	if launcher_override != "":
+		_apk_directory = launcher_override
+	_target = Paths.resources_path()
+	var args := PackedStringArray() if _bundled_importer else PackedStringArray(["-m", "pocx.import_games"])
+	args.append_array(PackedStringArray(["--out", _apk_directory if build_apk else _target, "--lang", Assets.lang]))
+	if build_apk:
+		args.append("--create-apk")
+	if FileAccess.file_exists(_target.path_join("inventory.json")):
+		args.append("--replace")
+	if Paths.has_data():
+		args.append_array(PackedStringArray(["--base", Paths.data_dir]))
+	for game in _sources:
+		if Paths.has_game(game):
+			args.append_array(PackedStringArray(["--reimport", game]))
+		args.append("--" + game)
+		args.append(str(_sources[game]))
+	if _yugi_update != "" and _sources.has("yugi"):
+		args.append_array(PackedStringArray(["--yugi-update", _yugi_update]))
+	for game in _voice_sources:
+		# A dub needs its game: already prepared or selected in this same import.
+		if not Paths.has_game(game) and not _sources.has(game):
+			continue
+		for voice_path in _voice_sources[game]:
+			args.append("--voice")
+			args.append(game + "=" + str(voice_path))
+	_busy = true
+	set_process(true)
+	get_tree().auto_accept_quit = false
+	for button in _buttons:
+		button.disabled = true
+	_refresh_actions()
+	_back.disabled = true
+	_python.editable = false
+	_status.text = _text("apk_preparing") if build_apk else _copy(8)
+	_language.disabled = true
+	var output_log := Paths.storage_dir.path_join("converter-output.log")
+	args.append_array(PackedStringArray(["--output-log", output_log]))
+	var executable := _python.text.strip_edges()
+	var error := _thread.start(func() -> Dictionary:
+		var importer := executable
+		if FileAccess.file_exists(BundledTools.MANIFEST):
+			importer = BundledTools.prepare()
+			if importer == "":
+				return {"code": -1, "output": "No se pudieron preparar las herramientas de importación."}
+		if FileAccess.file_exists(output_log) and DirAccess.remove_absolute(output_log) != OK:
+			return {"code": -1, "output": "No se pudo preparar el registro de conversión. / Could not prepare conversion log."}
+		var output: Array = []
+		var code := OS.execute(importer, args, output, true)
+		var text := FileAccess.get_file_as_string(output_log) if FileAccess.file_exists(output_log) else "\n".join(output)
+		return {"code": code, "output": text})
+	if error != OK:
+		_finish({"code": -1, "output": "No se pudo iniciar el hilo de importación."})
+
+
+func _process(_delta: float) -> void:
+	super._process(_delta)
+	# Poll the viewport as other controls may consume mouse motion before _input.
+	var pointer := _pointer if DisplayServer.get_name() == "headless" else get_viewport().get_mouse_position()
+	var hit := _hit(pointer) if _pointer_inside and not _controls.panel_open else -1
+	var local_pointer := get_global_transform_with_canvas().affine_inverse() * pointer
+	var can_reimport: bool = _pointer_inside and not (_busy or _leaving or _tools_failed or Paths.storage_error or _controls.panel_open)
+	if hit >= 0 and not _keyboard_reveal:
+		_selected_index = hit
+	for i in _rows.size():
+		var installed := Paths.has_game(Game.GAMES[i])
+		var slot := Rect2(_logos[i].position - SLOT / 2.0, SLOT)
+		_reimport_buttons[i].visible = can_reimport and installed and slot.has_point(local_pointer)
+		if _reimport_buttons[i].visible and not _keyboard_reveal:
+			_selected_index = i
+		var available: bool = not installed and not _controls.panel_open
+		var reveal: bool = available and (hit == i or (_keyboard_reveal and i == _selected_index))
+		var row := _rows[i].get_child(0)
+		for button: Button in row.get_children():
+			if available and _keyboard_reveal and button.has_focus():
+				reveal = true
+			elif not _keyboard_reveal and hit != i and button.has_focus():
+				button.release_focus()
+		_revealed[i] = reveal
+		row.visible = reveal
+		for button: Button in row.get_children():
+			button.mouse_filter = Control.MOUSE_FILTER_STOP if reveal else Control.MOUSE_FILTER_IGNORE
+		if _logos[i].material != null:
+			_logos[i].material.set_shader_parameter("reveal", 1.0 if reveal else 0.0)
+	if _busy and _thread.is_started() and not _thread.is_alive():
+		_finish(_thread.wait_to_finish())
+	elif _busy and _building_apk:
+		var progress := _apk_directory.path_join("PoC Data/android/progress.json")
+		if FileAccess.file_exists(progress):
+			var parser := JSON.new()
+			if parser.parse(FileAccess.get_file_as_string(progress)) == OK and parser.data is Dictionary:
+				_status.text = str(parser.data.get("message", _status.text))
+
+
+func _browse_pck() -> void:
+	if _busy or _leaving or Paths.storage_error:
+		return
+	_pck_dialog.title = _import_pck.text
+	_pck_dialog.popup_file_dialog()
+
+
+func _start_pck_import(source: String) -> void:
+	if _busy or source.is_empty() or Paths.storage_error:
+		return
+	var target := Paths.user_content_pack_path()
+	var replace_existing := FileAccess.file_exists(target)
+	_importing_pck = true
+	_busy = true
+	set_process(true)
+	get_tree().auto_accept_quit = false
+	for button in _buttons:
+		button.disabled = true
+	_refresh_actions()
+	_back.disabled = true
+	_python.editable = false
+	_language.disabled = true
+	_status.text = _text("pack_copying")
+	var error := _thread.start(PACK.install_pack.bind(source, target, replace_existing))
+	if error != OK:
+		_finish({"ok": false, "error": "copy"})
+
+
+func _pck_error_text(reason: String, game := "") -> String:
+	match reason:
+		"engine":
+			var title: String = {"yugi": "Yugi", "kaiba": "Kaiba", "joey": "Joey"}.get(game, game)
+			return _text("pack_engine") % title
+		"format", "resources":
+			return _text("pack_invalid")
+		"installed":
+			return _text("pack_installed")
+		_:
+			return _text("pack_copy_failed")
+
+
+func _finish(result: Dictionary) -> void:
+	_busy = false
+	_language.disabled = false
+	get_tree().auto_accept_quit = true
+	for button in _buttons:
+		button.disabled = false
+	_refresh_actions()
+	_back.disabled = false
+	_python.editable = true
+	if _importing_pck:
+		_importing_pck = false
+		if not bool(result.get("ok", false)):
+			_status.text = _pck_error_text(str(result.get("error", "copy")), str(result.get("game", "")))
+			return
+		if Paths.data_dir == "res://data" and Paths.content_pack_persistent:
+			_status.text = _text("pack_replaced")
+			return
+		if not Paths.mount_user_content_pack():
+			_status.text = _text("pack_invalid")
+			return
+		Assets.reindex()
+		CardDB.load_db()
+		Audio.reload_native_tables()
+		SaveData.load_or_create()
+		Assets.remember_language(Assets.lang)
+		Game.open_launcher()
+		return
+	if int(result["code"]) != 0:
+		_show_import_error(result)
+		return
+	if _building_apk:
+		_status.text = _text("apk_ready")
+		_status.tooltip_text = str(result["output"])
+		if DisplayServer.get_name() != "headless":
+			OS.shell_open(_apk_directory.path_join("PoC Data/android/pck"))
+		return
+	var config := ConfigFile.new()
+	config.load(Paths.settings_path())
+	config.set_value("content", "data", "resources")
+	var error := config.save(Paths.settings_path())
+	if error != OK:
+		var reason := _text("settings_failed") + error_string(error)
+		_show_import_error({"code": error, "output": "POC_IMPORT_ERROR " + JSON.stringify({"stage": "write", "source": Paths.settings_path(), "reason": reason})})
+		return
+	Paths.data_dir = _target
+	Paths.migration_source = ""
+	Assets.reindex()
+	CardDB.load_db()
+	Audio.reload_native_tables()
+	SaveData.load_or_create()
+	Assets.remember_language(Assets.lang)
+	Game.open_launcher()
+
+
+func _show_import_error(result: Dictionary) -> void:
+	var output := str(result.get("output", ""))
+	var failure := {}
+	for line: String in output.split("\n"):
+		var marker := line.find("POC_IMPORT_ERROR ")
+		if marker >= 0:
+			var parser := JSON.new()
+			if parser.parse(line.substr(marker + 17).strip_edges()) == OK and parser.data is Dictionary:
+				failure = parser.data
+	var title := _text("title_apk_failed" if _building_apk else "title_import_failed")
+	var game := str(failure.get("game", "")) if failure.get("game") != null else ""
+	var game_label := game.capitalize() if game in Game.GAMES else ""
+	var stage_key := "stage_" + str(failure.get("stage", ""))
+	var stage := _text(stage_key if TEXTS.TEXT.has(stage_key) else "stage_process")
+	var heading := title + (" · " + game_label if game_label != "" else "")
+	var reason := str(failure.get("reason", ""))
+	if reason == "":
+		reason = _text("process_failed") % str(result.get("code", -1))
+	var source := str(failure.get("source", "")) if failure.get("source") != null else ""
+	_error_log_path = Paths.storage_dir.path_join("apk-last-error.log" if _building_apk else "import-last-error.log")
+	var log_file := FileAccess.open(_error_log_path, FileAccess.WRITE)
+	var saved := log_file != null
+	if saved:
+		log_file.store_string(output)
+		log_file.close()
+	var detail := heading + "\n" + stage + "\n\n" + reason
+	if source != "":
+		detail += "\n\n" + _text("source_label") + source
+	var diagnostics := str(failure.get("diagnostics", ""))
+	if diagnostics == "":
+		diagnostics = output
+	if diagnostics != "":
+		detail += "\n\n" + _text("details_label") + "\n" + diagnostics
+	detail += "\n\n" + _text("log_label") + _error_log_path
+	if not saved:
+		detail += "\n" + _text("log_not_saved")
+	_error_details.text = detail
+	_error_dialog.title = heading
+	_error_dialog.get_ok_button().text = _text("close")
+	_error_copy_button.text = _text("copy_details")
+	_error_log_button.text = _text("open_log")
+	_error_log_button.disabled = not saved
+	_update_media_buttons.visible = stage_key == "stage_yugi_update" and _sources.has("yugi")
+	_update_media_buttons.get_node("ISO").text = _text("kaiba_update_iso")
+	_update_media_buttons.get_node("Disc").text = _text("kaiba_update_disc")
+	_status.text = heading + " · " + stage
+	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_status.tooltip_text = detail
+	_error_link.text = _text("view_error")
+	_error_link.show()
+	_layout()
+	_error_dialog.popup_centered(Vector2i(650, 400))
+
+
+func _close() -> void:
+	if _busy:
+		if not _building_apk:
+			_status.text = _copy(8)
+
+
+func _open_apk_download() -> void:
+	# Release de esta misma versión: su APK acepta el formato del .pck que crea este launcher.
+	var repo := Updates.repository_url()
+	if repo != "":
+		OS.shell_open(repo + "/releases/download/%s/PowerOfChaos-Android.apk" % Updates.current)
+
+
+func _open_licenses() -> void:
+	var directory := BundledTools.prepare(true)
+	if directory != "":
+		OS.shell_open(directory)
+	else:
+		_status.text = _copy(9)
+
+
+func _request_exit() -> void:
+	if _busy:
+		_close()
+	else:
+		super._request_exit()
+
+
+func _request_update() -> void:
+	if not _busy:
+		super._request_update()
+
+
+func _exit_tree() -> void:
+	super._exit_tree()
+	if _thread.is_started():
+		_thread.wait_to_finish()
+	get_tree().auto_accept_quit = true
