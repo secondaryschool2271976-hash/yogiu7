@@ -507,11 +507,11 @@ func f5bc050() -> int:
 			var lp_b := m.u16(JoeyMem.pl(other) + 4)
 			if lp_a != 0 and lp_b != 0:
 				var cw := CustomCardEffects.check_win(self)
-				if cw == 0:
+				if cw < 0:
 					return 0
-				if cw == 3:
+				if cw == 2:
 					result = turn | 0xc0
-				elif (cw == 1 and local == 0) or (cw == 2 and local == 1):
+				elif cw == local:
 					result = (result & 0xff7f) | 0x40
 				else:
 					result = (result & 0xffbf) | 0x80

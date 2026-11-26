@@ -320,6 +320,6 @@ func winner() -> int:
 	var w := (m.u16(0xa133f2) & 0x60) >> 5
 	if w == 0:
 		var cw := CustomCardEffects.check_win(self)
-		if cw != 0:
-			return cw
+		if cw >= 0:
+			return cw + 1
 	return w

@@ -315,6 +315,13 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 			self.assertIn(hook, core_blob, f"Missing Core hook: {hook}")
 			self.assertIn(hook, joey_blob, f"Missing Joey hook: {hook}")
 
+		# CustomCardEffects.check_win returns -1 (undecided), 0/1 (player), 2 (draw).
+		joey_s = (JOEY_DIR / "joey_port_s.gd").read_text(encoding="utf-8")
+		self.assertIn("if cw < 0:", joey_s, "Joey f5bc050 must treat check_win() < 0 as undecided")
+		core_duel = (CORE_DIR / "duel.gd").read_text(encoding="utf-8")
+		self.assertIn("if cw >= 0:", core_duel, "Core winner() must treat check_win() < 0 as undecided")
+		self.assertIn("return cw + 1", core_duel, "Core winner() must map 0/1/2 -> 1/2/3")
+
 
 if __name__ == "__main__":
 	unittest.main()
