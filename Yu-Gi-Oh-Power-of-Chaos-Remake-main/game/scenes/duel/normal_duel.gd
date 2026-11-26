@@ -42,7 +42,9 @@ var _online_turn_left := ONLINE_TURN_LIMIT_SEC
 var _online_turn_owner := -1
 var _online_auto_ending := false
 var _online_auto_tick := 0
+var _online_auto_elapsed := 0.0
 var _online_resp_wait := 0.0
+var _online_resp_auto_decline := false
 var _online_net_wait_stuck := 0.0
 var _online_timer_paused := false
 var _forfeit_handled := false
@@ -279,11 +281,9 @@ func _process(_delta: float) -> void:
 		if _forfeit_handled:
 			return
 	if presenting:
-		if _lan and not _finished:
+		if _lan and not _finished and not (_duel is JoeyPresentationAdapter):
 			if _duel.has_method("f53eda0"):
 				_duel.call("f53eda0")
-			elif _duel.has_method("f5bd2d0"):
-				_duel.call("f5bd2d0")
 		# El motor no lee el raton mientras la presentacion lo detiene: el clic se pierde.
 		if steps > 0: _press_bits = 0
 		return
@@ -308,6 +308,10 @@ func _process(_delta: float) -> void:
 			steps = 1
 		else:
 			return
+	if _online_resp_auto_decline and (_duel.m.u16(0xa133f2) & 1) != 0:
+		_press_bits = 0
+		_online_step_auto_end(steps, true)
+		return
 	if _online_auto_ending and (_duel.m.u16(0xa133f2) & 1) == 0:
 		_press_bits = 0
 		_online_step_auto_end(steps, false)
@@ -594,8 +598,9 @@ func _input(event: InputEvent) -> void:
 ## Ventana del cuadro de dialogo del original (duel_dialog_window.gd; 431db0, 431ee0, 432050,
 ## 432240, 432400, 432570, 4326a0). El texto lo compone _dialog_text.
 func _show_dialog() -> void:
-	if _dialog_box != null:
+	if _dialog_box != null and is_instance_valid(_dialog_box):
 		return
+	_dialog_box = null
 	var window: Node2D = preload("res://scenes/duel/duel_dialog_window.gd").new()
 	window.setup(self, _duel, game, _dialog_text(_duel.dialog_open))
 	add_child(window)
@@ -610,10 +615,11 @@ func _dialog_text(d: Dictionary) -> String:
 
 
 func _answer_dialog(value: int) -> void:
-	if _dialog_box != null:
+	if _dialog_box != null and is_instance_valid(_dialog_box):
 		_dialog_box.begin_close()
 		_duel.dialog_close(value)
 	else:
+		_dialog_box = null
 		_duel.answer_dialog(value)
 	_refresh_cursor(true)
 
@@ -778,11 +784,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _setup_online_timer_hud() -> void:
 	if _online_timer_panel != null and is_instance_valid(_online_timer_panel):
+		_online_timer_panel.visible = _online_timer_enabled and not _finished and _result == null and not _forfeit_handled
 		return
 	var panel := Control.new()
 	panel.position = Vector2(708, 180)
 	panel.size = Vector2(88, 56)
+	panel.z_as_relative = false
 	panel.z_index = 2000
+	panel.visible = true
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var border := ColorRect.new()
 	border.position = Vector2.ZERO
@@ -826,6 +835,8 @@ func _setup_online_timer_hud() -> void:
 	_online_timer_who_label = who_lbl
 	_online_timer_label = lbl
 	_online_timer_bar = bar
+	if _online_turn_owner < 0 and _duel != null:
+		_online_turn_owner = _duel.m.u16(0xa133f2) & 1
 	_refresh_online_timer_hud()
 
 
@@ -869,9 +880,10 @@ func _refresh_online_timer_hud() -> void:
 func _is_local_prompt_open(turn_owner: int) -> bool:
 	if not _duel.dialog_open.is_empty() or not _duel.list_open.is_empty():
 		return true
-	if _duel.get("engine") != null and _duel.engine.get("m") != null:
-		var req: int = _duel.engine.m.u32(0xa57810)
-		var local_p: int = int(_duel.local_native_player) if _duel.get("local_native_player") != null else 0
+	if _duel is JoeyPresentationAdapter:
+		var adapter := _duel as JoeyPresentationAdapter
+		var req: int = adapter.engine.m.u32(0xa57810)
+		var local_p: int = adapter.local_native_player
 		if (req & 2) != 0 and ((req >> 2) & 1) == local_p:
 			return true
 	elif (_duel.m.u8(0xa13413) & 2) != 0 and (_duel.m.u8(0xa13413) & 4) == 0:
@@ -881,39 +893,73 @@ func _is_local_prompt_open(turn_owner: int) -> bool:
 	return false
 
 
+func _is_action_menu_open() -> bool:
+	if _duel is JoeyPresentationAdapter:
+		var adapter := _duel as JoeyPresentationAdapter
+		return (adapter.engine.m.u16(0xa57804) & 3) != 0
+	return (_duel.m.u8(0xa13408) & 3) != 0
+
+
+func _safe_slot_card(p: int, loc: int, idx: int) -> int:
+	if idx < 0:
+		return 0
+	if loc == 11:
+		var hand_n := _duel.m.u8(DuelMem.pl(p) + 2)
+		if idx >= hand_n:
+			return 0
+	var ptr := _duel.f5419b0(p, loc, idx)
+	if ptr <= 0:
+		return 0
+	return _duel.m.u16(ptr) & 0xfff
+
+
 func _step_online_timer(delta: float, presenting: bool) -> void:
+	if _online_timer_panel == null or not is_instance_valid(_online_timer_panel):
+		_setup_online_timer_hud()
 	var turn_owner := _duel.m.u16(0xa133f2) & 1
 	if turn_owner != _online_turn_owner:
 		_online_turn_owner = turn_owner
 		_online_turn_left = ONLINE_TURN_LIMIT_SEC
 		_online_auto_ending = false
 		_online_auto_tick = 0
+		_online_auto_elapsed = 0.0
 		_online_resp_wait = 0.0
+		_online_resp_auto_decline = false
 		_online_net_wait_stuck = 0.0
 		_online_timer_paused = false
 	_online_timer_paused = false
+	_online_resp_auto_decline = false
 	var start_shaded: bool = _visual != null and _visual._start_banner_shade
-	if not start_shaded:
+	var net_waiting: bool = _duel.net_waiting()
+	if not start_shaded and not presenting:
 		var local_prompt_open := _is_local_prompt_open(turn_owner)
-		var waiting_on_opponent: bool = turn_owner == 0 and not _online_auto_ending and (
-			presenting
-			or ((_duel.net_waiting() or Lan.in_flight > 0) and not local_prompt_open)
-		)
+		var waiting_on_opponent: bool = turn_owner == 0 and not _online_auto_ending and net_waiting and not local_prompt_open
 		if turn_owner == 1 and local_prompt_open:
 			_online_resp_wait += delta
 			if _online_resp_wait >= 25.0:
-				_online_step_auto_end(1, true)
+				_online_resp_auto_decline = true
 		elif waiting_on_opponent:
 			_online_resp_wait = 0.0
 			_online_timer_paused = true
 		else:
 			_online_resp_wait = 0.0
 			_online_turn_left = maxf(0.0, _online_turn_left - delta)
-	_refresh_online_timer_hud()
+	elif turn_owner == 0 and not _online_auto_ending and net_waiting and not start_shaded:
+		_online_timer_paused = true
 	if turn_owner == 0 and _online_turn_left <= 0.0:
 		if not _online_auto_ending:
 			_online_auto_ending = true
 			_online_auto_tick = 0
+			_online_auto_elapsed = 0.0
+		elif not presenting and not start_shaded and not net_waiting:
+			_online_auto_elapsed += delta
+			if _online_auto_elapsed >= 6.0:
+				# Safeguard: never leave the player locked out if an unusual sub-state prevents auto-end.
+				_online_auto_ending = false
+				_online_auto_tick = 0
+				_online_auto_elapsed = 0.0
+				_online_turn_left = 15.0
+	_refresh_online_timer_hud()
 	# Timeout ends only the active player's turn (each side auto-ends its own turn at 00:00);
 	# never award a match win or terminate the duel on turn timeout.
 
@@ -924,6 +970,9 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 		Game._mobile_pointer.cancel()
 	if not _duel.dialog_open.is_empty():
 		if bool(_duel.dialog_open.get("closing", false)):
+			if _dialog_box == null or not is_instance_valid(_dialog_box):
+				_dialog_box = null
+				_duel.dialog_gone()
 			return
 		var dtype := int(_duel.dialog_open.get("type", 0))
 		if dtype in [8, 9]:
@@ -933,36 +982,53 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 				var hand_n := _duel.m.u8(DuelMem.pl(0) + 2)
 				if hand_n > 0:
 					var slot := (_online_auto_tick >> 1) % hand_n
-					hover = {"p": 0, "loc": 11, "i": slot, "card": _duel.m.u16(_duel.f5419b0(0, 11, slot)) & 0xfff}
+					hover = {"p": 0, "loc": 11, "i": slot, "card": _safe_slot_card(0, 11, slot)}
 				else:
 					var z := (_online_auto_tick >> 1) % 10
 					var loc := 0 if z < 5 else 5
 					var idx := z if z < 5 else z - 5
-					hover = {"p": 0, "loc": loc, "i": idx, "card": _duel.m.u16(_duel.f5419b0(0, loc, idx)) & 0xfff}
+					hover = {"p": 0, "loc": loc, "i": idx, "card": _safe_slot_card(0, loc, idx)}
 			else:
 				press = 0x100 if (_online_auto_tick & 1) == 1 else 0
-			_duel.set_frame_input(press, 0, hover, -1)
 			for _i in range(steps):
 				if _lan:
 					Lan._poll()
-				_duel.frame()
-			_collect_visual_events()
+				_duel.set_frame_input(press, 0, hover, -1)
+				press = 0
+				if not _duel.frame():
+					_finished = true
+					break
+				_duel.set_frame_input(0, 0, hover, -1)
+				if _collect_visual_events() or _finished:
+					break
+				if _duel.dialog_open.is_empty() or bool(_duel.dialog_open.get("closing", false)):
+					break
+			_collect_events()
 			_redraw()
 			return
+		var msg := int(_duel.dialog_open.get("msg", _duel.dialog_open.get("message", -1)))
 		var ans := 0
 		if dtype == 1:
-			ans = 0
+			# 0xe6 asks "End your turn?" (1 = Yes / end turn, 0 = No / stay in Main Phase).
+			ans = 1 if (not decline_only and msg == 0xe6) else 0
 		elif dtype == 2:
 			ans = 1
 		elif dtype == 3:
-			var def_val := int(_duel.dialog_open.get("default", -1))
-			ans = def_val if def_val >= 0 else 1
+			# 0xe5 / 0xdc / 0xdd are the 3-choice phase menus (1 = End Turn, 2 = Cancel).
+			if not decline_only and msg in [0xe5, 0xdc, 0xdd]:
+				ans = 1
+			else:
+				var def_val := int(_duel.dialog_open.get("default", -1))
+				ans = def_val if def_val >= 0 else 1
 		elif dtype in [4, 5, 6, 7]:
 			ans = 0
 		_answer_dialog(ans)
 		return
 	if not _duel.list_open.is_empty():
 		if bool(_duel.list_open.get("closing", false)):
+			if _list_window == null or not is_instance_valid(_list_window):
+				_list_window = null
+				_duel.list_gone()
 			return
 		var mode := int(_duel.list_open.get("mode", 0))
 		var close_val := 0
@@ -985,30 +1051,39 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 		if _list_window != null and is_instance_valid(_list_window):
 			_list_window._close(close_val)
 		else:
+			_list_window = null
 			_duel.list_close(close_val)
 			_duel.list_gone()
 		return
-	if _duel.get("engine") != null and _duel.engine.get("m") != null:
-		var req_t: int = _duel.engine.m.u32(0xa57810)
-		var local_p_t: int = int(_duel.local_native_player) if _duel.get("local_native_player") != null else 0
+	if _duel is JoeyPresentationAdapter:
+		var adapter := _duel as JoeyPresentationAdapter
+		var req_t: int = adapter.engine.m.u32(0xa57810)
+		var local_p_t: int = adapter.local_native_player
 		if (req_t & 2) != 0 and ((req_t >> 2) & 1) == local_p_t:
 			var req_kind := (req_t >> 3) & 0x3f
 			var tp := 0
 			var tloc := 0
 			var tidx := 0
 			var tcard := 0
+			var force_cancel := false
 			if req_kind == 5:
-				tp = 1
-				tloc = 11
-				var opp_hand_n := maxi(1, _duel.m.u8(DuelMem.pl(1) + 2))
-				tidx = (_online_auto_tick >> 1) % opp_hand_n
-				tcard = _duel.m.u16(_duel.f5419b0(tp, tloc, tidx)) & 0xfff
+				var opp_hand_n := _duel.m.u8(DuelMem.pl(1) + 2)
+				if opp_hand_n > 0:
+					tp = 1
+					tloc = 11
+					tidx = (_online_auto_tick >> 1) % opp_hand_n
+					tcard = _safe_slot_card(tp, tloc, tidx)
+				else:
+					force_cancel = true
 			elif req_kind == 6:
-				tp = 0
-				tloc = 11
-				var own_hand_n := maxi(1, _duel.m.u8(DuelMem.pl(0) + 2))
-				tidx = (_online_auto_tick >> 1) % own_hand_n
-				tcard = _duel.m.u16(_duel.f5419b0(tp, tloc, tidx)) & 0xfff
+				var own_hand_n := _duel.m.u8(DuelMem.pl(0) + 2)
+				if own_hand_n > 0:
+					tp = 0
+					tloc = 11
+					tidx = (_online_auto_tick >> 1) % own_hand_n
+					tcard = _safe_slot_card(tp, tloc, tidx)
+				else:
+					force_cancel = true
 			else:
 				var base_slot := (_online_auto_tick >> 1) % 20
 				for off in 20:
@@ -1017,7 +1092,7 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 					var tz := t_slot % 10
 					var cand_loc := 0 if tz < 5 else 5
 					var cand_idx := tz if tz < 5 else tz - 5
-					var cand_card := _duel.m.u16(_duel.f5419b0(cand_p, cand_loc, cand_idx)) & 0xfff
+					var cand_card := _safe_slot_card(cand_p, cand_loc, cand_idx)
 					if cand_card != 0 or off == 19:
 						tp = cand_p
 						tloc = cand_loc
@@ -1025,12 +1100,13 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 						tcard = cand_card
 						if cand_card != 0:
 							break
-			var thover := {"p": tp, "loc": tloc, "i": tidx, "card": tcard}
-			var tpress := (0x100 if (_online_auto_tick % 6) == 1 else 0x200) if (_online_auto_tick & 1) == 1 else 0
-			_duel.set_frame_input(tpress, 0, thover, -1)
+			var thover := {} if force_cancel else {"p": tp, "loc": tloc, "i": tidx, "card": tcard}
+			var tpress := (0x100 if (force_cancel or (_online_auto_tick % 6) == 1) else 0x200) if (_online_auto_tick & 1) == 1 else 0
 			for _i in range(steps):
 				if _lan:
 					Lan._poll()
+				_duel.set_frame_input(tpress, 0, thover, -1)
+				tpress = 0
 				if not _duel.frame():
 					_finished = true
 					break
@@ -1054,14 +1130,15 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 				var tz2 := t_slot2 % 10
 				var cloc := 0 if tz2 < 5 else 5
 				var cidx := tz2 if tz2 < 5 else tz2 - 5
-				var ccard := _duel.m.u16(_duel.f5419b0(cp, cloc, cidx)) & 0xfff
+				var ccard := _safe_slot_card(cp, cloc, cidx)
 				if ccard != 0:
 					thover2 = {"p": cp, "loc": cloc, "i": cidx, "card": ccard}
 					break
-		_duel.set_frame_input(tpress2, 0, thover2, -1)
 		for _i in range(steps):
 			if _lan:
 				Lan._poll()
+			_duel.set_frame_input(tpress2, 0, thover2, -1)
+			tpress2 = 0
 			if not _duel.frame():
 				_finished = true
 				break
@@ -1076,10 +1153,18 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 	if decline_only:
 		return
 	var before := _duel.executed
-	var passive_wait: bool = _duel.net_waiting() or not _waiting_for_player()
-	var use_cancel := (not passive_wait) and (_online_auto_tick % 8) == 7
-	var press_bit := 0 if passive_wait else ((0x100 if use_cancel else 0x200) if (_online_auto_tick & 1) == 1 else 0)
-	var ph := -1 if (passive_wait or use_cancel) else 5
+	var net_waiting: bool = _duel.net_waiting()
+	var action_menu_open := _is_action_menu_open()
+	var can_end_phase := (not net_waiting) and (not action_menu_open) and _waiting_for_player()
+	var press_bit := 0
+	var ph := -1
+	if not net_waiting:
+		if action_menu_open:
+			press_bit = 0x100 if (_online_auto_tick & 1) == 1 else 0
+			ph = -1
+		elif can_end_phase:
+			press_bit = 0x200 if (_online_auto_tick & 1) == 1 else 0
+			ph = 5
 	for _i in range(steps):
 		if _lan:
 			Lan._poll()
@@ -1097,7 +1182,7 @@ func _online_step_auto_end(steps: int, decline_only: bool) -> void:
 			break
 		if _duel.ui_target_selection_mask != 0:
 			break
-		if passive_wait and _waiting_for_player() and not _duel.net_waiting():
+		if not can_end_phase and not _duel.net_waiting() and not _is_action_menu_open() and _waiting_for_player():
 			break
 	_refresh_cursor(true)
 	_collect_events()

@@ -1090,3 +1090,9 @@ func list_close(value: int) -> void:
 func list_gone() -> void:
 	list_open = {}
 	engine.ui_busy = false
+
+
+## Joey usa su propio receptor de red (engine.f5bd2d0); bloquear f53eda0 del nucleo
+## evita que robe paquetes de Lan durante animaciones y desincronice la partida.
+func f53eda0() -> int:
+	return 1

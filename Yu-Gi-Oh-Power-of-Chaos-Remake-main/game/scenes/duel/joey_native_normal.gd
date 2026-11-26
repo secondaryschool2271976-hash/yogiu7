@@ -44,7 +44,8 @@ func _ready() -> void:
 ## pertenece a 481a10 dentro del motor, incluso cuando no se ha hecho clic.
 func _native_phase_hover() -> Dictionary:
 	var adapter := _duel as JoeyPresentationAdapter
-	var auto_end := _online_auto_ending and adapter != null and adapter.waiting_for_player() and adapter.ui_target_selection_mask == 0 and (adapter.m.u16(0xa133f2) & 1) == 0
+	var action_menu_open := adapter != null and (adapter.engine.m.u16(0xa57804) & 3) != 0
+	var auto_end := _online_auto_ending and adapter != null and not action_menu_open and adapter.waiting_for_player() and adapter.ui_target_selection_mask == 0 and (adapter.m.u16(0xa133f2) & 1) == 0
 	var hover: int = 5 if auto_end else _phase_hover()
 	return {"mode": _ph_phase, "hover": hover,
 		"pressed": adapter != null and (adapter.frame_pressed & 0x200) != 0}
@@ -149,9 +150,11 @@ func _process(delta: float) -> void:
 		var adapter := _duel as JoeyPresentationAdapter
 		var paused := not adapter.list_open.is_empty() or (not adapter.dialog_open.is_empty() and int(adapter.dialog_open.get("type", 0)) not in [8, 9]) or (_visual != null and _visual.busy())
 		if paused:
+			Lan._poll()
 			_modal_network_clock = minf(_modal_network_clock + NativeClock.ticks(delta), 4.0)
 			while _modal_network_clock >= 1.0:
 				_modal_network_clock -= 1.0
+				Lan._poll()
 				if adapter.engine.f5bd2d0() == 0:
 					adapter._done = true
 					adapter.synchronize_view()

@@ -322,6 +322,61 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		self.assertIn("if cw >= 0:", core_duel, "Core winner() must treat check_win() < 0 as undecided")
 		self.assertIn("return cw + 1", core_duel, "Core winner() must map 0/1/2 -> 1/2/3")
 
+	def test_lan_and_online_timer_stability(self) -> None:
+		lan_path = REPO_ROOT / "game" / "autoload" / "lan.gd"
+		normal_duel_path = REPO_ROOT / "game" / "scenes" / "duel" / "normal_duel.gd"
+		joey_normal_path = REPO_ROOT / "game" / "scenes" / "duel" / "joey_native_normal.gd"
+		joey_adapter_path = REPO_ROOT / "game" / "scenes" / "duel" / "joey_presentation_adapter.gd"
+
+		for path in (lan_path, normal_duel_path, joey_normal_path, joey_adapter_path):
+			text = path.read_text(encoding="utf-8")
+			lines = text.splitlines()
+			for lineno, line in enumerate(lines, start=1):
+				if not line.strip():
+					continue
+				leading = line[: len(line) - len(line.lstrip(" \t"))]
+				if leading and " " in leading and "\t" in leading:
+					self.fail(f"Mixed tabs and spaces at {path.name}:{lineno}")
+			stripped = _strip_comments_and_strings(text)
+			stack: list[tuple[str, int]] = []
+			pairs = {")": "(", "]": "[", "}": "{"}
+			cur_line = 1
+			for ch in stripped:
+				if ch == "\n":
+					cur_line += 1
+				elif ch in "([{":
+					stack.append((ch, cur_line))
+				elif ch in ")]}":
+					if not stack or stack[-1][0] != pairs[ch]:
+						self.fail(f"Unbalanced '{ch}' at {path.name}:{cur_line}")
+					stack.pop()
+			if stack:
+				self.fail(f"Unclosed '{stack[-1][0]}' at {path.name}:{stack[-1][1]}")
+
+		lan_text = lan_path.read_text(encoding="utf-8")
+		self.assertIn("0xf043", lan_text, "Lan.COUNTED must include Core ack opcode 0xf043")
+
+		adapter_text = joey_adapter_path.read_text(encoding="utf-8")
+		self.assertIn("func f53eda0() -> int:", adapter_text, "JoeyPresentationAdapter must block inherited Core f53eda0")
+
+		normal_text = normal_duel_path.read_text(encoding="utf-8")
+		self.assertIn("not (_duel is JoeyPresentationAdapter)", normal_text, "normal_duel must not call Core f53eda0 on Joey")
+		self.assertNotIn("Lan.in_flight > 0", normal_text, "Timer must rely on _duel.net_waiting(), not Lan.in_flight")
+		self.assertIn("if _dialog_box != null and is_instance_valid(_dialog_box):", normal_text)
+		self.assertIn("msg in [0xe5, 0xdc, 0xdd]", normal_text, "Auto-end must pick End Turn (1) on phase menu dialogs")
+		self.assertIn("msg == 0xe6", normal_text, "Auto-end must answer Yes (1) on End Turn confirmation 0xe6")
+		self.assertIn("_is_action_menu_open()", normal_text, "Auto-end must dismiss open card action menus before ending phase")
+		self.assertIn("_online_auto_elapsed >= 6.0", normal_text, "Auto-end must include a deadlock release watchdog")
+		self.assertIn("_online_resp_auto_decline", normal_text, "Response auto-decline must not mutate engine during presenting")
+
+		step_timer_match = re.search(r"func _step_online_timer\(.*?\n(?=func |\Z)", normal_text, flags=re.S)
+		self.assertIsNotNone(step_timer_match)
+		self.assertNotIn("_online_step_auto_end(", step_timer_match.group(0), "_step_online_timer must not call _online_step_auto_end directly")
+
+		joey_normal_text = joey_normal_path.read_text(encoding="utf-8")
+		self.assertIn("0xa57804", joey_normal_text, "Joey _native_phase_hover must yield while card action menu is open")
+		self.assertIn("Lan._poll()", joey_normal_text, "Joey paused network loop must poll Lan before f5bd2d0")
+
 
 if __name__ == "__main__":
 	unittest.main()
