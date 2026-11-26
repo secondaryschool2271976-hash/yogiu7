@@ -856,7 +856,9 @@ func f54f140(p: int, count: int, discard_spells: int) -> int:
 
 ## FUN_0054f470: robo normal sin descarte de magias.
 func f54f470(p: int, count: int) -> int:
-	return f54f140(p, count, 0)
+	var res := f54f140(p, count, 0)
+	CustomCardEffects.on_draw(self, p, count)
+	return res
 
 ## FUN_0054f490: retira cartas de la parte superior del mazo.
 func f54f490(p: int, count: int) -> int:

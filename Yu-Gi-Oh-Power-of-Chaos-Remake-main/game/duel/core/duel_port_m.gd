@@ -182,6 +182,8 @@ func f571600(p: int, z: int) -> int:
 		0x27a, 0x182, 0x18c, 0x18d, 0x1a5, 0x1e7: return 1
 		0x2d6, 0x2d7, 0x2d8, 0x2fe: return 1 if f5438c0(1 - p) == 0 else 0
 		0x32c: return f543930(1 - p)
+	if CustomCardEffects.can_direct_attack(self, p, z):
+		return 1
 	return 0
 
 ## FUN_00571d30: comprueba si se puede entrar en batalla este turno.
@@ -1079,7 +1081,11 @@ func f570850(index: int, z: int, p: int = -1) -> int:
 					allowed = enabled
 					break
 	elif id in [0xf, 0x191, 0x1a3, 0x1ac, 0x1f9, 0x2e6, 0x34d, 0x458, 0x596, 0x598, 0x599, 0x59f, 0x5a2, 0x5a4, 0x5e6]: allowed = f551cb0(p, z, 0)
-	else: return 0
+	else:
+		var raw_id := cards.id_of(index) & 0xffff
+		if CustomCardEffects.handles(raw_id) and CustomCardEffects.can_activate(self, p, raw_id, CustomDuelOps.LOC_FIELD_MONSTER, z, {}):
+			return 1
+		return 0
 	if allowed != 0:
 		return allowed
 	# 0x5708f5: carta con efecto que ahora no se puede usar -> ayuda 4 (help05).
@@ -1153,6 +1159,10 @@ func f570e50(p: int = -1, z: int = -1, index: int = -1) -> int:
 				f4437a0(1)
 			elif f551cb0(0, z + 5, 0) != 0:
 				mask = 8
+	if mask == 0 and (m.u8(a + 6) & 2) != 0:
+		var raw_st := cards.id_of(index) & 0xffff
+		if CustomCardEffects.handles(raw_st) and CustomCardEffects.can_activate(self, 0, raw_st, CustomDuelOps.LOC_FIELD_ST, z + 5, {}):
+			mask = 8
 	if type > 20 and type < 23 and (m.u16(0xa1194a) & 0xc000) != 0: mask = 0
 	return mask
 
@@ -1294,6 +1304,7 @@ func f574420(p: int) -> int:
 				f54efe0(p, own_damage, (source << 8) | p, (target << 8) | defender)
 				if p != defender: _m_damage_trigger(p, defender, source, target, p, own_damage, true)
 				if effect_card_id(m.u16(0xa114c6 + p * 12)) == 0x2da and f5451f0(p, source) != -1 and other_prevent == 0: f54ef90(1 - p, own_damage)
+				CustomCardEffects.on_battle_damage(self, defender, target, p, own_damage)
 			m.set_u8(0xa133f4, 1)
 			return 0
 		1:
@@ -1306,6 +1317,7 @@ func f574420(p: int) -> int:
 				f54efe0(defender, other_damage, (source << 8) | p, (target << 8) | defender)
 				if p != defender: _m_damage_trigger(p, defender, source, target, defender, other_damage, false)
 				if effect_card_id(m.u16(0xa114d2 - p * 12)) == 0x2da and f5451f0(defender, target) != -1 and own_prevent == 0: f54ef90(1 - defender, other_damage)
+				CustomCardEffects.on_battle_damage(self, p, source, defender, other_damage)
 			m.set_u8(0xa133f4, 3)
 			return 0
 		10:
@@ -1351,6 +1363,7 @@ func f574420(p: int) -> int:
 				if (record & 0x40) != 0 and (record & 8) == 0:
 					var ref := ((source << 8) | p) if owner == p else ((target << 8) | defender)
 					f54c860(p, f401ad0(0x49e), ref, 3)
+			CustomCardEffects.on_battle_end(self, p, source, defender, -1 if (flags & 4) != 0 else target, (m.u8(0xa114c4 + p * 12) & 8) != 0, (m.u8(0xa114d0 - p * 12) & 8) != 0)
 			return 1
 
 func f5736f0(p: int) -> int:
@@ -1380,6 +1393,7 @@ func f5736f0(p: int) -> int:
 					var a := DuelMem.zone(ref & 1, (ref >> 8) & 0xff)
 					if (m.u8(a + 0x8f) & 4) == 0 and effect_card_id(m.u16(a) & 0xfff) == 0x291:
 						f54eed0(ref & 0xff, m.u16(a) & 0xfff, ref >> 8)
+			CustomCardEffects.on_attack_declare(self, attacker, source, defender, -1 if (flags & 4) != 0 else target)
 			m.set_u8(0xa133f4, 1)
 			return 0
 		1:

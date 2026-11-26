@@ -270,6 +270,16 @@ func f570450(p: int, hand: int, index: int) -> int:
 					mask |= 8
 			elif id == 0x1a8 and f551c40(p, index, 11) != 0:
 				mask |= 8
+			var raw_h := cards.id_of(index) & 0xffff
+			if CustomCardEffects.handles(raw_h):
+				if not CustomCardEffects.can_normal_summon(self, p, raw_h, false):
+					mask &= ~0x1
+				if not CustomCardEffects.can_normal_summon(self, p, raw_h, true):
+					mask &= ~0x10
+				if f56e660(0) != 0 and CustomCardEffects.can_special_summon(self, p, raw_h, CustomDuelOps.LOC_HAND, hand):
+					mask |= 0xc00
+				if CustomCardEffects.can_activate(self, p, raw_h, CustomDuelOps.LOC_HAND, hand, {}):
+					mask |= 8
 	elif phase == 3:
 		# Fase de batalla: trampa 0xf, magia que no sea de velocidad 5 (rapida) 5, monstruo 6.
 		if kind == 0x15:

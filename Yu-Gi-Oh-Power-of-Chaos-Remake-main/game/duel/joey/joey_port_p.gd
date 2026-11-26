@@ -404,7 +404,9 @@ func f578860(p: int, n: int, reveal: int) -> int:
 
 ## Joey FUN_00578b60: p roba n cartas sin revelarlas (578860).
 func f578b60(p: int, n: int) -> int:
-	return f578860(p, n, 0)
+	var res := f578860(p, n, 0)
+	CustomCardEffects.on_draw(self, p, n)
+	return res
 
 
 ## Joey FUN_00578b80: comando 0x62 (descarte del mazo) de n cartas con el bloqueo de 0x453.

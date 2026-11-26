@@ -225,6 +225,12 @@ func f5aab90(p: int, card: int) -> int:
 			return _ju_error(p, 0, result)
 		if f5aab30(p, 0) == 0:
 			return _ju_error(p, 0xb, result)
+	var raw_ns := cards.id_of(card & 0xffff) & 0xffff
+	if CustomCardEffects.handles(raw_ns):
+		if not CustomCardEffects.can_normal_summon(self, p, raw_ns, false):
+			normal = 0
+		if not CustomCardEffects.can_normal_summon(self, p, raw_ns, true):
+			settable = 0
 	return result | settable | normal
 
 
@@ -261,6 +267,10 @@ func f5aae00(p: int, card: int) -> int:
 				ok = int(_s32(f569d50(1 - p)) > _s32(f569d50(p)) + 1)
 		0x5ea, 0x5eb, 0x5ec, 0x5ed, 0x5ee, 0x5ef: ok = f5ab640(p, card)
 		0x5f0: ok = f56a000(p)
+	if ok == 0:
+		var raw_ss := cards.id_of(card & 0xffff) & 0xffff
+		if CustomCardEffects.handles(raw_ss) and CustomCardEffects.can_special_summon(self, p, raw_ss, CustomDuelOps.LOC_HAND, -1):
+			ok = 1
 	return 0xc00 if ok else 0
 
 
@@ -444,6 +454,7 @@ func f5abd00() -> int:
 				elif id in [0x45e, 0x585]:
 					f578390(a & 1, card, (a >> 1) & 0x1f)
 					f577840(a & 1, (a >> 1) & 0x1f, 0, card)
+				CustomCardEffects.on_summon_or_flip(self, a & 1, (a >> 1) & 0x1f, cards.id_of(card) & 0xffff, "normal")
 			_ju_next()
 			return 0
 	return 1
@@ -581,6 +592,7 @@ func f5ac990() -> int:
 				if f57ee80(packed, ref & 0xff, ref):
 					f5b9170((a << 15) | 0xad, f4022e0(card), 0, 0)
 					f5ba490(packed, ref & 0xff, ref)
+			CustomCardEffects.on_summon_or_flip(self, a & 1, (a >> 1) & 0x1f, cards.id_of(card) & 0xffff, "flip")
 			_ju_next()
 			return 0
 		_:
@@ -603,6 +615,7 @@ func _ju_relocate_finish() -> int:
 		var ref := _ju_ref()
 		if s16(effect_card_id(m.u16(0xa55084))) in [0x4de, 0x5f6]:
 			f5ba490((((a & 0x3e) | (a << 16) | 0x1c40) << 15) | m.u16(0xa55084), ref & 0xff, ref)
+		CustomCardEffects.on_summon_or_flip(self, a & 1, (a >> 1) & 0x1f, cards.id_of(m.u16(0xa55084)) & 0xffff, "special")
 	_ju_next()
 	return 0
 
@@ -647,6 +660,11 @@ func f5ad350() -> int:
 	var a := m.u32(_JU_ACTION)
 	match _ju_step():
 		0:
+			var raw_hss := cards.id_of(m.u16(0xa55084)) & 0xffff
+			var hslot := (a >> 6) & 0xff
+			if CustomCardEffects.handles(raw_hss) and CustomCardEffects.can_special_summon(self, a & 1, raw_hss, CustomDuelOps.LOC_HAND, hslot):
+				CustomCardEffects.special_summon(self, a & 1, raw_hss, CustomDuelOps.LOC_HAND, hslot)
+				return 1
 			if a & 0x4000:
 				f5b9170((a << 15) | 0xe6, f4022e0(m.u16(0xa55084)), 0, 5)
 			_ju_pay_tributes()

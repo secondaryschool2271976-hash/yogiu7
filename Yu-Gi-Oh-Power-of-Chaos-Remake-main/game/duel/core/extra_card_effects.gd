@@ -106,8 +106,10 @@ static func _preferred_ritual_monsters(spell_raw_id: int) -> Array[int]:
 			return [3046]
 		3047:
 			return [3071]
+		3053:
+			return [3084, 2526, 3129]
 		3083:
-			return [3129, 3084, 2526]
+			return [3084]
 		_:
 			return []
 
@@ -717,9 +719,9 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	if y_shield > 0:
 		def_delta += y_shield * 300
 	if (_core_count_active_st_raw_id(duel, 0, 2846) > 0 or _core_count_active_st_raw_id(duel, 1, 2846) > 0) and raw_id in GRAVEKEEPER_IDS:
-		# Necrovalley (2846, alias 334 Yami gives +200 to Spellcaster; add +300 so total is +500 ATK/DEF)
-		atk_delta += 300
-		def_delta += 300
+		# Necrovalley (2846): direct +500 ATK/DEF to Gravekeeper's monsters.
+		atk_delta += 500
+		def_delta += 500
 	if (_core_count_active_st_raw_id(duel, owner, 2645) > 0 or _core_count_active_st_raw_id(duel, owner, 2646) > 0) and raw_id in HERO_IDS:
 		if (m.u8(0xa133f2) & 1) == owner and _core_highest_other_atk(duel, p, z, opp) > int(m.u32(out + 4)):
 			atk_delta += 1000
@@ -729,7 +731,7 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	if (_core_count_active_st_raw_id(duel, owner, 2576) > 0 or _core_count_active_st_raw_id(duel, owner, 2577) > 0) and raw_id in SACRED_BEAST_IDS:
 		atk_delta += 500
 		def_delta += 500
-	# Extra Equip Spells (aliased to 303 Axe of Despair = +1000 ATK; adjust to exact bonus)
+	# Extra Equip Spells & Equip Traps (direct stat modifiers without native alias subtraction).
 	if (m.u32(0xa133ec) & 0x100) == 0:
 		for i in m.u16(zone + 0x88):
 			if m.u8(zone + 0x48 + i * 2) != 1:
@@ -741,28 +743,24 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 				continue
 			match duel.cards.id_of(lix):
 				2729: # Fusion Sword Murasame Blade (+800 ATK)
-					atk_delta -= 200
-				2755, 2756, 2897, 2924, 2964, 3079: # 0 ATK bonus
-					atk_delta -= 1000
-				2879: # Buster Rancher (+2500 vs >=2500 opponent monster, else 0)
-					atk_delta -= 1000
+					atk_delta += 800
+				2787, 3011, 3016, 3052: # Blast with Chain / Cestus of Dagla / Gravity Axe - Grarl / Wicked-Breaking Flamberge - Baou (+500 ATK)
+					atk_delta += 500
+				2879: # Buster Rancher (+2500 vs >=2500 opponent monster)
 					if _core_highest_other_atk(duel, p, z, opp) >= 2500:
 						atk_delta += 2500
 				2950: # Big Bang Shot (+400 ATK)
-					atk_delta -= 600
+					atk_delta += 400
 				3008: # Twin Swords of Flashing Light - Tryce (-500 ATK)
-					atk_delta -= 1500
-				3011, 3052: # Cestus of Dagla / Wicked-Breaking Flamberge - Baou (+500 ATK)
 					atk_delta -= 500
 				3054: # Butterfly Dagger - Elma (+300 ATK)
-					atk_delta -= 700
+					atk_delta += 300
 				3081: # Rod of Silence - Kay'est (+500 DEF)
-					atk_delta -= 1000
 					def_delta += 500
 				3082: # Shooting Star Bow - Ceal (-1000 ATK)
-					atk_delta -= 2000
+					atk_delta -= 1000
 				3096: # Fuhma Shuriken (+700 ATK)
-					atk_delta -= 300
+					atk_delta += 700
 	if atk_delta != 0:
 		m.set_u32(out + 4, maxi(0, int(m.u32(out + 4)) + atk_delta))
 	if def_delta != 0:
@@ -772,6 +770,9 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	if not skill_drain and raw_id != 2662 and _core_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f53fbd0(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f53fbd0(m.u32(out + 8)))
+	var custom_stats: Dictionary = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
+	m.set_u32(out + 4, maxi(0, int(custom_stats.get("atk", m.u32(out + 4)))))
+	m.set_u32(out + 8, maxi(0, int(custom_stats.get("def", m.u32(out + 8)))))
 
 
 # --- Joey (JoeyMem) helpers ------------------------------------------------------------------
@@ -1213,8 +1214,8 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	if y_shield > 0:
 		def_delta += y_shield * 300
 	if (_joey_count_active_st_raw_id(duel, 0, 2846) > 0 or _joey_count_active_st_raw_id(duel, 1, 2846) > 0) and raw_id in GRAVEKEEPER_IDS:
-		atk_delta += 300
-		def_delta += 300
+		atk_delta += 500
+		def_delta += 500
 	if (_joey_count_active_st_raw_id(duel, owner, 2645) > 0 or _joey_count_active_st_raw_id(duel, owner, 2646) > 0) and raw_id in HERO_IDS:
 		if (m.u8(JoeyMem.TURN) & 1) == owner and _joey_highest_other_atk(duel, p, z, opp) > int(m.u32(out + 4)):
 			atk_delta += 1000
@@ -1224,7 +1225,7 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	if (_joey_count_active_st_raw_id(duel, owner, 2576) > 0 or _joey_count_active_st_raw_id(duel, owner, 2577) > 0) and raw_id in SACRED_BEAST_IDS:
 		atk_delta += 500
 		def_delta += 500
-	# Extra Equip Spells (aliased to 303 Axe of Despair = +1000 ATK; adjust to exact bonus)
+	# Extra Equip Spells & Equip Traps (direct stat modifiers without native alias subtraction).
 	if (m.u32(JoeyMem.RULES) & 0x10000) == 0:
 		for i in m.u16(zo + JoeyMem.Z_LINKS_N):
 			if (m.u8(zo + JoeyMem.Z_LINK_KIND + i * 2) & 0xf) != 1:
@@ -1236,28 +1237,24 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 				continue
 			match duel.cards.id_of(lix):
 				2729:
-					atk_delta -= 200
-				2755, 2756, 2897, 2924, 2964, 3079:
-					atk_delta -= 1000
+					atk_delta += 800
+				2787, 3011, 3016, 3052:
+					atk_delta += 500
 				2879:
-					atk_delta -= 1000
 					if _joey_highest_other_atk(duel, p, z, opp) >= 2500:
 						atk_delta += 2500
 				2950:
-					atk_delta -= 600
+					atk_delta += 400
 				3008:
-					atk_delta -= 1500
-				3011, 3052:
 					atk_delta -= 500
 				3054:
-					atk_delta -= 700
+					atk_delta += 300
 				3081:
-					atk_delta -= 1000
 					def_delta += 500
 				3082:
-					atk_delta -= 2000
+					atk_delta -= 1000
 				3096:
-					atk_delta -= 300
+					atk_delta += 700
 	if atk_delta != 0:
 		m.set_u32(out + 4, maxi(0, int(m.u32(out + 4)) + atk_delta))
 	if def_delta != 0:
@@ -1267,4 +1264,7 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	if not skill_drain and raw_id != 2662 and _joey_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f5be050(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f5be050(m.u32(out + 8)))
+	var custom_stats: Dictionary = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
+	m.set_u32(out + 4, maxi(0, int(custom_stats.get("atk", m.u32(out + 4)))))
+	m.set_u32(out + 8, maxi(0, int(custom_stats.get("def", m.u32(out + 8)))))
 

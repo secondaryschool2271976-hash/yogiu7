@@ -43,7 +43,11 @@ func f576960(info: int, mask: int, kind: int, flags: int) -> int:
 				m.set_u32(_JO_DESTROYING, m.u32(_JO_DESTROYING) & ~bit)
 				var w := m.u16(info + 2)
 				var side := ((w >> 14) & 1) ^ (w & 1)
-				f576b30(q, z, k, (int(side != q) + flags) & 0xffffffff, m.u16(info))
+				var raw_id := cards.id_of(m.u16(JoeyMem.zone(q, z)) & 0xfff) & 0xffff
+				if f576b30(q, z, k, (int(side != q) + flags) & 0xffffffff, m.u16(info)) != 0 and (k == 0xe or k == 0xf):
+					CustomCardEffects.on_destroyed(self, q, raw_id, false, side != q)
+					if k == 0xe:
+						CustomCardEffects.on_sent_to_gy(self, q, raw_id, CustomDuelOps.LOC_FIELD_MONSTER if z < 5 else CustomDuelOps.LOC_FIELD_ST)
 		f579890()
 	return (m.u32(_JO_DESTROYING) ^ old) & 0xffffffff
 

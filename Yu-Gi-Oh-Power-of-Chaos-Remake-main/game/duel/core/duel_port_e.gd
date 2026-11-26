@@ -113,6 +113,9 @@ func f54de00(p: int, z: int, a3: int, a4: int) -> int:
 	if reg:
 		var entry := m.u32(zone)
 		f53baa0((((entry & 0xfffff78d) << 0x13) | ix | 0x3c6e0000) & 0xffffffff, 0)
+	var raw_destroyed := cards.id_of(ix) & 0xffff
+	CustomCardEffects.on_destroyed(self, p, raw_destroyed, false, true)
+	CustomCardEffects.on_sent_to_gy(self, p, raw_destroyed, CustomDuelOps.LOC_FIELD_MONSTER if z < 5 else CustomDuelOps.LOC_FIELD_ST)
 	f54ca50(p, z, 1)
 	return 0
 
@@ -699,6 +702,8 @@ func f571810(p: int, z: int, a3: int) -> int:
 		k += f542f30(0, 0x42a)
 		if k != 0 and m.u16(0xa11944 + q) <= k * 500:
 			return 0
+	if not CustomCardEffects.can_attack(self, p, z):
+		return 0
 	if ((effect_card_id(ix) & 0xffff) == 0x31c or (flags & 1) == 0) \
 			and (m.u8(zone + 7) & 8) == 0 and (m.u8(zone + 0x8e) & 0xc) == 0:
 		return 1

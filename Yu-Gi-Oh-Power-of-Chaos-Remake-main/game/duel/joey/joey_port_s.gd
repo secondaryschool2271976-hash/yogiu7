@@ -506,11 +506,20 @@ func f5bc050() -> int:
 			var lp_a := m.u16(JoeyMem.pl(local) + 4)
 			var lp_b := m.u16(JoeyMem.pl(other) + 4)
 			if lp_a != 0 and lp_b != 0:
-				return 0
-			if lp_b < lp_a:
-				result = (result & 0xff7f) | 0x40
-			if lp_a < lp_b:
-				result = (result & 0xffbf) | 0x80
+				var cw := CustomCardEffects.check_win(self)
+				if cw == 0:
+					return 0
+				if cw == 3:
+					result = turn | 0xc0
+				elif (cw == 1 and local == 0) or (cw == 2 and local == 1):
+					result = (result & 0xff7f) | 0x40
+				else:
+					result = (result & 0xffbf) | 0x80
+			else:
+				if lp_b < lp_a:
+					result = (result & 0xff7f) | 0x40
+				if lp_a < lp_b:
+					result = (result & 0xffbf) | 0x80
 	m.set_u16(JoeyMem.TURN, result)
 	m.set_u8(0xa577f4, m.u8(0xa577f4) | 0x10)
 	return 1
@@ -581,6 +590,7 @@ func f5bc620() -> int:
 		f5a8e00()
 	else:
 		f5bc5d0()
+	CustomCardEffects.on_phase_tick(self, m.u8(JoeyMem.TURN) & 1, (m.u8(JoeyMem.TURN) >> 1) & 7)
 	return 0
 
 

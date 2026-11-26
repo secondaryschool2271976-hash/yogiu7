@@ -107,7 +107,7 @@ func _try_load_db_cache() -> bool:
 		return false
 	var parsed: Variant = f.get_var(false)
 	f.close()
-	if not (parsed is Dictionary) or int(parsed.get("v", 0)) != 5:
+	if not (parsed is Dictionary) or int(parsed.get("v", 0)) != 6:
 		return false
 	if str(parsed.get("key", "")) != _db_cache_key():
 		return false
@@ -136,7 +136,7 @@ func _save_db_cache() -> void:
 	if f == null:
 		return
 	f.store_var({
-		"v": 5,
+		"v": 6,
 		"key": _db_cache_key(),
 		"cards": cards,
 		"extra_cards": extra_cards,
@@ -244,45 +244,162 @@ func is_usable(internal_id: int, game: String) -> bool:
 var _fallback_face_cache: Dictionary = {}
 
 
+static func card_subcategory(card: Dictionary) -> String:
+	var sub := str(card.get("subcategory", "")).strip_edges().to_lower()
+	if sub != "":
+		return sub
+	var cat := str(card.get("category", ""))
+	if cat == "spell" or cat == "trap":
+		var prop := int(card.get("prop", 0))
+		match (prop >> 17) & 7:
+			1: return "counter"
+			2: return "field"
+			3: return "equip"
+			4: return "continuous"
+			5: return "quickplay"
+			6: return "ritual"
+	return "normal"
+
+
+static func card_abilities(card: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var raw: Variant = card.get("abilities", null)
+	if raw is Array:
+		for item: Variant in raw:
+			var tok := str(item).strip_edges().to_lower()
+			if tok != "" and tok not in out:
+				out.append(tok)
+	return out
+
+
+static func card_shape_of(card: Dictionary) -> String:
+	var explicit := str(card.get("card_shape", "")).strip_edges().to_lower()
+	if explicit != "":
+		return explicit
+	var cat := str(card.get("category", ""))
+	if cat == "spell" or cat == "trap":
+		return "%s_%s" % [cat, card_subcategory(card)]
+	if bool(card.get("divine", false)) or int(card.get("type_id", 0)) == 24:
+		var iid := int(card.get("internal_id", 0))
+		if iid == 2502:
+			return "god_red"
+		if iid == 2500:
+			return "god_blue"
+		return "god_gold"
+	match str(card.get("monster_kind", "normal")):
+		"effect": return "effect"
+		"fusion": return "fusion"
+		"ritual": return "ritual"
+	return "normal"
+
+
+func _shape_frame_colors(shape: String) -> Dictionary:
+	match shape:
+		"god_red":
+			return {"frame": Color(0.76, 0.19, 0.17, 1.0), "trim": Color(0.95, 0.78, 0.34, 1.0), "box": Color(0.92, 0.78, 0.72, 1.0)}
+		"god_blue":
+			return {"frame": Color(0.18, 0.33, 0.68, 1.0), "trim": Color(0.86, 0.88, 0.96, 1.0), "box": Color(0.76, 0.82, 0.94, 1.0)}
+		"god_gold":
+			return {"frame": Color(0.84, 0.67, 0.22, 1.0), "trim": Color(1.0, 0.92, 0.56, 1.0), "box": Color(0.96, 0.90, 0.70, 1.0)}
+		"fusion":
+			return {"frame": Color(0.55, 0.35, 0.72, 1.0), "trim": Color(0.82, 0.68, 0.94, 1.0), "box": Color(0.88, 0.82, 0.92, 1.0)}
+		"ritual":
+			return {"frame": Color(0.28, 0.52, 0.82, 1.0), "trim": Color(0.70, 0.85, 0.98, 1.0), "box": Color(0.84, 0.90, 0.96, 1.0)}
+		"effect":
+			return {"frame": Color(0.80, 0.46, 0.23, 1.0), "trim": Color(0.94, 0.72, 0.52, 1.0), "box": Color(0.93, 0.84, 0.74, 1.0)}
+		_:
+			if shape.begins_with("spell_"):
+				return {"frame": Color(0.12, 0.58, 0.50, 1.0), "trim": Color(0.54, 0.88, 0.78, 1.0), "box": Color(0.79, 0.91, 0.86, 1.0)}
+			if shape.begins_with("trap_"):
+				return {"frame": Color(0.70, 0.25, 0.50, 1.0), "trim": Color(0.92, 0.62, 0.78, 1.0), "box": Color(0.92, 0.80, 0.87, 1.0)}
+			return {"frame": Color(0.83, 0.71, 0.41, 1.0), "trim": Color(0.95, 0.87, 0.64, 1.0), "box": Color(0.94, 0.89, 0.76, 1.0)}
+
+
+func _attr_badge_color(attr_key: String, category: String) -> Color:
+	if category == "spell":
+		return Color(0.12, 0.74, 0.58, 1.0)
+	if category == "trap":
+		return Color(0.82, 0.26, 0.58, 1.0)
+	match attr_key:
+		"light": return Color(0.97, 0.87, 0.32, 1.0)
+		"dark": return Color(0.46, 0.22, 0.62, 1.0)
+		"water": return Color(0.22, 0.62, 0.95, 1.0)
+		"fire": return Color(0.92, 0.28, 0.18, 1.0)
+		"earth": return Color(0.62, 0.44, 0.24, 1.0)
+		"wind": return Color(0.24, 0.78, 0.46, 1.0)
+		"divine": return Color(0.96, 0.80, 0.26, 1.0)
+	return Color(0.60, 0.58, 0.54, 1.0)
+
+
+func _fill_circle(img: Image, cx: int, cy: int, radius: int, col: Color) -> void:
+	var r2 := radius * radius
+	for dy in range(-radius, radius + 1):
+		for dx in range(-radius, radius + 1):
+			if dx * dx + dy * dy <= r2:
+				var px := cx + dx
+				var py := cy + dy
+				if px >= 0 and py >= 0 and px < img.get_width() and py < img.get_height():
+					img.set_pixel(px, py, col)
+
+
 func _fallback_face_texture(card: Dictionary, mini: bool) -> Texture2D:
-	var grp := group_of(card)
-	var key := "%d_%d" % [int(grp), 1 if mini else 0]
+	var shape := card_shape_of(card)
+	var cat := str(card.get("category", "monster"))
+	var attr_key := card_attribute_key(card)
+	var level := clampi(int(card.get("level", 0)), 0, 12)
+	var sub := card_subcategory(card)
+	var key := "%s_%s_%d_%s_%d" % [shape, attr_key, level, sub, 1 if mini else 0]
 	if _fallback_face_cache.has(key):
 		return _fallback_face_cache[key] as Texture2D
 	var w := 50 if mini else 200
 	var h := 72 if mini else 290
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	var frame := Color(0.84, 0.72, 0.42, 1.0)
-	match grp:
-		Group.EFFECT:
-			frame = Color(0.82, 0.49, 0.25, 1.0)
-		Group.RITUAL:
-			frame = Color(0.35, 0.56, 0.84, 1.0)
-		Group.FUSION:
-			frame = Color(0.56, 0.36, 0.72, 1.0)
-		Group.SPELL:
-			frame = Color(0.14, 0.62, 0.54, 1.0)
-		Group.TRAP:
-			frame = Color(0.72, 0.28, 0.54, 1.0)
-	var border := Color(0.16, 0.14, 0.12, 1.0)
-	var inner_border := frame.darkened(0.32)
-	var art_bg := Color(0.10, 0.11, 0.16, 1.0)
-	var text_bg := frame.lightened(0.45)
+	var palette := _shape_frame_colors(shape)
+	var frame: Color = palette["frame"]
+	var trim: Color = palette["trim"]
+	var text_bg: Color = palette["box"]
+	var border := Color(0.11, 0.10, 0.10, 1.0)
+	var inner_border := frame.darkened(0.38)
+	var art_bg := Color(0.08, 0.09, 0.14, 1.0)
 	img.fill(border)
 	var pad := 2 if mini else 6
 	img.fill_rect(Rect2i(pad, pad, w - pad * 2, h - pad * 2), frame)
+	if not mini:
+		# Inner bevel highlight and shadow for realistic card frame depth
+		img.fill_rect(Rect2i(pad, pad, w - pad * 2, 2), trim)
+		img.fill_rect(Rect2i(pad, pad, 2, h - pad * 2), trim)
+		img.fill_rect(Rect2i(pad, h - pad - 2, w - pad * 2, 2), inner_border)
+		img.fill_rect(Rect2i(w - pad - 2, pad, 2, h - pad * 2), inner_border)
+		# Title nameplate
+		img.fill_rect(Rect2i(14, 12, w - 28, 22), inner_border)
+		img.fill_rect(Rect2i(16, 14, w - 32, 18), trim.lightened(0.15))
+		# Attribute orb
+		_fill_circle(img, w - 25, 23, 8, inner_border)
+		_fill_circle(img, w - 25, 23, 6, _attr_badge_color(attr_key, cat))
+		if cat == "monster":
+			var stars := maxi(1, level)
+			var start_x := w - 20 - stars * 12
+			for i in stars:
+				_fill_circle(img, start_x + i * 12, 42, 4, Color(0.92, 0.25, 0.14, 1.0))
+				_fill_circle(img, start_x + i * 12, 42, 2, Color(1.0, 0.88, 0.28, 1.0))
+		else:
+			var badge_col := Color(0.95, 0.88, 0.42, 1.0) if sub != "normal" else trim
+			img.fill_rect(Rect2i(20, 38, w - 40, 8), inner_border)
+			img.fill_rect(Rect2i(w - 36, 37, 14, 10), badge_col)
 	var ax := 6 if mini else 20
-	var ay := 12 if mini else 48
+	var ay := 12 if mini else 52
 	var aw := w - ax * 2
-	var ah := 36 if mini else 156
+	var ah := 36 if mini else 148
 	img.fill_rect(Rect2i(ax - 1, ay - 1, aw + 2, ah + 2), inner_border)
 	img.fill_rect(Rect2i(ax, ay, aw, ah), art_bg)
 	var tx := 5 if mini else 16
-	var ty := ay + ah + (4 if mini else 14)
+	var ty := ay + ah + (4 if mini else 12)
 	var tw := w - tx * 2
-	var th := maxi(6, h - ty - (5 if mini else 16))
+	var th := maxi(6, h - ty - (5 if mini else 14))
 	img.fill_rect(Rect2i(tx - 1, ty - 1, tw + 2, th + 2), inner_border)
 	img.fill_rect(Rect2i(tx, ty, tw, th), text_bg)
+	if not mini and cat == "monster":
+		img.fill_rect(Rect2i(tx + 6, ty + th - 14, tw - 12, 1), inner_border)
 	var tex := ImageTexture.create_from_image(img)
 	_fallback_face_cache[key] = tex
 	return tex
@@ -386,21 +503,66 @@ func _dialog_label(index: int, fallback: String) -> String:
 
 
 func type_text(card: Dictionary) -> String:
-	match str(card.get("category", "")):
-		"spell":
-			return "[%s]" % type_name(22)
-		"trap":
-			return "[%s]" % type_name(21)
+	var cat := str(card.get("category", ""))
+	var sub := card_subcategory(card)
+	if cat == "spell":
+		var st_suffix := ""
+		if sub != "normal" and sub != "":
+			if Assets.lang == "a":
+				st_suffix = "/" + str({
+					"quickplay": "لعب سريع", "continuous": "مستمر", "equip": "تجهيز",
+					"field": "ملعب", "ritual": "طقوس",
+				}.get(sub, ""))
+			elif Assets.lang == "s":
+				st_suffix = "/" + str({
+					"quickplay": "Juego Rápido", "continuous": "Continua", "equip": "Equipo",
+					"field": "Campo", "ritual": "Ritual",
+				}.get(sub, ""))
+			else:
+				st_suffix = "/" + str({
+					"quickplay": "Quick-Play", "continuous": "Continuous", "equip": "Equip",
+					"field": "Field", "ritual": "Ritual",
+				}.get(sub, ""))
+		return "[%s%s]" % [type_name(22), st_suffix]
+	if cat == "trap":
+		var tr_suffix := ""
+		if sub != "normal" and sub != "":
+			if Assets.lang == "a":
+				tr_suffix = "/" + str({"continuous": "مستمر", "counter": "مضاد"}.get(sub, ""))
+			elif Assets.lang == "s":
+				tr_suffix = "/" + str({"continuous": "Continua", "counter": "Contraefecto"}.get(sub, ""))
+			else:
+				tr_suffix = "/" + str({"continuous": "Continuous", "counter": "Counter"}.get(sub, ""))
+		return "[%s%s]" % [type_name(21), tr_suffix]
+
 	var kind := str(card.get("monster_kind", ""))
-	if bool(card.get("divine", false)):
+	var abil := card_abilities(card)
+	var base_type := ""
+	if bool(card.get("divine", false)) or int(card.get("type_id", 0)) == 24:
+		base_type = "إله وحش" if Assets.lang == "a" else ("Bestia Divina" if Assets.lang == "s" else "Divine-Beast")
+	else:
+		base_type = type_name(int(card.get("type_id", 0)))
+
+	var abil_parts := ""
+	for a in abil:
 		if Assets.lang == "a":
-			return "[إله وحش%s]" % KIND_SUFFIX_AR.get(kind, "")
-		return "[Divine-Beast%s]" % KIND_SUFFIX.get(kind, "")
+			var ar_ab := str({"flip": "قلب", "toon": "كارتون", "spirit": "روح", "union": "اتحاد", "gemini": "توأم"}.get(a, ""))
+			if ar_ab != "":
+				abil_parts += "/" + ar_ab
+		elif Assets.lang == "s":
+			var es_ab := str({"flip": "Volteo", "toon": "Toon", "spirit": "Spirit", "union": "Unión", "gemini": "Géminis"}.get(a, ""))
+			if es_ab != "":
+				abil_parts += "/" + es_ab
+		else:
+			abil_parts += "/" + a.capitalize()
+
 	if Assets.lang == "a":
-		return "[%s%s]" % [type_name(int(card.get("type_id", 0))), KIND_SUFFIX_AR.get(kind, "")]
+		return "[%s%s%s]" % [base_type, KIND_SUFFIX_AR.get(kind, ""), abil_parts] if kind in ["fusion", "ritual"] else "[%s%s%s]" % [base_type, abil_parts, KIND_SUFFIX_AR.get(kind, "")]
 	var suffix_index: int = {"effect": 550, "fusion": 551, "ritual": 552}.get(kind, -1)
 	var suffix := _dialog_label(suffix_index, KIND_SUFFIX.get(kind, "")) if suffix_index >= 0 else ""
-	return "[%s%s]" % [type_name(int(card.get("type_id", 0))), suffix]
+	if kind in ["fusion", "ritual"]:
+		return "[%s%s%s]" % [base_type, suffix, abil_parts]
+	return "[%s%s%s]" % [base_type, abil_parts, suffix]
 
 
 func _filter(bits: int) -> Array[Dictionary]:
