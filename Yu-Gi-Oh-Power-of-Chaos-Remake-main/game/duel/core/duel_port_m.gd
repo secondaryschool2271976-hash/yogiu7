@@ -188,6 +188,14 @@ func f571600(p: int, z: int) -> int:
 
 ## FUN_00571d30: comprueba si se puede entrar en batalla este turno.
 func f571d30(p: int) -> int:
+	# Frozen Soul (3044) y Great Long Nose (2701): el jugador marcado no entra en la Battle Phase.
+	var pf := CustomDuelOps.pflags(self, p & 1)
+	if bool(pf.get("skip_next_bp", false)):
+		pf.erase("skip_next_bp")
+		return 0
+	if int(pf.get("skip_bp_turn", -1)) == CustomDuelOps.turn_number(self):
+		pf.erase("skip_bp_turn")
+		return 0
 	if m.u16(0xa133f0) == 0:
 		return 0
 	var a := DuelMem.pl(p & 1)
@@ -1708,7 +1716,6 @@ func f5732e0() -> int:
 		m.set_u8(0xa133f4, 3)
 		return 0
 	return 1
-
 
 
 
