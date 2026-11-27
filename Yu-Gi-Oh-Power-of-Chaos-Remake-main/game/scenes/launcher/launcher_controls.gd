@@ -627,6 +627,17 @@ func _on_import_ydc(path: String) -> void:
 		"Mazo '%s' importado (%d principal, %d fusión, %d side) y disponible en los 3 juegos.",
 		"Imported deck '%s' (%d Main, %d Fusion, %d Side) across all 3 games (Yugi / Kaiba / Joey)."
 	) % [deck_name, main_c, fusion_c, side_c]
+	var saved_total := 0
+	var decks_dir := Paths.save_dir.path_join("decks")
+	if DirAccess.dir_exists_absolute(decks_dir):
+		for f in DirAccess.get_files_at(decks_dir):
+			if f.get_extension().to_lower() == "ydc":
+				saved_total += 1
+	_reset_result.dialog_text += "\n" + _tr(
+		"محفوظة في قائمة المجموعات باسم '%s' (إجمالي المجموعات المحفوظة: %d). تظهر في محرر المجموعات (استيراد) في الأعلى.",
+		"Guardado en la lista de mazos como '%s' (mazos guardados: %d). Aparece arriba en Importar del editor.",
+		"Saved in the deck list as '%s' (saved decks: %d). It shows at the top of the editor's Import list."
+	) % [deck_name, saved_total]
 	_reset_result.popup_centered()
 
 

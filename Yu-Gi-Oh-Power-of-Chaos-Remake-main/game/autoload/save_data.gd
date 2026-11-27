@@ -795,12 +795,19 @@ func import_ydc_to_all_games(path: String, custom_name: String = "") -> Dictiona
 		seen_map[key] = true
 	var base_name := custom_name.strip_edges()
 	if base_name == "":
-		base_name = path.get_file().get_basename().strip_edges()
+		# Android puede dar una URI (content://.../primary%3ADownload%2FMi%20mazo.ydc): se decodifica y se
+		# toma solo el ultimo tramo, para que el nombre guardado sea el del archivo y no un prefijo comun.
+		var decoded := path.uri_decode().replace("\\", "/")
+		var tail := decoded.get_slice("/", decoded.get_slice_count("/") - 1)
+		tail = tail.get_slice(":", tail.get_slice_count(":") - 1)
+		base_name = tail.get_basename().strip_edges()
+		if base_name == "":
+			base_name = path.get_file().get_basename().strip_edges()
 	var safe_name := ""
 	for ch in base_name:
-		if ch.is_valid_identifier() or ch.is_valid_int() or ch in " -_" or ch.unicode_at(0) > 127:
+		if ch.is_valid_identifier() or ch.is_valid_int() or ch in " -_()." or ch.unicode_at(0) > 127:
 			safe_name += ch
-	safe_name = safe_name.strip_edges().substr(0, 24)
+	safe_name = safe_name.strip_edges().substr(0, 40)
 	if safe_name == "":
 		safe_name = "imported_deck"
 	var decks_dir := Paths.save_dir.path_join("decks")
