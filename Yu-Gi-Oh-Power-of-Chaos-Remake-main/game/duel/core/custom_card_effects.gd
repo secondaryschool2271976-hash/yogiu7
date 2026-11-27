@@ -193,10 +193,12 @@ static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := 
 	var st_src = CustomDuelOps.state(duel)
 	if CustomEffectsTraps.handles(cid):
 		st_src["effect_source"] = "trap"
+		st_src["effect_targeted"] = false
 		handled = CustomEffectsTraps.resolve(duel, p, cid, loc, z, ctx)
 		st_src["effect_source"] = ""
 	elif CustomEffectsSpells.handles(cid):
 		st_src["effect_source"] = "spell"
+		st_src["effect_targeted"] = false
 		handled = CustomEffectsSpells.resolve(duel, p, cid, loc, z, ctx)
 		st_src["effect_source"] = ""
 		if handled:
