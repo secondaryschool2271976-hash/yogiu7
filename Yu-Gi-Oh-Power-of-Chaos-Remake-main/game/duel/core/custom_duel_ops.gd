@@ -1515,6 +1515,14 @@ static func is_skill_drain_active(duel) -> bool:
 	return has_faceup_id(duel, 0, 2644) or has_faceup_id(duel, 1, 2644)
 
 
+## Timidity (2834): hasta el proximo End Phase del rival nadie puede destruir Magias/Trampas
+## boca abajo. Lo consulta destroy_zone.
+static func set_timidity(duel) -> void:
+	var until := turn_number(duel) + 1
+	pflags(duel, 0)["timidity_until_turn"] = until
+	pflags(duel, 1)["timidity_until_turn"] = until
+
+
 ## Dark Ruler Ha Des (2744): niega los efectos de los monstruos destruidos en batalla con
 ## monstruos Demonio que controles. El monstruo destruido ya esta en el cementerio cuando se
 ## disparan sus efectos, asi que se consulta aqui, no en la zona.
