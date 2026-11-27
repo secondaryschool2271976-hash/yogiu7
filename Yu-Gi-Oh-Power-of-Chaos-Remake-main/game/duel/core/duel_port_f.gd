@@ -394,6 +394,11 @@ func f539ac0(p: int, zero_attack: int) -> int:
 		_f_battle_prevent_destruction(atk, p)
 		_f_battle_prevent_damage(def, other)
 		_f_battle_prevent_damage(atk, p)
+		# Dimension Fusion Destruction (2548): no battle damage to the summoner of the marked monster.
+		if CustomCardEffects.battle_damage_blocked(self, p, source):
+			m.set_u16(atk + 10, 0)
+		if CustomCardEffects.battle_damage_blocked(self, other, target):
+			m.set_u16(def + 10, 0)
 		for out in [0xa114c4, 0xa114d0]:
 			m.set_u8(out, m.u8(out) ^ (((m.u8(out) * 4) ^ m.u8(out)) & 0x20))
 	return 0
@@ -2093,4 +2098,3 @@ func f542a20(p: int) -> int:
 			var entry := ordered[i]
 			issue((0x8000 if p != 0 else 0) | op, m.u16(entry), m.u16(entry + 2), 0)
 	return 0
-

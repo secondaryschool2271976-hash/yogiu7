@@ -111,6 +111,7 @@ static func build_core_ctx(duel, e: int, other: int, hand: int) -> Dictionary:
 		ctx["def_p"] = dp
 		ctx["def_z"] = dz
 		ctx["recv_p"] = p
+		ctx["amount"] = CustomDuelOps.battle_damage_to(duel, p, ap, az, dp, -1 if (bflags & 4) != 0 else dz)
 		if az < 5:
 			ctx["tribute_summoned"] = bool(CustomDuelOps.zflags(duel, ap, az).get("tribute_summoned", false))
 	elif ev == "draw":
@@ -158,6 +159,7 @@ static func build_joey_ctx(duel, effect: int, target: int, flag: int) -> Diction
 		ctx["def_p"] = dp
 		ctx["def_z"] = dz
 		ctx["recv_p"] = p
+		ctx["amount"] = CustomDuelOps.battle_damage_to(duel, p, ap, az, dp, -1 if (bflags & 4) != 0 else dz)
 		if az < 5:
 			ctx["tribute_summoned"] = bool(CustomDuelOps.zflags(duel, ap, az).get("tribute_summoned", false))
 	elif ev == "draw":
@@ -506,6 +508,44 @@ static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
 	if int(zf.get("cannot_attack_turn", -1)) == CustomDuelOps.turn_number(duel):
 		return false
 	return CustomEffectsMonsters1.can_attack(duel, p, z, id) and CustomEffectsMonsters2.can_attack(duel, p, z, id)
+
+
+## Whether the monster at atk_p/atk_z may attack the monster at def_p/def_z. Called from the
+## engines' attack-target checks (human selection, CPU choice, Joey FUN_0056bd80).
+## A Feint Plan (2759): nobody can attack face-down monsters this turn.
+## Marshmallon Glasses (2604): while its controller has "Marshmallon" (2603) in a Monster Zone,
+## only "Marshmallon" can be attacked.
+static func can_attack_target(duel, atk_p: int, atk_z: int, def_p: int, def_z: int) -> bool:
+	if def_z < 0 or def_z >= 5 or CustomDuelOps.zone_idx(duel, def_p, def_z) == 0:
+		return true
+	var t: int = CustomDuelOps.turn_number(duel)
+	if not CustomDuelOps.is_face_up(duel, def_p, def_z):
+		if int(CustomDuelOps.pflags(duel, 0).get("cannot_attack_facedown_turn", -1)) == t \
+				or int(CustomDuelOps.pflags(duel, 1).get("cannot_attack_facedown_turn", -1)) == t:
+			return false
+	if (atk_p & 1) != (def_p & 1) and CustomDuelOps.has_faceup_id(duel, def_p, 2604) \
+			and CustomDuelOps.zone_id(duel, def_p, def_z) != 2603:
+		for z in 5:
+			if CustomDuelOps.zone_idx(duel, def_p, z) != 0 and CustomDuelOps.zone_id(duel, def_p, z) == 2603:
+				# the Glasses only count as a Spell/Trap in the back row
+				for sz in range(5, 10):
+					if CustomDuelOps.zone_idx(duel, def_p, sz) != 0 and CustomDuelOps.is_face_up(duel, def_p, sz) \
+							and CustomDuelOps.zone_id(duel, def_p, sz) == 2604:
+						return false
+	return true
+
+
+## Hieroglyph Lithograph (2808): the hand size limit of that player is 7 instead of 6.
+static func hand_limit(duel, p: int) -> int:
+	return 7 if bool(CustomDuelOps.pflags(duel, p & 1).get("hand_limit_7", false)) else 6
+
+
+## Dimension Fusion Destruction (2548): the controller takes no battle damage from attacks
+## involving the monster it Special Summoned. True when the monster at p/z carries that mark.
+static func battle_damage_blocked(duel, p: int, z: int) -> bool:
+	if z < 0 or z >= 5:
+		return false
+	return bool(CustomDuelOps.zflags(duel, p & 1, z).get("no_battle_dmg_to_controller", false))
 
 
 static func can_direct_attack(duel, p: int, z: int, cid := -1) -> bool:

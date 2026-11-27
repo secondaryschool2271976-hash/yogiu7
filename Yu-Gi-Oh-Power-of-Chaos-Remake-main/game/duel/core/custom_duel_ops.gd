@@ -1002,6 +1002,49 @@ static func send_zone_to_gy(duel, p: int, z: int) -> bool:
 	return true
 
 
+## Negates the attack that is being declared and ends the battle, the same two commands the
+## original issues for its own attack-cancelling cards (Core FUN_005595f0, Joey FUN_0058cf50):
+## 0x35 releases the attacker, 0x37 closes the battle. Works for both engines.
+static func negate_attack(duel, effect_p: int, atk_p: int, atk_z: int) -> bool:
+	if atk_z < 0 or atk_z >= 5:
+		return false
+	var atk_bit: int = 0x8000 if (atk_p & 1) != 0 else 0
+	var eff_bit: int = 0x8000 if (effect_p & 1) != 0 else 0
+	if is_joey(duel):
+		duel.f5b9170(atk_bit | 0x35, atk_z, 1, 0)
+		duel.f5b9170(eff_bit | 0x37, 0, 0, 0)
+	else:
+		duel.issue(atk_bit | 0x35, atk_z, 1, 0)
+		duel.issue(eff_bit | 0x37, 0, 0, 0)
+	return true
+
+
+## Battle damage that player recv_p would take from the attack atk_p/atk_z against def_p/def_z
+## (def_z < 0 = direct attack). Mirrors the engine's own rule: ATK vs ATK, ATK vs DEF only with
+## piercing. Used to decide whether Nutrient Z can be activated.
+static func battle_damage_to(duel, recv_p: int, atk_p: int, atk_z: int, def_p: int, def_z: int) -> int:
+	if atk_z < 0 or atk_z >= 5 or zone_idx(duel, atk_p, atk_z) == 0:
+		return 0
+	var atk: int = eff_atk(duel, atk_p, atk_z)
+	if def_z < 0 or def_z >= 5 or zone_idx(duel, def_p, def_z) == 0:
+		return atk if (recv_p & 1) == (def_p & 1) else 0
+	if is_atk_pos(duel, def_p, def_z):
+		var datk: int = eff_atk(duel, def_p, def_z)
+		if atk > datk:
+			return (atk - datk) if (recv_p & 1) == (def_p & 1) else 0
+		if atk < datk:
+			return (datk - atk) if (recv_p & 1) == (atk_p & 1) else 0
+		return 0
+	var ddef: int = eff_def(duel, def_p, def_z)
+	if atk > ddef:
+		if CustomCardEffects.has_pierce(duel, atk_p, atk_z) and (recv_p & 1) == (def_p & 1):
+			return atk - ddef
+		return 0
+	if atk < ddef and (recv_p & 1) == (atk_p & 1):
+		return ddef - atk
+	return 0
+
+
 static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	p &= 1
 	var idx = zone_idx(duel, p, z)

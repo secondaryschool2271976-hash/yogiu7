@@ -79,7 +79,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		2718: # Last Turn
 			return CustomDuelOps.turn_player(duel) == opp and CustomDuelOps.get_lp(duel, p) <= 1000 and CustomDuelOps.count_monsters(duel, p, false) > 0
 		2720: # Nutrient Z
-			return (ev == "damage_calc" or ev == "damage_step") and int(ctx.get("recv_p", -1)) == p and int(ctx.get("amount", 2000)) >= 2000
+			return (ev == "damage_calc" or ev == "damage_step") and int(ctx.get("recv_p", -1)) == p and int(ctx.get("amount", 0)) >= 2000
 		2724: # Ready for Intercepting
 			return not CustomDuelOps.choose_zone(duel, p, func(d, _pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, _pl, zz) and (CustomDuelOps.monster_race(d, idx) == 15 or CustomDuelOps.monster_race(d, idx) == 18)).is_empty()
 		2737: # Bark of Dark Ruler
@@ -247,8 +247,8 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			if az >= 0 and az < 5 and CustomDuelOps.zone_idx(duel, opp, az) != 0:
 				var gain = CustomDuelOps.eff_atk(duel, opp, az)
 				ctx["negate_attack"] = true
-				CustomDuelOps.pflags(duel, p)["negate_current_attack"] = true
-				CustomDuelOps.heal(duel, p, gain)
+				if CustomDuelOps.negate_attack(duel, p, opp, az):
+					CustomDuelOps.heal(duel, p, gain)
 			return true
 		2605: # Mayakashi Metamorphosis
 			CustomDuelOps.mark_hopt(duel, p, 2605)
