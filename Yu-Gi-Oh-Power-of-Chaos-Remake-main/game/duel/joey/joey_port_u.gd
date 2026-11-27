@@ -216,6 +216,13 @@ func f5aab90(p: int, card: int) -> int:
 	var result := 0
 	if s16(effect_card_id(card)) == 0x4e2 and m.u8(JoeyMem.pl(p) + 8) == 1 and f56a000(p):
 		result = normal
+	# Carta personalizada que no se Invoca de Modo Normal (p. ej. Armed Dragon LV10 White):
+	# no se ofrece el flujo de Ofrendas, aunque su Nivel pida 2.
+	var raw_ns_early := cards.id_of(card & 0xffff) & 0xffff
+	if CustomCardEffects.handles(raw_ns_early) \
+			and not CustomCardEffects.can_normal_summon(self, p, raw_ns_early, false) \
+			and not CustomCardEffects.can_normal_summon(self, p, raw_ns_early, true):
+		return 0
 	var level := f4026c0(card) & 0xffff
 	if level <= 4:
 		if f56a000(p) == 0:
