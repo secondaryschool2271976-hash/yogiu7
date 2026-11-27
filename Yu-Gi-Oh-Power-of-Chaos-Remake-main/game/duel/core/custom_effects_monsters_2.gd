@@ -625,27 +625,10 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.change_position(duel, opp, zz, 0, -1)
 		2991: # Maju Garzett: ATK = combined original ATK of the 2 Tributed monsters
 			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
-				var gy_n = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
-				var total_atk = 0
-				var found = 0
-				for i in range(gy_n - 1, -1, -1):
-					var idx = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
-					if CustomDuelOps.is_monster(duel, idx):
-						total_atk += CustomDuelOps.base_atk(duel, idx)
-						found += 1
-						if found >= 2:
-							break
-				CustomDuelOps.set_stat_val(duel, p, z, total_atk, -1, false)
+				zf["garrzett_pending"] = 2
 		3030: # Great Maju Garzett: ATK = 2x original ATK of the 1 Tributed monster
 			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
-				var gy_n2 = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
-				var trib_atk = 0
-				for i in range(gy_n2 - 1, -1, -1):
-					var idx = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
-					if CustomDuelOps.is_monster(duel, idx):
-						trib_atk = CustomDuelOps.base_atk(duel, idx)
-						break
-				CustomDuelOps.set_stat_val(duel, p, z, trib_atk * 2, -1, false)
+				zf["garrzett_pending"] = 1
 		3128: # Chopman: Flip Summon -> equip 1 Equip Spell from GY
 			if kind == "flip_summon" and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_st_zone(duel, p) >= 0:
 				var gi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 1, true)
