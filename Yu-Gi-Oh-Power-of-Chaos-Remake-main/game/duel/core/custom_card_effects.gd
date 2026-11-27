@@ -507,4 +507,14 @@ static func _execute_delayed(duel, task: Dictionary) -> void:
 		"helpoemer_discard":
 			if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 2866) >= 0:
 				CustomDuelOps.discard_random(duel, 1 - p, 1)
+		"capsule_resolve":
+			var cz := int(data.get("z", -1))
+			var bcid := int(data.get("card_id", 0))
+			if cz >= 0 and bcid > 0 and CustomDuelOps.zone_id(duel, p, cz) == 2809:
+				CustomDuelOps.destroy_zone(duel, p, cz)
+				var bi := CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_BANISH, bcid)
+				if bi >= 0:
+					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_BANISH, bi, p, CustomDuelOps.LOC_HAND)
+		"final_countdown_win":
+			CustomDuelOps.declare_win(duel, p)
 	CustomDuelOps.sync_visuals(duel)
