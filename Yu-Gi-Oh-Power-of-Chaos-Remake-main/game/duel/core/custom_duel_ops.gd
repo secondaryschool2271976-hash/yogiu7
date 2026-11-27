@@ -368,6 +368,13 @@ static func is_normal_monster(duel, idx: int) -> bool:
 
 
 static func monster_race(duel, idx: int) -> int:
+	if idx == 0:
+		return 0
+	# D. Tribe (2796): todos los monstruos del campo son Dragon ese turno.
+	var tn := turn_number(duel)
+	if int(pflags(duel, 0).get("all_monsters_dragon_turn", -1)) == tn \
+			or int(pflags(duel, 1).get("all_monsters_dragon_turn", -1)) == tn:
+		return 1
 	return ctype(duel, idx)
 
 
