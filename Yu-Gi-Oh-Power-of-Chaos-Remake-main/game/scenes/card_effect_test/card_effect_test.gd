@@ -57,6 +57,15 @@ func _build() -> void:
 	title.add_theme_font_size_override("font_size", 28)
 	col.add_child(title)
 
+	var note := Label.new()
+	note.text = _txt("The opponent plays normally, so it may interrupt. If it does, end the duel and start again.",
+			"الخصم يلعب بشكل عادي وقد يقاطع الاختبار. إن حدث ذلك، أنهِ المبارزة وابدأ من جديد.",
+			"El rival juega normal y puede interrumpir. Si pasa, termina el duelo y vuelve a empezar.")
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_theme_font_size_override("font_size", 15)
+	note.modulate = Color(1, 1, 1, 0.75)
+	col.add_child(note)
+
 	var search := LineEdit.new()
 	search.placeholder_text = _txt("Search a card by name", "ابحث عن بطاقة بالاسم", "Busca una carta por nombre")
 	search.text_changed.connect(_refresh)
