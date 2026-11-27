@@ -89,6 +89,21 @@ static func _action_name(action: int) -> String:
 		12: return "Special Defense"
 	return "Choose"
 
+## Los cuadros modales hechos con Control (p. ej. el selector de mazos de Importar) no reciben
+## el raton sintetico: sus Control viven en pixeles del viewport y nosotros enviamos coordenadas
+## de escena. Si el cuadro abierto sabe leer el toque, se le pasa tal cual, en coordenadas de
+## escena, y el decide.
+func _modal_handles(method: String, event: InputEvent) -> bool:
+	if not is_instance_valid(Game._screen):
+		return false
+	var modal: Variant = Game._screen.get("_modal")
+	if modal == null or not is_instance_valid(modal):
+		return false
+	if not modal.has_method(method):
+		return false
+	return bool(modal.call(method, event, _scene_point(event.position)))
+
+
 func _target_viewport() -> Viewport:
 	if Game.has_active_root_dialog():
 		return get_tree().root
@@ -309,6 +324,11 @@ func cancel() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenDrag:
 		get_viewport().set_input_as_handled()
+		if _modal_handles("handle_mobile_drag", event):
+			return
+		if is_instance_valid(Game._screen) and Game._screen.has_method("handle_mobile_search_drag"):
+			if Game._screen.handle_mobile_search_drag(event, _scene_point(event.position)):
+				return
 		if event.index == _finger and _touch_active:
 			if _touch_card == "pile": return
 			if _touch_card.begins_with("duel:") and not _scrolling and event.position.distance_to(_start) < 32.0:
@@ -326,6 +346,9 @@ func _input(event: InputEvent) -> void:
 				_preview_duel_card(_target)
 		return
 	if event is InputEventScreenTouch:
+		if _modal_handles("handle_mobile_touch", event):
+			get_viewport().set_input_as_handled()
+			return
 		if is_instance_valid(Game._screen) and Game._screen.has_method("handle_mobile_search_touch"):
 			if Game._screen.handle_mobile_search_touch(event, _scene_point(event.position)):
 				get_viewport().set_input_as_handled()
