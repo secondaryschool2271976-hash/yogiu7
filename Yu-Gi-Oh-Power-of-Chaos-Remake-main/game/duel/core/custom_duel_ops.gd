@@ -1603,6 +1603,56 @@ static func ask_optional(duel, p: int, text: String, on_yes: Callable) -> bool:
 	return true
 
 
+## Efecto "puedes" sin pila de eleccion: al jugador local se le pregunta Si/No; en los demas
+## casos (CPU, online, repeticion, headless) se ejecuta solo, como antes.
+static func optional_effect(duel, p: int, cid: int, body: Callable) -> void:
+	if not ask_optional(duel, p, effect_prompt(duel, cid), body):
+		body.call()
+
+
+## Igual, con un texto propio.
+static func optional_text(duel, p: int, text: String, body: Callable) -> void:
+	if not ask_optional(duel, p, text, body):
+		body.call()
+
+
+## Texto en el idioma activo (arabe, espanol, ingles).
+static func lang_text(ar: String, es: String, en: String) -> String:
+	if Assets.lang == "a":
+		return ar
+	if Assets.lang == "s":
+		return es
+	return en
+
+
+## "Activa 1 de estos efectos": se pregunta cada opcion en orden y solo vale la primera que se
+## acepte. Sin jugador local se ejecuta la opcion auto_index.
+static func optional_one_of(duel, p: int, texts: Array, bodies: Array, auto_index: int) -> void:
+	var done: Array = [false]
+	var first := true
+	for i in texts.size():
+		var body: Callable = bodies[i]
+		var gated := func() -> void:
+			if bool(done[0]):
+				return
+			done[0] = true
+			# Quita de la cola las demas opciones del mismo grupo.
+			var q: Array = state(duel).get_or_add("optional_prompts", [])
+			for k in range(q.size() - 1, -1, -1):
+				if (q[k] as Dictionary).get("group", null) == done:
+					q.remove_at(k)
+			body.call()
+		if not ask_optional(duel, p, str(texts[i]), gated):
+			if first:
+				(bodies[auto_index] as Callable).call()
+			return
+		if not first:
+			var qq: Array = state(duel).get_or_add("optional_prompts", [])
+			if not qq.is_empty():
+				(qq.back() as Dictionary)["group"] = done
+		first = false
+
+
 static func _open_optional_prompt(duel, text: String, on_yes: Callable) -> void:
 	duel.dialog_open = {"type": 1, "msg": -1, "literal": text, "subs": [], "buttons": 2, "default": -1, "custom_yes": on_yes}
 	duel.present("dialog_open", duel.dialog_open.duplicate())

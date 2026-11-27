@@ -694,9 +694,12 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				CustomDuelOps.add_counter(duel, int(pick["p"]), int(pick["z"]), "spell", 1)
 		2905: # Decayed Commander: Normal -> SS Zombie Tiger from hand
 			if kind == "normal" and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2941)
-				if hi >= 0:
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+				if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2941) >= 0:
+					var dc_run := func() -> void:
+						var hi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2941)
+						if hi >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+							CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+					CustomDuelOps.optional_effect(duel, p, 2905, dc_run)
 		2923: # Magical Merchant FLIP: mill until S/T, add it to hand
 			if kind == "flip_summon" or kind == "flipped":
 				while CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_DECK) > 0:
@@ -713,9 +716,12 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
 		2937: # Vampiric Orchis: Normal -> SS Des Dendle from hand
 			if kind == "normal" and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2914)
-				if hi >= 0:
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+				if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2914) >= 0:
+					var vo_run := func() -> void:
+						var hi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2914)
+						if hi >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+							CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+					CustomDuelOps.optional_effect(duel, p, 2937, vo_run)
 		2960: # Des Koala FLIP: 400 * opp hand
 			if kind == "flip_summon" or kind == "flipped":
 				CustomDuelOps.damage(duel, opp, CustomDuelOps.pile_count(duel, opp, CustomDuelOps.LOC_HAND) * 400, false)
@@ -755,12 +761,14 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				if gi >= 0:
 					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, gi)
 		3088: # Don Turtle: Normal/Flip Summon -> SS Don Turtles from hand
-			if kind == "normal" or kind == "tribute" or kind == "flip_summon":
-				while CustomDuelOps.free_monster_zone(duel, p) >= 0:
-					var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3088)
-					if hi < 0:
-						break
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+			if (kind == "normal" or kind == "tribute" or kind == "flip_summon") and CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3088) >= 0:
+				var dt_run := func() -> void:
+					while CustomDuelOps.free_monster_zone(duel, p) >= 0:
+						var hi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3088)
+						if hi < 0:
+							break
+						CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+				CustomDuelOps.optional_effect(duel, p, 3088, dt_run)
 		3089: # Stealth Bird: Flip Summon -> 1000 dmg
 			if kind == "flip_summon":
 				CustomDuelOps.damage(duel, opp, 1000, false)
@@ -790,11 +798,16 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				zf["garrzett_pending"] = 1
 		3128: # Chopman: Flip Summon -> equip 1 Equip Spell from GY
 			if kind == "flip_summon" and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_st_zone(duel, p) >= 0:
-				var gi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 1, true)
-				if gi >= 0:
-					var eq_z = CustomDuelOps.set_st_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, true)
-					if eq_z >= 5:
-						CustomDuelOps.link_equip(duel, p, eq_z, p, z)
+				var ch_pred := func(d, idx, _s): return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 1
+				if CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, ch_pred, true) >= 0:
+					var ch_run := func() -> void:
+						var gi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, ch_pred, true)
+						if gi < 0 or CustomDuelOps.free_st_zone(duel, p) < 0 or CustomDuelOps.zone_id(duel, p, z) != 3128:
+							return
+						var eq_z: int = CustomDuelOps.set_st_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, true)
+						if eq_z >= 5:
+							CustomDuelOps.link_equip(duel, p, eq_z, p, z)
+					CustomDuelOps.optional_effect(duel, p, 3128, ch_run)
 
 
 static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: int) -> bool:
@@ -804,10 +817,13 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 	if not can_attack(duel, atk_p, atk_z, cid):
 		return false
 	if cid == 2822 and CustomDuelOps.has_faceup_id(duel, atk_p, 2846): # Gravekeeper's Assailant
-		var pick = CustomDuelOps.choose_zone(duel, atk_p, func(d, pl, zz, _idx): return pl == def_p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-		if not pick.is_empty():
-			var cur_def = not CustomDuelOps.is_atk_pos(duel, def_p, int(pick["z"]))
-			CustomDuelOps.change_position(duel, def_p, int(pick["z"]), 0 if cur_def else 1, -1)
+		if not CustomDuelOps.choose_zone(duel, atk_p, func(d, pl, zz, _idx): return pl == def_p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true).is_empty():
+			var ga_run := func() -> void:
+				var pk := CustomDuelOps.choose_zone(duel, atk_p, func(d, pl, zz, _idx): return pl == def_p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
+				if not pk.is_empty():
+					var cur_def: bool = not CustomDuelOps.is_atk_pos(duel, def_p, int(pk["z"]))
+					CustomDuelOps.change_position(duel, def_p, int(pk["z"]), 0 if cur_def else 1, -1)
+			CustomDuelOps.optional_effect(duel, atk_p, 2822, ga_run)
 	if (cid == 2813 or cid == 2966) and def_z >= 0 and not CustomDuelOps.is_face_up(duel, def_p, def_z) and not CustomDuelOps.is_atk_pos(duel, def_p, def_z):
 		CustomDuelOps.destroy_zone(duel, def_p, def_z)
 	if cid == 2811 and def_z >= 0 and not CustomDuelOps.is_face_up(duel, def_p, def_z):
@@ -851,11 +867,20 @@ static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: i
 			if is_direct:
 				CustomDuelOps.discard_random(duel, opp_p, 1)
 		2894: # Cliff the Trap Remover
-			var pick = CustomDuelOps.choose_zone(duel, dmg_p, func(_d, _pl, zz, _idx): return zz >= 5, true, true)
-			if not pick.is_empty():
-				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
-			else:
+			var cl_pick := CustomDuelOps.choose_zone(duel, dmg_p, func(_d, _pl, zz, _idx): return zz >= 5, true, true)
+			var cl_a := func() -> void:
+				var pk := CustomDuelOps.choose_zone(duel, dmg_p, func(_d, _pl, zz, _idx): return zz >= 5, true, true)
+				if not pk.is_empty():
+					CustomDuelOps.destroy_zone(duel, int(pk["p"]), int(pk["z"]))
+			var cl_b := func() -> void:
 				CustomDuelOps.mill(duel, opp_p, 2, 1)
+			var cl_texts: Array = [
+				CustomDuelOps.lang_text("هل تريد تدمير بطاقة سحر/فخ على الملعب؟", "¿Destruir 1 carta de Magia/Trampa del campo?", "Destroy 1 Spell/Trap Card on the field?"),
+				CustomDuelOps.lang_text("هل تريد إرسال أول بطاقتين من مجموعة الخصم إلى المقبرة؟", "¿Enviar las 2 cartas de arriba del Deck del rival al Cementerio?", "Send the top 2 cards of your opponent's Deck to the Graveyard?")]
+			if cl_pick.is_empty():
+				CustomDuelOps.optional_text(duel, dmg_p, str(cl_texts[1]), cl_b)
+			else:
+				CustomDuelOps.optional_one_of(duel, dmg_p, cl_texts, [cl_a, cl_b], 0)
 		2905: # Decayed Commander: direct -> discard 1 random
 			if is_direct:
 				CustomDuelOps.discard_random(duel, opp_p, 1)
@@ -865,19 +890,35 @@ static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: i
 		3027: # Mefist: discard 1 random
 			CustomDuelOps.discard_random(duel, opp_p, 1)
 		3032: # Dark Scorpion - Gorg the Strong
-			var pick = CustomDuelOps.choose_zone(duel, dmg_p, func(_d, pl, zz, _idx): return pl == opp_p and zz < 5, true, true)
-			if not pick.is_empty():
-				CustomDuelOps.spin_zone(duel, opp_p, int(pick["z"]), false)
-			else:
+			var gg_pick := CustomDuelOps.choose_zone(duel, dmg_p, func(_d, pl, zz, _idx): return pl == opp_p and zz < 5, true, true)
+			var gg_a := func() -> void:
+				var pk := CustomDuelOps.choose_zone(duel, dmg_p, func(_d, pl, zz, _idx): return pl == opp_p and zz < 5, true, true)
+				if not pk.is_empty():
+					CustomDuelOps.spin_zone(duel, opp_p, int(pk["z"]), false)
+			var gg_b := func() -> void:
 				CustomDuelOps.mill(duel, opp_p, 1, 1)
+			var gg_texts: Array = [
+				CustomDuelOps.lang_text("هل تريد إعادة وحش من الخصم إلى أعلى المجموعة؟", "¿Devolver 1 monstruo del rival al tope del Deck?", "Return 1 monster your opponent controls to the top of the Deck?"),
+				CustomDuelOps.lang_text("هل تريد إرسال أول بطاقة من مجموعة الخصم إلى المقبرة؟", "¿Enviar la carta de arriba del Deck del rival al Cementerio?", "Send the top card of your opponent's Deck to the Graveyard?")]
+			if gg_pick.is_empty():
+				CustomDuelOps.optional_text(duel, dmg_p, str(gg_texts[1]), gg_b)
+			else:
+				CustomDuelOps.optional_one_of(duel, dmg_p, gg_texts, [gg_a, gg_b], 0)
 		3049: # Dark Scorpion - Chick the Yellow
-			var pick = CustomDuelOps.choose_zone(duel, dmg_p, func(_d, pl, _zz, _idx): return pl == opp_p, true, true)
-			if not pick.is_empty():
-				CustomDuelOps.bounce_zone(duel, opp_p, int(pick["z"]))
+			if not CustomDuelOps.choose_zone(duel, dmg_p, func(_d, pl, _zz, _idx): return pl == opp_p, true, true).is_empty():
+				var dsc_run := func() -> void:
+					var pk := CustomDuelOps.choose_zone(duel, dmg_p, func(_d, pl, _zz, _idx): return pl == opp_p, true, true)
+					if not pk.is_empty():
+						CustomDuelOps.bounce_zone(duel, opp_p, int(pk["z"]))
+				CustomDuelOps.optional_text(duel, dmg_p, CustomDuelOps.lang_text("هل تريد إعادة بطاقة من الملعب إلى اليد؟", "¿Devolver 1 carta del campo a la mano?", "Return 1 card on the field to the hand?"), dsc_run)
 		3061: # Dark Scorpion - Meanae the Thorn
-			var di = CustomDuelOps.choose_pile_card(duel, dmg_p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.DARK_SCORPION_IDS, true)
-			if di >= 0:
-				CustomDuelOps.add_from_pile_to_hand(duel, dmg_p, CustomDuelOps.LOC_DECK, di)
+			var dm_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.DARK_SCORPION_IDS
+			if CustomDuelOps.choose_pile_card(duel, dmg_p, CustomDuelOps.LOC_DECK, dm_pred, true) >= 0:
+				var dm_run := func() -> void:
+					var di: int = CustomDuelOps.choose_pile_card(duel, dmg_p, CustomDuelOps.LOC_DECK, dm_pred, true)
+					if di >= 0:
+						CustomDuelOps.add_from_pile_to_hand(duel, dmg_p, CustomDuelOps.LOC_DECK, di)
+				CustomDuelOps.optional_effect(duel, dmg_p, 3061, dm_run)
 
 
 static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, atk_destroyed: bool, def_destroyed: bool) -> void:
@@ -916,16 +957,22 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 		if acid == 2843: # Timeater: skip opp next MP1
 			CustomDuelOps.pflags(duel, def_p)["skip_mp1_turn"] = t + 1
 		if acid == 2883 and CustomDuelOps.is_atk_pos(duel, def_p, def_z): # Winged Sage Falcos
-			var gi = CustomDuelOps.find_pile_index_by_id(duel, def_p, CustomDuelOps.LOC_GRAVE, dcid)
-			if gi >= 0:
-				CustomDuelOps.move_pile_card(duel, def_p, CustomDuelOps.LOC_GRAVE, gi, def_p, CustomDuelOps.LOC_DECK)
+			if CustomDuelOps.find_pile_index_by_id(duel, def_p, CustomDuelOps.LOC_GRAVE, dcid) >= 0:
+				var fa_run := func() -> void:
+					var gi: int = CustomDuelOps.find_pile_index_by_id(duel, def_p, CustomDuelOps.LOC_GRAVE, dcid)
+					if gi >= 0:
+						CustomDuelOps.move_pile_card(duel, def_p, CustomDuelOps.LOC_GRAVE, gi, def_p, CustomDuelOps.LOC_DECK)
+				CustomDuelOps.optional_effect(duel, atk_p, 2883, fa_run)
 		if acid == 2884: # Great Dezard increment kill count
 			var dzf = CustomDuelOps.zflags(duel, atk_p, atk_z)
 			dzf["dezard_kills"] = int(dzf.get("dezard_kills", 0)) + 1
 		if acid == 2889: # Mystical Knight of Jackal
-			var gi = CustomDuelOps.find_pile_index_by_id(duel, def_p, CustomDuelOps.LOC_GRAVE, dcid)
-			if gi >= 0:
-				CustomDuelOps.move_pile_card(duel, def_p, CustomDuelOps.LOC_GRAVE, gi, def_p, CustomDuelOps.LOC_DECK)
+			if CustomDuelOps.find_pile_index_by_id(duel, def_p, CustomDuelOps.LOC_GRAVE, dcid) >= 0:
+				var jk_run := func() -> void:
+					var gi: int = CustomDuelOps.find_pile_index_by_id(duel, def_p, CustomDuelOps.LOC_GRAVE, dcid)
+					if gi >= 0:
+						CustomDuelOps.move_pile_card(duel, def_p, CustomDuelOps.LOC_GRAVE, gi, def_p, CustomDuelOps.LOC_DECK)
+				CustomDuelOps.optional_effect(duel, atk_p, 2889, jk_run)
 		if acid == 2938: # Helping Robo for Combat: draw 1 then return 1 to bottom
 			if CustomDuelOps.draw(duel, atk_p, 1) > 0 and CustomDuelOps.pile_count(duel, atk_p, CustomDuelOps.LOC_HAND) > 0:
 				CustomDuelOps.move_pile_card(duel, atk_p, CustomDuelOps.LOC_HAND, 0, atk_p, CustomDuelOps.LOC_DECK, true)
@@ -1097,9 +1144,13 @@ static func on_sent_to_gy(duel, p: int, cid: int, from_loc: int, opp_effect: boo
 			pass
 		3115: # Pinch Hopper: sent from field to GY -> SS Insect from hand
 			if from_loc < 11 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var hi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 10, true)
-				if hi >= 0:
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+				var ph_pred := func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 10
+				if CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, ph_pred, true) >= 0:
+					var ph_run := func() -> void:
+						var hi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, ph_pred, true)
+						if hi >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+							CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p, true, false)
+					CustomDuelOps.optional_effect(duel, p, 3115, ph_run)
 
 
 static func on_spell_resolved(duel, _cast_p: int) -> void:

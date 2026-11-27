@@ -1215,7 +1215,10 @@ static func on_standby_tick(duel, tp: int) -> void:
 				CustomDuelOps.zflags(duel, pl, sz)["snake_dmg"] = mini(16000, dmg * 2)
 		if CustomDuelOps.has_faceup_id(duel, pl, 2948) and pl == tp: # Senri Eye
 			if CustomDuelOps.can_pay_lp(duel, pl, 100):
-				CustomDuelOps.pay_lp(duel, pl, 100)
+				var se_run := func() -> void:
+					if CustomDuelOps.can_pay_lp(duel, pl, 100):
+						CustomDuelOps.pay_lp(duel, pl, 100)
+				CustomDuelOps.optional_text(duel, pl, CustomDuelOps.lang_text("هل تريد دفع 100 نقطة حياة للنظر في أول بطاقة من مجموعة الخصم؟", "¿Pagar 100 Puntos de Vida para mirar la carta de arriba del Deck del rival?", "Pay 100 Life Points to look at the top card of your opponent's Deck?"), se_run)
 		if CustomDuelOps.has_faceup_id(duel, pl, 3017) and pl != tp: # Falling Down: su controlador recibe 800 en la Standby Phase del rival
 			CustomDuelOps.damage(duel, pl, 800)
 
