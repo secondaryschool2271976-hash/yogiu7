@@ -17,8 +17,38 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130,
 ]
+
+
+## Level Up!: enviar 1 monstruo "LV" boca arriba que controlas al Cementerio; Invocar
+## especialmente 1 monstruo de tu mano o Deck nombrado en el texto del enviado, ignorando sus
+## condiciones de invocacion. La tabla sale del propio texto de cada monstruo LV del juego
+## (los nombres de carta entre comillas de su descripcion).
+const LEVEL_UP_TABLE := {
+	2508: 2512, 2510: 2511, 2511: 2512, 2512: 2511,
+	2591: 2592, 2592: 2593, 2593: 2592,
+	2636: 2637, 2637: 2636,
+	2640: 2641, 2641: 2642, 2642: 2641,
+	2683: 2681,
+}
+
+
+## Zona del monstruo LV que se puede enviar (y cuyo relevo esta en mano o Deck), o -1.
+static func _level_up_zone(duel, p: int) -> int:
+	for zz in 5:
+		var idx: int = CustomDuelOps.zone_idx(duel, p, zz)
+		if idx == 0 or not CustomDuelOps.is_face_up(duel, p, zz):
+			continue
+		var rid: int = CustomDuelOps.zone_id(duel, p, zz)
+		if not LEVEL_UP_TABLE.has(rid):
+			continue
+		var to_id: int = int(LEVEL_UP_TABLE[rid])
+		if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, to_id) >= 0:
+			return zz
+		if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, to_id) >= 0:
+			return zz
+	return -1
 
 
 static func handles(cid: int) -> bool:
@@ -36,6 +66,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
 	match cid:
+		3130: # Level Up!
+			return CustomDuelOps.can_hopt(duel, p, 3130) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and _level_up_zone(duel, p) >= 0
 		2507: # Ancient Chant
 			if loc == CustomDuelOps.LOC_GRAVE:
 				return CustomDuelOps.can_hopt(duel, p, 2507)
@@ -255,6 +287,23 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3130: # Level Up!
+			CustomDuelOps.mark_hopt(duel, p, 3130)
+			var lv_zone: int = _level_up_zone(duel, p)
+			if lv_zone < 0:
+				return true
+			var lv_sent: int = CustomDuelOps.zone_id(duel, p, lv_zone)
+			var lv_next: int = int(LEVEL_UP_TABLE.get(lv_sent, 0))
+			if lv_next == 0:
+				return true
+			CustomDuelOps.send_zone_to_gy(duel, p, lv_zone)
+			var lv_locs: Array[int] = [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK]
+			for lv_loc: int in lv_locs:
+				var lv_i: int = CustomDuelOps.find_pile_index_by_id(duel, p, lv_loc, lv_next)
+				if lv_i >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, lv_loc, lv_i, p, true, false)
+					return true
+			return true
 		2507: # Ancient Chant
 			CustomDuelOps.mark_hopt(duel, p, 2507)
 			if loc == CustomDuelOps.LOC_GRAVE:

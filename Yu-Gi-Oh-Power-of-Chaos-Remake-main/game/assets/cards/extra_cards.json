@@ -2,6 +2,7 @@
   "format": 1,
   "source": "arab-duelists.com",
   "original_art": {
+    "1745": "ad_25290459.webp",
     "0": "ad_89631139.webp",
     "1": "ad_15025844.webp",
     "2": "ad_76184692.webp",
@@ -33149,6 +33150,44 @@
       ],
       "frame_type": "ritual",
       "card_shape": "ritual",
+      "custom_effect": true
+    },
+    {
+      "index": 1745,
+      "internal_id": 3130,
+      "password": "25290459",
+      "names": {
+        "eng": "Level Up!",
+        "ara": "رفع المستوى!"
+      },
+      "descriptions": {
+        "eng": "Send 1 face-up \"LV\" monster you control to the GY; Special Summon 1 monster from your hand or Deck that is listed in the sent monster's text, ignoring its Summoning conditions.",
+        "ara": "أرسل وحش 1 \"مستوى\" تتحكم به إلى المقبرة؛ استدعِ وحش 1 بشكل خاص من يدك أو مجموعتك يكون مذكوراً في نص الوحش المُرسَل، متجاهلاً شروط استدعائه."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_25290459.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
       "custom_effect": true
     }
   ],
