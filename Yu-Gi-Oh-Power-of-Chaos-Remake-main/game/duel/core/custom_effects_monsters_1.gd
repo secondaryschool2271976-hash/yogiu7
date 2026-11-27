@@ -1649,8 +1649,11 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 			if CustomDuelOps.can_hopt(duel, p, 2583):
 				var fi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.name_matches(d, idx, "final geas"), true)
 				if fi >= 0:
-					CustomDuelOps.mark_hopt(duel, p, 2583)
-					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, fi)
+					var gandora_search: Callable = func() -> void:
+						CustomDuelOps.mark_hopt(duel, p, 2583)
+						CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, fi)
+					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 2583), gandora_search):
+						gandora_search.call()
 		2618: # Moremarshmallon: if destroyed by card effect -> SS another + 1000 dmg
 			if not by_battle and CustomDuelOps.can_hopt(duel, p, 2618) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				CustomDuelOps.mark_hopt(duel, p, 2618)
