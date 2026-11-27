@@ -99,6 +99,10 @@ func _scenario(data: String, sc: Dictionary) -> void:
 	var decks: Array[Dictionary] = []
 	for p in 2:
 		var main := _filler()
+		if sc.has("deck_only"):
+			main = PackedInt32Array()
+			for id in _ids(sc["deck_only"][p]):
+				main.append(id)
 		for id in hands[p] + _ids(sc.get("grave", [[], []])[p]) + _ids(sc.get("deck_top", [[], []])[p]):
 			main.append(id)
 		for e in sc.get("field", [[], []])[p]:
@@ -142,20 +146,42 @@ func _scenario(data: String, sc: Dictionary) -> void:
 			names.append("%d=%s" % [id, _name_of(id)])
 	print("cards: ", names)
 	print("before: ", _state(duel))
+	if sc.has("deck_only"):
+		for pp in 2:
+			var top := []
+			for i in mini(8, CustomDuelOps.pile_count(duel, pp, 13)):
+				top.append(CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, pp, 13, i)))
+			print("deck top (P%d): %s" % [pp, top])
 	var flow: Dictionary = sc.get("flow", {})
 	if not flow.is_empty():
 		_flow(duel, flow)
 		return
+	var eng = duel.engine if duel is JoeyPresentationAdapter else duel
 	var act: Dictionary = sc.get("act", {})
 	if act.is_empty():
 		return
+	if eng != duel:
+		# Joey cannot load field/grave from the scenario: summon them from hand, then force
+		# them face-up in attack position (see the f568610 argument-order bug).
+		for jf in sc.get("jfield", []):
+			var jp: int = 1 - int(jf.get("p", 0))
+			var ji: int = CustomDuelOps.find_pile_index_by_id(eng, jp, 11, _id(jf["card"]))
+			var jz: int = CustomDuelOps.special_summon_from_pile(eng, jp, 11, ji, jp, true, false)
+			var ja: int = CustomDuelOps.zone_addr(eng, jp, jz)
+			eng.m.set_u8(ja + 6, (eng.m.u8(ja + 6) & ~3) | 2)
+		print("  joey field set: ", _state(eng))
+	if sc.get("dbg_eng", false):
+		print("  eng class=", eng.get_script().resource_path, " is_joey=", CustomDuelOps.is_joey(eng), " hand_n=", CustomDuelOps.pile_count(eng, 0, 11), " deck_n=", CustomDuelOps.pile_count(eng, 0, 13))
+		print("  eng state: ", _state(eng))
 	var p: int = int(act.get("p", 0))
+	if eng != duel:
+		p = 1 - p  # the Joey rules engine indexes players the other way round from the adapter
 	var cid: int = _id(act["card"])
 	var loc: int = int(LOC.get(str(act.get("loc", "hand")), 11))
 	var z: int = int(act.get("z", -1))
 	var ctx: Dictionary = (act.get("ctx", {}) as Dictionary).duplicate()
 	if loc != 0 and loc != 5 and loc != 10:
-		var pi: int = CustomDuelOps.find_pile_index_by_id(duel, p, loc, cid)
+		var pi: int = CustomDuelOps.find_pile_index_by_id(eng, p, loc, cid)
 		ctx["pile_i"] = pi
 		if pi < 0:
 			print("  !! card %d is not in that pile" % cid)
@@ -164,32 +190,48 @@ func _scenario(data: String, sc: Dictionary) -> void:
 	else:
 		if z < 0:
 			for zz in 11:
-				if CustomDuelOps.zone_id(duel, p, zz) == cid:
+				if CustomDuelOps.zone_id(eng, p, zz) == cid:
 					z = zz
 					break
+	if str(act.get("kind", "activate")) == "summon_trigger":
+		CustomCardEffects.on_summon_or_flip(eng, p, z, cid, str(act.get("how", "normal")))
+		duel.run_until_idle(4000)
+		print("after:  ", _state(eng))
+		_check_expect(eng, sc)
+		return
+	if str(act.get("kind", "activate")) == "standby":
+		CustomEffectsMonsters1.on_standby_tick(eng, p)
+		duel.run_until_idle(4000)
+		print("after:  ", _state(eng))
+		_check_expect(eng, sc)
+		return
 	if str(act.get("kind", "activate")) == "special_summon":
 		var slot: int = int(ctx.get("pile_i", z))
-		var ok: bool = CustomCardEffects.can_special_summon(duel, p, cid, loc, slot)
+		var ok: bool = CustomCardEffects.can_special_summon(eng, p, cid, loc, slot)
 		print("can_special_summon: ", ok)
 		var want_ss: Variant = sc.get("expect_can", null)
 		if want_ss != null and bool(want_ss) != ok:
 			print("  !! expected can_special_summon == ", want_ss)
 			failures += 1
 		if ok:
-			var zone: int = CustomCardEffects.special_summon(duel, p, cid, loc, slot)
+			var zone: int = CustomCardEffects.special_summon(eng, p, cid, loc, slot)
 			duel.run_until_idle(4000)
-			print("special_summon -> zone ", zone)
-			print("after:  ", _state(duel))
-			_check_expect(duel, sc)
+			print("special_summon -> zone ", zone, " joey=", CustomDuelOps.is_joey(eng), " script=", duel.get_script().resource_path)
+			for _k in int(sc.get("settle", 0)):
+				duel.frame()
+			print("  z0 flags=", CustomDuelOps.zone_entry(eng, p, 0) != 0 and eng.m.u8(CustomDuelOps.zone_addr(eng, p, 0) + 6), " atk_pos=", CustomDuelOps.is_atk_pos(eng, p, 0), " face_up=", CustomDuelOps.is_face_up(eng, p, 0))
+			print("  unported(eng): ", eng.unported_calls, " unported(adapter): ", duel.unported_calls, " z0 idx=", CustomDuelOps.zone_idx(eng, p, 0), " hand_n=", CustomDuelOps.pile_count(eng, p, 11), " gy_n=", CustomDuelOps.pile_count(eng, p, 14))
+			print("after:  ", _state(eng))
+			_check_expect(eng, sc)
 		return
-	var can: bool = CustomCardEffects.can_activate(duel, p, cid, loc, z, ctx)
+	var can: bool = CustomCardEffects.can_activate(eng, p, cid, loc, z, ctx)
 	print("can_activate: ", can)
 	var expect_can: Variant = sc.get("expect_can", null)
 	if expect_can != null and bool(expect_can) != can:
 		print("  !! expected can_activate == ", expect_can)
 		failures += 1
 	if can and not bool(sc.get("skip_resolve", false)):
-		var handled: bool = CustomCardEffects.resolve_chain_link(duel, p, cid, loc, z, ctx)
+		var handled: bool = CustomCardEffects.resolve_chain_link(eng, p, cid, loc, z, ctx)
 		var guard := 0
 		while duel.ui_pending.size() > 0 and guard < 20:
 			guard += 1
@@ -197,8 +239,8 @@ func _scenario(data: String, sc: Dictionary) -> void:
 			break
 		duel.run_until_idle(4000)
 		print("resolved: ", handled)
-		print("after:  ", _state(duel))
-		_check_expect(duel, sc)
+		print("after:  ", _state(eng))
+		_check_expect(eng, sc)
 	if not duel.unported_calls.is_empty():
 		print("  unported engine calls: ", duel.unported_calls)
 
@@ -222,12 +264,14 @@ func _set_phase(duel: Duel, ph: int) -> void:
 
 
 ## Query like "p0.hand.count", "p0.grave.has:3131", "p1.lp", "p0.field.3" (zone id)
-func _query(duel: Duel, q: String) -> Variant:
+func _query(duel, q: String) -> Variant:
 	var parts := q.split(".")
 	var p := int(parts[0].substr(1))
 	match parts[1]:
 		"lp": return CustomDuelOps.get_lp(duel, p)
 		"field": return CustomDuelOps.zone_id(duel, p, int(parts[2]))
+		"atk": return CustomDuelOps.eff_atk(duel, p, int(parts[2]))
+		"winner": return duel.winner()
 		_:
 			var loc: int = LOC[parts[1]]
 			if parts[2] == "count":
@@ -237,21 +281,21 @@ func _query(duel: Duel, q: String) -> Variant:
 	return null
 
 
-func _pile(duel: Duel, p: int, loc: int) -> Array:
+func _pile(duel, p: int, loc: int) -> Array:
 	var out := []
 	for i in CustomDuelOps.pile_count(duel, p, loc):
 		out.append(CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, loc, i)))
 	return out
 
 
-func _state(duel: Duel) -> String:
+func _state(duel) -> String:
 	var s := []
 	for p in 2:
 		var field := {}
 		for z in 11:
 			var id := CustomDuelOps.zone_id(duel, p, z)
 			if id != 0 and CustomDuelOps.zone_idx(duel, p, z) != 0:
-				field[z] = "%d%s" % [id, "" if CustomDuelOps.is_face_up(duel, p, z) else "(fd)"]
+				field[z] = "%d%s%s" % [id, "" if CustomDuelOps.is_face_up(duel, p, z) else "(fd)", ("@%d" % CustomDuelOps.eff_atk(duel, p, z)) if z < 5 else ""]
 		var hand := _pile(duel, p, 11)
 		var gy := _pile(duel, p, 14)
 		var bn := _pile(duel, p, 15)
@@ -259,7 +303,7 @@ func _state(duel: Duel) -> String:
 	return " | ".join(s) + " | phase=%d turn=%d" % [CustomDuelOps.phase(duel), CustomDuelOps.turn_number(duel)]
 
 
-func _check_expect(duel: Duel, sc: Dictionary) -> void:
+func _check_expect(duel, sc: Dictionary) -> void:
 	for key in sc.get("expect", {}):
 		var got: Variant = _query(duel, str(key))
 		var want: Variant = sc["expect"][key]
@@ -278,7 +322,15 @@ func _flow(duel: Duel, flow: Dictionary) -> void:
 	var last := ""
 	var prompts := 0
 	var clicks := 0
+	var logged_tops := false
 	for i in int(flow.get("frames", 20000)):
+		if flow.get("log_decks", false) and not logged_tops and duel.m.u32(0xa114c0) != 0:
+			logged_tops = true
+			for pp in 2:
+				var top := []
+				for k in mini(6, CustomDuelOps.pile_count(duel, pp, 13)):
+					top.append(CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, pp, 13, k)))
+				print("  attack declared, deck top (P%d): %s" % [pp, top])
 		duel.ui_phase_hover = -1
 		duel.ui_mouse_click = false
 		if flow.has("click_phase") and i % 50 == 25 and clicks < int(flow.get("max_clicks", 6)):
