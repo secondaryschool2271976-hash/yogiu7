@@ -123,7 +123,7 @@ func _list_selected() -> Array:
 
 func _card_name(card: Dictionary) -> String:
 	var names: Dictionary = card.get("names", {})
-	var lang := {"a": "ara", "s": "spa"}.get(Assets.lang, "eng")
+	var lang: String = str({"a": "ara", "s": "spa"}.get(Assets.lang, "eng"))
 	return str(names.get(lang, names.get("eng", "")))
 
 
@@ -135,7 +135,7 @@ func _refresh(query: String) -> void:
 		var nm := _card_name(card)
 		if q != "" and not nm.to_lower().contains(q):
 			continue
-		var item := _list_add("%s  ·  #%d" % [nm, int(card.get("internal_id", 0))], int(card.get("internal_id", 0)))
+		_list_add("%s  ·  #%d" % [nm, int(card.get("internal_id", 0))], int(card.get("internal_id", 0)))
 		shown += 1
 		if shown >= MAX_RESULTS:
 			break
