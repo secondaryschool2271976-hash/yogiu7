@@ -179,6 +179,14 @@ static func damage(duel, p: int, amount: int, is_battle := false) -> int:
 	var pf = pflags(duel, p)
 	if not is_battle and int(pf.get("no_effect_damage_turn", 0)) == turn_number(duel):
 		return 0
+	# Trap of Board Eraser (2798): niega el proximo dano de efecto que iba a recibir el jugador.
+	if not is_battle and bool(pf.get("negate_next_effect_damage", false)):
+		pf["negate_next_effect_damage"] = false
+		return 0
+	# Barrel Behind the Door (2875): ese dano de efecto lo recibe el rival en su lugar.
+	if not is_battle and bool(pflags(duel, 1 - p).get("reflect_effect_damage_once", false)):
+		pflags(duel, 1 - p)["reflect_effect_damage_once"] = false
+		return damage(duel, 1 - p, amount, false)
 	if int(pf.get("effect_dmg_to_heal_turn", 0)) == turn_number(duel) and not is_battle:
 		return heal(duel, p, amount)
 	if int(pf.get("halve_damage_turn", 0)) == turn_number(duel):
