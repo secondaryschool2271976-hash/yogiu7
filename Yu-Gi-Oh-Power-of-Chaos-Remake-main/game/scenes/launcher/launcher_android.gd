@@ -249,14 +249,32 @@ func _style_online_hero() -> void:
 		_online_mode_button.add_theme_stylebox_override(state, hbox)
 
 
-func _layout_online_hero(below_y: float) -> void:
+const DOCK_GAP := 14.0       # espacio horizontal entre botones
+const DOCK_ROW_GAP := 10.0   # espacio vertical entre filas
+const DOCK_ROW_H := 40.0
+const HERO_H := 52.0
+const HERO_GAP := 12.0
+
+
+## Boton ONLINE grande: el tamano va en custom_minimum_size para que reset_size() (al cambiar
+## el texto o el idioma) no lo encoja otra vez.
+func _layout_online_hero(y: float) -> void:
 	if not _online_mode_button.visible:
 		return
-	var w: float = clampf(_screen.x - 60.0, 240.0, 340.0)
-	var h := 50.0
+	var w: float = clampf(_screen.x - 60.0, 260.0, 360.0)
 	_online_mode_button.clip_text = false
-	_online_mode_button.size = Vector2(w, h)
-	_online_mode_button.position = Vector2((_screen.x - w) * 0.5, minf(below_y, _screen.y - 104.0))
+	_online_mode_button.custom_minimum_size = Vector2(w, HERO_H)
+	_online_mode_button.size = Vector2(w, HERO_H)
+	_online_mode_button.position = Vector2(floorf((_screen.x - w) * 0.5), y)
+
+
+func _dock_button_width(btn: Button) -> float:
+	var font: Font = btn.get_theme_font("font")
+	var fs: int = btn.get_theme_font_size("font_size")
+	var tw := 0.0
+	if font != null:
+		tw = ceilf(font.get_string_size(btn.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
+	return maxf(tw + 40.0, 124.0)
 
 
 func _layout_feature_dock(dock_y: float) -> void:
@@ -264,45 +282,51 @@ func _layout_feature_dock(dock_y: float) -> void:
 	for btn: Button in [_wheel_button, _special_wheel_button, _code_button, _card_back_button, _ydc_button, _ydc_export_button, _admin_code_button, _card_test_button]:
 		if btn.visible:
 			dock_buttons.append(btn)
-	if dock_buttons.is_empty():
-		_layout_online_hero(dock_y)
-		return
-	var gap := 8.0
 	var max_total := maxf(400.0, _screen.x - 28.0)
-	var use_two_rows: bool = dock_buttons.size() > 5 or (_screen.x < 980.0 and dock_buttons.size() > 4)
-	var rows: Array[Array] = []
-	if use_two_rows:
-		var split := ceili(float(dock_buttons.size()) * 0.5)
-		rows.append(dock_buttons.slice(0, split))
-		rows.append(dock_buttons.slice(split, dock_buttons.size()))
-	else:
-		rows.append(dock_buttons)
-	var y_cursor := dock_y - (18.0 if use_two_rows else 0.0)
-	for row_btns: Array in rows:
-		var widths: Array[float] = []
-		var sum_w := 0.0
-		for btn: Button in row_btns:
-			var bw := clampf(btn.get_combined_minimum_size().x + 8.0, 126.0, 214.0)
-			widths.append(bw)
-			sum_w += bw
-		var avail_buttons := max_total - gap * float(row_btns.size() - 1)
-		if sum_w > avail_buttons and sum_w > 0.0:
-			var ratio := avail_buttons / sum_w
-			sum_w = 0.0
-			for i in widths.size():
-				widths[i] = floorf(widths[i] * ratio)
+	var widths: Array[float] = []
+	for btn: Button in dock_buttons:
+		widths.append(_dock_button_width(btn))
+	# Menos filas posibles, repartidas por igual, sin recortar el texto.
+	var n_rows := 1
+	var per_row := maxi(dock_buttons.size(), 1)
+	while n_rows < 4:
+		per_row = ceili(float(dock_buttons.size()) / float(n_rows))
+		var fits := true
+		for r in n_rows:
+			var sum_w := 0.0
+			var count := 0
+			for i in range(r * per_row, mini((r + 1) * per_row, dock_buttons.size())):
 				sum_w += widths[i]
-		var total_w := sum_w + gap * float(row_btns.size() - 1)
-		var bx := (_screen.x - total_w) * 0.5
-		var row_h := 40.0 if use_two_rows else 44.0
-		for i in row_btns.size():
-			var btn: Button = row_btns[i]
-			btn.clip_text = true
-			btn.size = Vector2(widths[i], row_h)
-			btn.position = Vector2(bx, y_cursor)
-			bx += widths[i] + gap
-		y_cursor += row_h + 8.0
-	_layout_online_hero(y_cursor)
+				count += 1
+			if count > 0 and sum_w + DOCK_GAP * float(count - 1) > max_total:
+				fits = false
+		if fits:
+			break
+		n_rows += 1
+	var block_h := (float(n_rows) * DOCK_ROW_H + DOCK_ROW_GAP * float(n_rows - 1) + HERO_GAP + HERO_H) if not dock_buttons.is_empty() else HERO_H
+	# Si no cabe debajo de los logos, sube un poco, sin pasar de 28 px; el pie de pagina queda libre.
+	var y_start := clampf(_screen.y - 54.0 - block_h, dock_y - 34.0, dock_y)
+	var y_cursor := y_start
+	for r in n_rows:
+		var lo := r * per_row
+		var hi := mini((r + 1) * per_row, dock_buttons.size())
+		if hi <= lo:
+			continue
+		var total_w := DOCK_GAP * float(hi - lo - 1)
+		for i in range(lo, hi):
+			total_w += widths[i]
+		var scale_x := minf(1.0, max_total / total_w)
+		var bx := (_screen.x - total_w * scale_x) * 0.5
+		for i in range(lo, hi):
+			var btn: Button = dock_buttons[i]
+			var bw := floorf(widths[i] * scale_x)
+			btn.clip_text = false
+			btn.custom_minimum_size = Vector2(bw, DOCK_ROW_H)
+			btn.size = Vector2(bw, DOCK_ROW_H)
+			btn.position = Vector2(floorf(bx), y_cursor)
+			bx += bw + DOCK_GAP * scale_x
+		y_cursor += DOCK_ROW_H + DOCK_ROW_GAP
+	_layout_online_hero(y_cursor - DOCK_ROW_GAP + HERO_GAP if not dock_buttons.is_empty() else y_start)
 
 
 func _setup_resume_button() -> void:
@@ -595,6 +619,7 @@ func _refresh_online_controls() -> void:
 		else:
 			_online_mode_button.text = "ONLINE"
 		_online_mode_button.reset_size()
+		_layout.call_deferred()
 
 
 func _refresh_reward_buttons() -> void:
