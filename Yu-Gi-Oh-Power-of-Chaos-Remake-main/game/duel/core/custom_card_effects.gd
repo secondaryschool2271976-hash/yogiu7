@@ -584,23 +584,31 @@ static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) 
 	# que pueden llegar al Cementerio despues del aviso de invocacion. Por eso el valor se fija
 	# la primera vez que ya estan ahi, y no en el momento de la invocacion.
 	if cid == 2991 or cid == 3030:
-		var zf_g: Dictionary = CustomDuelOps.zflags(duel, p, z)
-		if not zf_g.has("garrzett_atk"):
+		# El valor se guarda por instancia de carta (indice de memoria), no por zona: los flags de
+		# zona se borran cuando otro monstruo sale del campo, y antes eso hacia que el ATK se
+		# recalculara con otro Cementerio y cambiara a mitad del duelo.
+		var st_g: Dictionary = CustomDuelOps.state(duel)
+		var fixed_g: Dictionary = st_g.get_or_add("garrzett_fixed", {})
+		var idx_g: int = CustomDuelOps.zone_idx(duel, p, z)
+		var key_g: String = "%d" % idx_g
+		if not fixed_g.has(key_g) and int(CustomDuelOps.zflags(duel, p, z).get("garrzett_pending", 0)) != 0:
 			var need_g: int = 2 if cid == 2991 else 1
 			var gy_n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
 			var total_g: int = 0
 			var found_g: int = 0
 			for i in range(gy_n - 1, -1, -1):
-				var idx_g: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
-				if CustomDuelOps.is_monster(duel, idx_g):
-					total_g += CustomDuelOps.base_atk(duel, idx_g)
+				var idx_pile: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
+				if CustomDuelOps.is_monster(duel, idx_pile):
+					total_g += CustomDuelOps.base_atk(duel, idx_pile)
 					found_g += 1
 					if found_g >= need_g:
 						break
 			if found_g >= need_g and total_g > 0:
-				zf_g["garrzett_atk"] = total_g * 2 if cid == 3030 else total_g
-		if zf_g.has("garrzett_atk"):
-			atk = int(zf_g["garrzett_atk"])
+				fixed_g[key_g] = {"cid": cid, "atk": total_g * 2 if cid == 3030 else total_g}
+		if fixed_g.has(key_g):
+			var rec_g: Dictionary = fixed_g[key_g]
+			if int(rec_g.get("cid", 0)) == cid:
+				atk = int(rec_g.get("atk", atk))
 
 	if st["set_atk"].has(k):
 		var sa: Array = st["set_atk"][k]
