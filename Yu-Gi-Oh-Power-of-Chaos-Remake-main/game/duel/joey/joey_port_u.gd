@@ -665,6 +665,9 @@ func f5ad350() -> int:
 			if CustomCardEffects.handles(raw_hss) and CustomCardEffects.can_special_summon(self, a & 1, raw_hss, CustomDuelOps.LOC_HAND, hslot):
 				CustomCardEffects.special_summon(self, a & 1, raw_hss, CustomDuelOps.LOC_HAND, hslot)
 				return 1
+			if CustomCardEffects.handles(raw_hss) and not CustomCardEffects.can_normal_summon(self, a & 1, raw_hss, false):
+				# Special-Summon-only custom card with its condition unmet: no generic Tribute flow.
+				return 1
 			if a & 0x4000:
 				f5b9170((a << 15) | 0xe6, f4022e0(m.u16(0xa55084)), 0, 5)
 			_ju_pay_tributes()
