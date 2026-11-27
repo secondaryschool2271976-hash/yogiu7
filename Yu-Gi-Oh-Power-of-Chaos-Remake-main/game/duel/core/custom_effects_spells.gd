@@ -364,10 +364,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					if CustomDuelOps.zone_idx(duel, opp, zz) != 0 and CustomDuelOps.is_face_up(duel, opp, zz):
 						CustomDuelOps.destroy_zone(duel, opp, zz)
 			return true
-		2599: # Magical Mallet
+		2599: # Magical Mallet: baraja cualquier numero de cartas de la mano y roba esa cantidad.
+			# Sin selector de cantidad se baraja la mano entera, que es una eleccion legal.
 			var n = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
 			var shuf = 0
-			for _k in mini(n, 2):
+			for _k in n:
 				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, 0, p, CustomDuelOps.LOC_DECK)
 				shuf += 1
 			CustomDuelOps.shuffle_deck(duel, p)
