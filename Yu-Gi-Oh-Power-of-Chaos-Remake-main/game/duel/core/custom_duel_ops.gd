@@ -1201,6 +1201,7 @@ static func tribute_zone(duel, p: int, z: int) -> bool:
 		duel.f54ea40(p, z)
 	clear_zone_state(duel, p, z)
 	state(duel)["sent_gy_this_turn"][p].append(cid)
+	sync_visuals(duel)
 	return true
 
 
@@ -1583,7 +1584,19 @@ static func effect_prompt(duel, cid: int) -> String:
 	return "Activate the effect of %s?" % nm
 
 
+## Cola de preguntas pendientes: la del motor Joey vive en el propio motor.
+static func optional_queue(duel) -> Array:
+	if is_joey(duel):
+		return duel.custom_prompt_queue
+	return state(duel).get_or_add("optional_prompts", [])
+
+
 static func ask_optional(duel, p: int, text: String, on_yes: Callable) -> bool:
+	if is_joey(duel):
+		var hook: Callable = duel.custom_prompt
+		if hook.is_valid():
+			return bool(hook.call(p & 1, text, on_yes))
+		return false
 	if not (duel is Duel):
 		return false
 	if (p & 1) != 0 or int(duel.game_mode) != DuelBase.GAME_NORMAL or int(duel.auto_answer) != -1:
@@ -1637,7 +1650,7 @@ static func optional_one_of(duel, p: int, texts: Array, bodies: Array, auto_inde
 				return
 			done[0] = true
 			# Quita de la cola las demas opciones del mismo grupo.
-			var q: Array = state(duel).get_or_add("optional_prompts", [])
+			var q: Array = optional_queue(duel)
 			for k in range(q.size() - 1, -1, -1):
 				if (q[k] as Dictionary).get("group", null) == done:
 					q.remove_at(k)
@@ -1647,7 +1660,7 @@ static func optional_one_of(duel, p: int, texts: Array, bodies: Array, auto_inde
 				(bodies[auto_index] as Callable).call()
 			return
 		if not first:
-			var qq: Array = state(duel).get_or_add("optional_prompts", [])
+			var qq: Array = optional_queue(duel)
 			if not qq.is_empty():
 				(qq.back() as Dictionary)["group"] = done
 		first = false

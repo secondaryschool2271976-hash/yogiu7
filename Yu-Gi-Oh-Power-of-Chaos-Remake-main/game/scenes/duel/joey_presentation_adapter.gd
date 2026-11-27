@@ -99,6 +99,7 @@ static func create_native(data_dir: String) -> JoeyPresentationAdapter:
 	var view := JoeyPresentationAdapter.new(native.cards)
 	view.engine = native
 	native.recording_owner = weakref(view)
+	native.custom_prompt = Callable(view, "open_custom_prompt")
 	view.rules_game = "joey"
 	view.native_version = 1300
 	# The shared renderer reads a projection written by Joey. Keep the legacy
@@ -897,13 +898,57 @@ func _open_native_dialog() -> void:
 	engine.ui_busy = true
 
 
+## Pregunta Si/No de un efecto opcional personalizado. Solo para el jugador local de un duelo
+## normal (no demostracion). Devuelve false si no se pregunta: el efecto se activa solo.
+func open_custom_prompt(p: int, text: String, yes: Callable) -> bool:
+	if p != local_native_player or game_mode != GAME_NORMAL or Game.joey_demo or DisplayServer.get_name() == "headless":
+		return false
+	if not dialog_open.is_empty() or not list_open.is_empty():
+		# Solo se encola tras otra pregunta propia; con un dialogo nativo el efecto se activa solo.
+		if dialog_open.has("custom_yes") or dialog_open.has("custom_done") or not engine.custom_prompt_queue.is_empty():
+			engine.custom_prompt_queue.append({"text": text, "yes": yes})
+			return true
+		return false
+	_show_custom_prompt(text, yes)
+	return true
+
+
+func _show_custom_prompt(text: String, yes: Callable) -> void:
+	dialog_open = {"type": 1, "msg": -1, "literal": text, "subs": [], "buttons": 2, "default": -1, "custom_yes": yes}
+	engine.ui_busy = true
+
+
+func _next_custom_prompt() -> void:
+	if engine.custom_prompt_queue.is_empty() or not dialog_open.is_empty() or not list_open.is_empty():
+		return
+	var nxt: Dictionary = engine.custom_prompt_queue.pop_front()
+	_show_custom_prompt(str(nxt["text"]), nxt["yes"])
+
+
 func answer_dialog(value: int) -> void:
+	if dialog_open.has("custom_yes"):
+		var yes_cb: Callable = dialog_open["custom_yes"]
+		dialog_open = {}
+		engine.ui_busy = false
+		if value == 1 and yes_cb.is_valid():
+			yes_cb.call()
+		_next_custom_prompt()
+		return
 	engine.f5bfcc0(value)
 	dialog_open = {}
 	engine.ui_busy = false
 
 
 func dialog_close(value: int) -> void:
+	if dialog_open.has("custom_yes"):
+		var yes_cb: Callable = dialog_open["custom_yes"]
+		dialog_open.erase("custom_yes")
+		dialog_open["custom_done"] = true
+		dialog_open["closing"] = true
+		engine.ui_busy = true
+		if value == 1 and yes_cb.is_valid():
+			yes_cb.call()
+		return
 	engine.f5bfcc0(value)
 	dialog_open["closing"] = true
 	engine.ui_busy = true
@@ -912,6 +957,7 @@ func dialog_close(value: int) -> void:
 func dialog_gone() -> void:
 	dialog_open = {}
 	engine.ui_busy = false
+	_next_custom_prompt()
 
 
 func _packed_location(native_ref: int) -> int:

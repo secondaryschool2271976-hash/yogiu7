@@ -12,6 +12,12 @@ const IMAGE_FILE := "common/duel/joey_image.bin"
 var m := JoeyMem.new()
 var ui_target_selection_mask := 0
 
+## Preguntas Si/No de efectos opcionales personalizados ("puedes"): el adaptador de presentacion
+## pone aqui su funcion (p, texto, al_aceptar) -> bool y la cola de preguntas pendientes.
+## Sin adaptador (headless, repeticion, pruebas) el efecto se activa solo.
+var custom_prompt: Callable = Callable()
+var custom_prompt_queue: Array = []
+
 ## Consulta optativa del renderer: espera de objetos de presentacion, no reglas.
 ## El contrato sin pantalla conserva el valor por defecto (ningun objeto ocupado).
 var visual_busy_query: Callable

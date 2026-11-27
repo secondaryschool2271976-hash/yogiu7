@@ -1819,14 +1819,8 @@ static func _evolve_optional(duel, p: int, z: int, from_id: int, to_id: int) -> 
 		text = "¿Activar el efecto de %s?\nSe enviará al Cementerio y se invocará por Invocación Especial a %s." % [from_name, to_name]
 	else:
 		text = "Activate the effect of %s?\nIt will be sent to the Graveyard and %s will be Special Summoned." % [from_name, to_name]
-	# Con otro cuadro o una lista abiertos no se decide solo: la pregunta queda en cola y se
-	# abre cuando se cierre lo que este en pantalla (duel_base._drain_optional_prompts).
-	var human: bool = (p & 1) == 0 and int(duel.game_mode) == DuelBase.GAME_NORMAL \
-			and int(duel.auto_answer) == -1 and DisplayServer.get_name() != "headless"
-	if human and (not duel.dialog_open.is_empty() or not duel.list_open.is_empty()):
-		var queue: Array = CustomDuelOps.state(duel).get_or_add("optional_prompts", [])
-		queue.append({"text": text, "yes": do_evolve})
-		return
+	# ask_optional pone la pregunta en cola si hay otra abierta; sin jugador local (CPU, red,
+	# repeticion, headless) la evolucion se activa sola.
 	if not CustomDuelOps.ask_optional(duel, p, text, do_evolve):
 		do_evolve.call()
 
