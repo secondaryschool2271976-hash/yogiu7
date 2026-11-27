@@ -365,6 +365,15 @@ static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int,
 
 
 static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct := false) -> void:
+	# The Secret of the Bandit (2789): el monstruo elegido hace descartar al rival cada vez que le
+	# hace dano de batalla ese turno.
+	if amount > 0 and not CustomDuelOps.is_joey(duel):
+		var bf: int = duel.m.u32(0xa114c0)
+		var bap := bf & 1
+		var baz := (bf >> 8) & 7
+		if baz < 5 and (dmg_p & 1) != bap \
+				and int(CustomDuelOps.zflags(duel, bap, baz).get("bandit_discard_turn", -1)) == CustomDuelOps.turn_number(duel):
+			CustomDuelOps.discard_random(duel, dmg_p & 1, 1)
 	CustomEffectsMonsters1.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 	CustomEffectsMonsters2.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 	CustomDuelOps.sync_visuals(duel)
