@@ -1591,11 +1591,11 @@ static func optional_queue(duel) -> Array:
 	return state(duel).get_or_add("optional_prompts", [])
 
 
-static func ask_optional(duel, p: int, text: String, on_yes: Callable) -> bool:
+static func ask_optional(duel, p: int, text: String, on_yes: Callable, on_no := Callable()) -> bool:
 	if is_joey(duel):
 		var hook: Callable = duel.custom_prompt
 		if hook.is_valid():
-			return bool(hook.call(p & 1, text, on_yes))
+			return bool(hook.call(p & 1, text, on_yes, on_no))
 		return false
 	if not (duel is Duel):
 		return false
@@ -1609,10 +1609,10 @@ static func ask_optional(duel, p: int, text: String, on_yes: Callable) -> bool:
 	if busy:
 		# Solo se encola detras de otra pregunta propia; con un dialogo del motor se actua solo.
 		if duel.dialog_open.has("custom_yes") or duel.dialog_open.has("custom_done") or not queue.is_empty():
-			queue.append({"text": text, "yes": on_yes})
+			queue.append({"text": text, "yes": on_yes, "no": on_no})
 			return true
 		return false
-	_open_optional_prompt(duel, text, on_yes)
+	_open_optional_prompt(duel, text, on_yes, on_no)
 	return true
 
 
@@ -1666,8 +1666,8 @@ static func optional_one_of(duel, p: int, texts: Array, bodies: Array, auto_inde
 		first = false
 
 
-static func _open_optional_prompt(duel, text: String, on_yes: Callable) -> void:
-	duel.dialog_open = {"type": 1, "msg": -1, "literal": text, "subs": [], "buttons": 2, "default": -1, "custom_yes": on_yes}
+static func _open_optional_prompt(duel, text: String, on_yes: Callable, on_no := Callable()) -> void:
+	duel.dialog_open = {"type": 1, "msg": -1, "literal": text, "subs": [], "buttons": 2, "default": -1, "custom_yes": on_yes, "custom_no": on_no}
 	duel.present("dialog_open", duel.dialog_open.duplicate())
 
 
@@ -1677,7 +1677,7 @@ static func next_optional_prompt(duel) -> void:
 	if queue.is_empty() or not duel.dialog_open.is_empty():
 		return
 	var nxt: Dictionary = queue.pop_front()
-	_open_optional_prompt(duel, str(nxt["text"]), nxt["yes"])
+	_open_optional_prompt(duel, str(nxt["text"]), nxt["yes"], nxt.get("no", Callable()))
 
 
 ## Pide al jugador que elija una carta de una pila con la ventana de lista del motor

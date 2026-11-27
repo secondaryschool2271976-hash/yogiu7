@@ -119,6 +119,58 @@ static func _alt_black_tribute(duel, p: int, self_slot: int) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
+## Monstruos Red-Eyes que se pueden ofrendar: campo (boca arriba) y mano, sin la propia carta.
+static func _alt_black_candidates(duel, p: int, self_slot: int) -> Array:
+	var out: Array = []
+	for z in 5:
+		var idx: int = CustomDuelOps.zone_idx(duel, p, z)
+		if idx != 0 and CustomDuelOps.is_face_up(duel, p, z) and CustomDuelOps.name_matches(duel, idx, "red-eyes"):
+			out.append(Vector2i(CustomDuelOps.LOC_FIELD_MONSTER, z))
+	for i in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND):
+		var hidx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, i)
+		if i != self_slot and hidx != 0 and CustomDuelOps.is_monster(duel, hidx) and CustomDuelOps.name_matches(duel, hidx, "red-eyes"):
+			out.append(Vector2i(CustomDuelOps.LOC_HAND, i))
+	return out
+
+
+static func _alt_black_ask(duel, p: int, cid: int, loc: int, slot: int, cands: Array, k: int) -> bool:
+	var c: Vector2i = cands[k]
+	var cidx: int = CustomDuelOps.zone_idx(duel, p, c.y) if c.x == CustomDuelOps.LOC_FIELD_MONSTER else CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, c.y)
+	var nm: String = CustomDuelOps.card_name(duel, CustomDuelOps.raw_id(duel, cidx))
+	var where_ar: String = "من الملعب" if c.x == CustomDuelOps.LOC_FIELD_MONSTER else "من اليد"
+	var where_es: String = "del campo" if c.x == CustomDuelOps.LOC_FIELD_MONSTER else "de la mano"
+	var where_en: String = "from the field" if c.x == CustomDuelOps.LOC_FIELD_MONSTER else "from your hand"
+	var text: String = CustomDuelOps.lang_text(
+		"ضحِّ بـ %s (%s) للاستدعاء الخاص؟\nنعم = هذه البطاقة، لا = البطاقة التالية." % [nm, where_ar],
+		"¿Ofrendar a %s (%s) para la Invocación Especial?\nSí = esta carta, No = la siguiente." % [nm, where_es],
+		"Tribute %s (%s) for the Special Summon?\nYes = this card, No = the next candidate." % [nm, where_en])
+	var pick := func() -> void:
+		_alt_black_finish(duel, p, cid, loc, slot, c)
+	var nxt := func() -> void:
+		if k + 2 >= cands.size():
+			_alt_black_finish(duel, p, cid, loc, slot, cands[cands.size() - 1])
+		elif not _alt_black_ask(duel, p, cid, loc, slot, cands, k + 1):
+			_alt_black_finish(duel, p, cid, loc, slot, cands[k + 1])
+	return CustomDuelOps.ask_optional(duel, p, text, pick, nxt)
+
+
+static func _alt_black_finish(duel, p: int, cid: int, loc: int, slot: int, alt_tr: Vector2i) -> int:
+	if alt_tr.x < 0 or not can_special_summon(duel, p, cid, loc, slot):
+		return -1
+	CustomDuelOps.mark_hopt(duel, p, 3133)
+	var alt_slot: int = slot
+	if alt_tr.x == CustomDuelOps.LOC_FIELD_MONSTER:
+		CustomDuelOps.tribute_zone(duel, p, alt_tr.y)
+	else:
+		CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, alt_tr.y, p, CustomDuelOps.LOC_GRAVE)
+		if alt_tr.y < slot:
+			alt_slot -= 1
+	var alt_z: int = CustomDuelOps.special_summon_from_pile(duel, p, loc, alt_slot, p, true, false)
+	if alt_z >= 0:
+		on_summon_or_flip(duel, p, alt_z, cid, "special")
+	return alt_z
+
+
 static func is_spirit(_cid: int) -> bool:
 	return false
 
@@ -173,19 +225,12 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 		return -1
 	match cid:
 		3133:
-			var alt_tr: Vector2i = _alt_black_tribute(duel, p, slot)
-			CustomDuelOps.mark_hopt(duel, p, 3133)
-			var alt_slot: int = slot
-			if alt_tr.x == CustomDuelOps.LOC_FIELD_MONSTER:
-				CustomDuelOps.tribute_zone(duel, p, alt_tr.y)
-			else:
-				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, alt_tr.y, p, CustomDuelOps.LOC_GRAVE)
-				if alt_tr.y < slot:
-					alt_slot -= 1
-			var alt_z: int = CustomDuelOps.special_summon_from_pile(duel, p, loc, alt_slot, p, true, false)
-			if alt_z >= 0:
-				on_summon_or_flip(duel, p, alt_z, cid, "special")
-			return alt_z
+			# El coste es "1 monstruo Red-Eyes de tu mano o campo": con mas de uno el jugador local
+			# elige cual (Si = este, No = el siguiente). Sin jugador local se elige solo, como antes.
+			var cands: Array = _alt_black_candidates(duel, p, slot)
+			if cands.size() > 1 and _alt_black_ask(duel, p, cid, loc, slot, cands, 0):
+				return -1
+			return _alt_black_finish(duel, p, cid, loc, slot, _alt_black_tribute(duel, p, slot))
 		2833:
 			var dz = CustomDuelOps.find_zone_of_id(duel, p, 2884, true)
 			CustomDuelOps.tribute_zone(duel, p, dz)

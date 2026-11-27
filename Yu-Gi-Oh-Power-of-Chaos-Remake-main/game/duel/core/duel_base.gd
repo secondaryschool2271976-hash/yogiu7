@@ -209,9 +209,12 @@ func answer_dialog(value: int) -> void:
 	if dialog_open.has("custom_yes"):
 		# Pregunta Si/No de un efecto opcional personalizado: no pasa por el motor original.
 		var yes_cb: Callable = dialog_open["custom_yes"]
+		var no_cb: Callable = dialog_open.get("custom_no", Callable())
 		dialog_open = {}
 		if value == 1 and yes_cb.is_valid():
 			yes_cb.call()
+		elif value != 1 and no_cb.is_valid():
+			no_cb.call()
 		CustomDuelOps.next_optional_prompt(self)
 		return
 	dialog_open = {}
@@ -224,10 +227,13 @@ func dialog_close(value: int) -> void:
 	dialog_open["closing"] = true
 	if dialog_open.has("custom_yes"):
 		var yes_cb: Callable = dialog_open["custom_yes"]
+		var no_cb: Callable = dialog_open.get("custom_no", Callable())
 		dialog_open.erase("custom_yes")
 		dialog_open["custom_done"] = true
 		if value == 1 and yes_cb.is_valid():
 			yes_cb.call()
+		elif value != 1 and no_cb.is_valid():
+			no_cb.call()
 		return
 	call("f540d80", value)
 
