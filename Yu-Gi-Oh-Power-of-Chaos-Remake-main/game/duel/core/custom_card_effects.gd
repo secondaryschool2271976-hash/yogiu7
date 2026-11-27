@@ -189,10 +189,16 @@ static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := 
 	if z >= 0 and z <= 10:
 		CustomDuelOps._present(duel, "card_effect", {"p": p, "zone": z, "card": cid, "flags": 2})
 	var handled = false
+	# Etiqueta de origen: destroy_zone la lee para las inmunidades a Magia/Trampa.
+	var st_src = CustomDuelOps.state(duel)
 	if CustomEffectsTraps.handles(cid):
+		st_src["effect_source"] = "trap"
 		handled = CustomEffectsTraps.resolve(duel, p, cid, loc, z, ctx)
+		st_src["effect_source"] = ""
 	elif CustomEffectsSpells.handles(cid):
+		st_src["effect_source"] = "spell"
 		handled = CustomEffectsSpells.resolve(duel, p, cid, loc, z, ctx)
+		st_src["effect_source"] = ""
 		if handled:
 			CustomEffectsMonsters2.on_spell_resolved(duel, p)
 	elif CustomEffectsMonsters1.handles(cid):
