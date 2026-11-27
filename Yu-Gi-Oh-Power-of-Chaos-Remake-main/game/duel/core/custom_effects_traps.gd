@@ -12,7 +12,7 @@ const IDS: Array[int] = [
 	2932, 2944, 2951, 2952, 2953, 2954, 2955, 2957, 2971, 2978,
 	2979, 2980, 2982, 2985, 3006, 3007, 3012, 3014, 3015, 3024,
 	3037, 3040, 3041, 3042, 3044, 3067, 3068, 3073, 3075, 3077,
-	3102, 3103, 3104, 3105, 3106, 3107, 3108,
+	3102, 3103, 3104, 3105, 3106, 3107, 3108, 3131,
 ]
 
 
@@ -30,6 +30,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 	if int(pf.get("locked_st_until_ep", -1)) == CustomDuelOps.turn_number(duel):
 		return false
 	match cid:
+		3131: # Red-Eyes Spirit
+			return CustomDuelOps.free_monster_zone(duel, p) >= 0 and not CustomDuelOps.is_necrovalley_active(duel) and _red_eyes_spirit_target(duel, p) >= 0
 		2521: # Bottomless Trap Hole
 			return (ev == "summon" or ev == "normal_summon") and int(ctx.get("summon_p", -1)) == opp and int(ctx.get("summon_atk", 0)) >= 1500
 		2529: # Compulsory Evacuation Device
@@ -228,6 +230,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3131: # Red-Eyes Spirit
+			var rs_i: int = _red_eyes_spirit_target(duel, p)
+			if rs_i >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, rs_i, p)
+			return true
 		2521: # Bottomless Trap Hole
 			var sz := int(ctx.get("summon_z", -1))
 			if sz >= 0 and sz < 5 and CustomDuelOps.zone_idx(duel, opp, sz) != 0 and CustomDuelOps.eff_atk(duel, opp, sz) >= 1500:
@@ -995,6 +1002,12 @@ static func _has_race_on_field(duel, p: int, race: int, face_up_only := true) ->
 
 static func _has_exodia_in_hand_or_deck(duel, p: int) -> bool:
 	return _find_in_pile(duel, p, CustomDuelOps.LOC_HAND, CustomDuelOps.EXODIA_IDS) >= 0 or _find_in_pile(duel, p, CustomDuelOps.LOC_DECK, CustomDuelOps.EXODIA_IDS) >= 0
+
+
+## "Red-Eyes" monster in the GY that can be Special Summoned from there (Darkness Dragon must be
+## Special Summoned by Tributing Red-Eyes Black Dragon, so it is not a valid target).
+static func _red_eyes_spirit_target(duel, p: int) -> int:
+	return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.raw_id(d, idx) != 2627)
 
 
 static func _find_in_pile(duel, p: int, loc: int, ids: Array) -> int:

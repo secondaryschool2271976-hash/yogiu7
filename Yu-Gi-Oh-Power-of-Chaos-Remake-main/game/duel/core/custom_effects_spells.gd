@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132,
 ]
 
 
@@ -51,6 +51,24 @@ static func _level_up_zone(duel, p: int) -> int:
 	return -1
 
 
+## Red-Eyes Insight: the "Red-Eyes" monster to send, as (location, index) from the hand first,
+## then the Deck; (-1, -1) when there is none.
+static func _red_eyes_insight_cost(duel, p: int) -> Vector2i:
+	var pred := func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes")
+	var hi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, pred, false)
+	if hi >= 0:
+		return Vector2i(CustomDuelOps.LOC_HAND, hi)
+	var di: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, pred, false)
+	if di >= 0:
+		return Vector2i(CustomDuelOps.LOC_DECK, di)
+	return Vector2i(-1, -1)
+
+
+## Red-Eyes Insight: a "Red-Eyes" Spell/Trap in the Deck, other than Red-Eyes Insight itself.
+static func _red_eyes_insight_target(duel, p: int) -> int:
+	return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _i): return (CustomDuelOps.is_spell(d, idx) or CustomDuelOps.is_trap(d, idx)) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.raw_id(d, idx) != 3132)
+
+
 static func handles(cid: int) -> bool:
 	return cid in IDS
 
@@ -66,6 +84,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
 	match cid:
+		3132: # Red-Eyes Insight
+			return CustomDuelOps.can_hopt(duel, p, 3132) and _red_eyes_insight_cost(duel, p) != Vector2i(-1, -1) and _red_eyes_insight_target(duel, p) >= 0
 		3130: # Level Up!
 			return CustomDuelOps.can_hopt(duel, p, 3130) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and _level_up_zone(duel, p) >= 0
 		2507: # Ancient Chant
@@ -287,6 +307,19 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3132: # Red-Eyes Insight
+			CustomDuelOps.mark_hopt(duel, p, 3132)
+			var ri_cost: Vector2i = _red_eyes_insight_cost(duel, p)
+			if ri_cost == Vector2i(-1, -1):
+				return true
+			if ri_cost.x == CustomDuelOps.LOC_HAND:
+				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, ri_cost.y, p, CustomDuelOps.LOC_GRAVE)
+			else:
+				CustomDuelOps.send_from_deck_to_gy(duel, p, ri_cost.y)
+			var ri_i: int = _red_eyes_insight_target(duel, p)
+			if ri_i >= 0:
+				CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, ri_i)
+			return true
 		3130: # Level Up!
 			CustomDuelOps.mark_hopt(duel, p, 3130)
 			var lv_zone: int = _level_up_zone(duel, p)

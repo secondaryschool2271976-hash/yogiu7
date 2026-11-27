@@ -100,20 +100,20 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		cls.by_id = {int(c["internal_id"]): c for c in cls.cards}
 
 	def test_extra_cards_counts_and_schema(self) -> None:
-		self.assertEqual(len(self.cards), 631)
-		self.assertEqual(set(self.by_id.keys()), set(range(2500, 3131)))
+		self.assertEqual(len(self.cards), 633)
+		self.assertEqual(set(self.by_id.keys()), set(range(2500, 3133)))
 
 		custom = [c for c in self.cards if c.get("custom_effect")]
 		normal = [c for c in self.cards if not c.get("custom_effect")]
-		self.assertEqual(len(custom), 590)
+		self.assertEqual(len(custom), 592)
 		self.assertEqual(len(normal), 41)
 
 		traps = [c for c in custom if c["category"] == "trap"]
 		spells = [c for c in custom if c["category"] == "spell"]
 		m1 = [c for c in custom if c["category"] == "monster" and c["internal_id"] < 2800]
 		m2 = [c for c in custom if c["category"] == "monster" and c["internal_id"] >= 2800]
-		self.assertEqual(len(traps), 97)
-		self.assertEqual(len(spells), 147)
+		self.assertEqual(len(traps), 98)
+		self.assertEqual(len(spells), 148)
 		self.assertEqual(len(m1), 184)
 		self.assertEqual(len(m2), 162)
 
@@ -131,7 +131,7 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 					f"Custom card {card['internal_id']} has unexpected effect_alias={card.get('effect_alias')} (expected {expected_alias})",
 				)
 
-	def test_all_590_custom_ids_registered_and_implemented(self) -> None:
+	def test_all_592_custom_ids_registered_and_implemented(self) -> None:
 		expected = {
 			CORE_DIR / "custom_effects_traps.gd": {
 				c["internal_id"] for c in self.cards if c.get("custom_effect") and c["category"] == "trap"
@@ -176,7 +176,7 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 					f"IDs registered in {path.name} but unreferenced in logic: {sorted(truly_missing)}",
 				)
 
-		self.assertEqual(len(union_ids), 590)
+		self.assertEqual(len(union_ids), 592)
 
 	def test_gdscript_static_syntax_and_style(self) -> None:
 		for path in CUSTOM_FILES + MODIFIED_ENGINE_FILES:
