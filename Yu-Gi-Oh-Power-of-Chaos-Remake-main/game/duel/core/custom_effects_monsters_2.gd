@@ -20,7 +20,7 @@ const IDS: Array[int] = [
 	3064, 3065, 3066, 3069, 3070, 3071, 3074, 3084, 3085, 3086,
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
-	3128, 3129, 3133,
+	3128, 3129, 3133, 3136, 3138, 3139,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -56,6 +56,23 @@ const GUARDIAN_EQUIP_REQ := {
 
 static func handles(cid: int) -> bool:
 	return cid in IDS
+
+
+## The Black Stone of Legend: a Level 7 or lower "Red-Eyes" monster (except "Red-Eyes B. Chick").
+static func _stone_pred() -> Callable:
+	return func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.monster_level(d, idx) <= 7 and CustomDuelOps.raw_id(d, idx) != 3136
+
+
+## Red-Eyes Black Meteor Dragon: a Level 5 or higher Normal Monster in the hand or Deck, as (location, index).
+static func _meteor_cost(duel, p: int) -> Vector2i:
+	var pred := func(d, idx, _i): return CustomDuelOps.is_normal_monster(d, idx) and CustomDuelOps.monster_level(d, idx) >= 5
+	var hi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, pred, false)
+	if hi >= 0:
+		return Vector2i(CustomDuelOps.LOC_HAND, hi)
+	var di: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, pred, false)
+	if di >= 0:
+		return Vector2i(CustomDuelOps.LOC_DECK, di)
+	return Vector2i(-1, -1)
 
 
 ## Red-Eyes Alternative Black Dragon: the "Red-Eyes" card to Tribute, as (location, zone or hand
@@ -186,6 +203,29 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return CustomDuelOps.can_opt(duel, p, cid, z) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and not bool(CustomDuelOps.zflags(duel, p, z).get("union_stolen", false))
 		return false
 	match cid:
+		3136: # Black Dragon's Chick: send itself to the GY; SS "Red-Eyes B. Dragon" from the hand
+			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.is_face_up(duel, p, z) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES) >= 0
+		3138: # The Black Stone of Legend: Tribute -> SS from the Deck, or from the GY -> add to hand
+			if not CustomDuelOps.can_hopt(duel, p, 3138):
+				return false
+			if loc == CustomDuelOps.LOC_FIELD_MONSTER:
+				return CustomDuelOps.is_face_up(duel, p, z) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, _stone_pred()) >= 0
+			if loc == CustomDuelOps.LOC_GRAVE:
+				return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, _stone_pred()) >= 0
+			return false
+		3139: # Red-Eyes Black Meteor Dragon: hand SS by sending a Normal Monster; GY banish -> add Red-Eyes Fusion
+			if loc == CustomDuelOps.LOC_HAND:
+				return CustomDuelOps.can_hopt(duel, p, 3139) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and _meteor_cost(duel, p) != Vector2i(-1, -1)
+			if loc == CustomDuelOps.LOC_GRAVE:
+				if not CustomDuelOps.can_hopt(duel, p, 13139) or CustomDuelOps.is_necrovalley_active(duel):
+					return false
+				if 3139 in (CustomDuelOps.state(duel)["sent_gy_this_turn"][p] as Array):
+					return false
+				var mp: int = CustomDuelOps.phase(duel)
+				if CustomDuelOps.turn_player(duel) != p or (mp != CustomDuelOps.PHASE_M1 and mp != CustomDuelOps.PHASE_M2):
+					return false
+				return CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 3140) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3140) >= 0
+			return false
 		2823: # Gravekeeper's Watcher (hand negate opp discard effect)
 			return ev == "chain_negate" and loc == CustomDuelOps.LOC_HAND and bool(ctx.get("opp_discards", false)) and int(ctx.get("chain_p", -1)) == opp
 		2847: # Charm of Shabti (hand Quick -> Gravekeepers battle indest until EP)
@@ -271,6 +311,49 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					duel.m.set_u8(DuelMem.zone(p, mz) + 6, duel.m.u8(DuelMem.zone(p, mz) + 6) | 2)
 		return
 	match cid:
+		3136: # Black Dragon's Chick
+			CustomDuelOps.send_zone_to_gy(duel, p, z)
+			var ch_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES)
+			if ch_i >= 0:
+				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, ch_i, p, true, false)
+		3138: # The Black Stone of Legend
+			CustomDuelOps.mark_hopt(duel, p, 3138)
+			if loc == CustomDuelOps.LOC_FIELD_MONSTER:
+				CustomDuelOps.tribute_zone(duel, p, z)
+				var bs_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, _stone_pred())
+				if bs_i >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, bs_i, p, true, false)
+					CustomDuelOps.shuffle_deck(duel, p)
+			else:
+				var bs_g: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, _stone_pred())
+				if bs_g >= 0:
+					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, bs_g, p, CustomDuelOps.LOC_DECK)
+					CustomDuelOps.shuffle_deck(duel, p)
+					var bs_s: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3138)
+					if bs_s >= 0:
+						CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_GRAVE, bs_s)
+		3139: # Red-Eyes Black Meteor Dragon
+			if loc == CustomDuelOps.LOC_HAND:
+				CustomDuelOps.mark_hopt(duel, p, 3139)
+				var mt_cost: Vector2i = _meteor_cost(duel, p)
+				if mt_cost != Vector2i(-1, -1):
+					if mt_cost.x == CustomDuelOps.LOC_HAND:
+						CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, mt_cost.y, p, CustomDuelOps.LOC_GRAVE)
+					else:
+						CustomDuelOps.send_from_deck_to_gy(duel, p, mt_cost.y)
+					var mt_h: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3139)
+					if mt_h >= 0:
+						CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, mt_h, p, true, false)
+			else:
+				CustomDuelOps.mark_hopt(duel, p, 13139)
+				var mt_g: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3139)
+				if mt_g >= 0:
+					CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, mt_g)
+				for mt_loc in [CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_GRAVE]:
+					var mt_f: int = CustomDuelOps.find_pile_index_by_id(duel, p, mt_loc, 3140)
+					if mt_f >= 0:
+						CustomDuelOps.add_from_pile_to_hand(duel, p, mt_loc, mt_f)
+						break
 		2823: # Gravekeeper's Watcher
 			var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2823)
 			if hi >= 0:

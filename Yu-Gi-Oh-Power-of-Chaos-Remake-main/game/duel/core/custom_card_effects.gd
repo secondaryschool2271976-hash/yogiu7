@@ -507,6 +507,9 @@ static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
 		return false
 	if int(zf.get("cannot_attack_turn", -1)) == CustomDuelOps.turn_number(duel):
 		return false
+	# Inferno Fire Blast (3135): "Red-Eyes B. Dragon" cannot attack the turn it was activated.
+	if id in CustomDuelOps.NATIVE_RED_EYES and int(CustomDuelOps.pflags(duel, p & 1).get("inferno_fire_blast_turn", -1)) == CustomDuelOps.turn_number(duel):
+		return false
 	return CustomEffectsMonsters1.can_attack(duel, p, z, id) and CustomEffectsMonsters2.can_attack(duel, p, z, id)
 
 

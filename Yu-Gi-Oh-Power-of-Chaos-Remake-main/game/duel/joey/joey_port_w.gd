@@ -44,7 +44,7 @@ func f59ff50(a: int, b: int, c: int) -> int:
 		for gi in range(gy_cnt):
 			var g_idx: int = CustomDuelOps.pile_idx(self, b & 1, CustomDuelOps.LOC_GRAVE, gi)
 			var g_cid: int = cards.id_of(g_idx) & 0xffff
-			if g_cid in [2507, 2625, 2650, 2653, 2658] and CustomCardEffects.can_activate(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
+			if g_cid in [2507, 2625, 2650, 2653, 2658, 3138, 3139] and CustomCardEffects.can_activate(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
 				CustomCardEffects.resolve_chain_link(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi})
 				_jw_clear_window()
 				return 0
@@ -60,7 +60,7 @@ func f59ff90(_unused: int, p: int, kind: int) -> int:
 		for gi in range(gy_cnt):
 			var g_idx: int = CustomDuelOps.pile_idx(self, p & 1, CustomDuelOps.LOC_GRAVE, gi)
 			var g_cid: int = cards.id_of(g_idx) & 0xffff
-			if g_cid in [2507, 2625, 2650, 2653, 2658] and CustomCardEffects.can_activate(self, p & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
+			if g_cid in [2507, 2625, 2650, 2653, 2658, 3138, 3139] and CustomCardEffects.can_activate(self, p & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
 				return (g_idx & 0xffff) | ((p & 1) << 31) | 0x5f0000
 	for i in range(_s32(m.u32(0x5efa64))):
 		var at := 0x5efa44 + i * 6

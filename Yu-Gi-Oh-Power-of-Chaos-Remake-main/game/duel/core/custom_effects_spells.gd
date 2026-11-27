@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137,
 ]
 
 
@@ -69,6 +69,24 @@ static func _red_eyes_insight_target(duel, p: int) -> int:
 	return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _i): return (CustomDuelOps.is_spell(d, idx) or CustomDuelOps.is_trap(d, idx)) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.raw_id(d, idx) != 3132)
 
 
+## Cards of the Red Stone: a Level 7 "Red-Eyes" monster in the hand (the cost).
+static func _red_stone_cost(duel, p: int) -> int:
+	return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.monster_level(d, idx) == 7, false)
+
+
+## Inferno Fire Blast: the zone of a "Red-Eyes B. Dragon" in the player's Monster Zone, or -1.
+static func _inferno_target(duel, p: int) -> int:
+	var pick: Dictionary = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES, true, false)
+	if pick.is_empty():
+		return -1
+	return int(pick["z"])
+
+
+## Return of the Dragon Lords: a Level 7 or 8 Dragon monster in the GY.
+static func _dragon_lords_target(duel, p: int) -> int:
+	return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.monster_race(d, idx) == 1 and (CustomDuelOps.monster_level(d, idx) == 7 or CustomDuelOps.monster_level(d, idx) == 8))
+
+
 static func handles(cid: int) -> bool:
 	return cid in IDS
 
@@ -84,6 +102,12 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
 	match cid:
+		3134: # Cards of the Red Stone
+			return CustomDuelOps.can_hopt(duel, p, 3134) and _red_stone_cost(duel, p) >= 0 and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_DECK) >= 2
+		3135: # Inferno Fire Blast
+			return _inferno_target(duel, p) >= 0
+		3137: # Return of the Dragon Lords
+			return not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and _dragon_lords_target(duel, p) >= 0
 		3132: # Red-Eyes Insight
 			return CustomDuelOps.can_hopt(duel, p, 3132) and _red_eyes_insight_cost(duel, p) != Vector2i(-1, -1) and _red_eyes_insight_target(duel, p) >= 0
 		3130: # Level Up!
@@ -307,6 +331,36 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3134: # Cards of the Red Stone
+			CustomDuelOps.mark_hopt(duel, p, 3134)
+			var rs_cost: int = _red_stone_cost(duel, p)
+			if rs_cost < 0:
+				return true
+			CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, rs_cost, p, CustomDuelOps.LOC_GRAVE)
+			CustomDuelOps.draw(duel, p, 2)
+			var rs_send: Callable = func() -> void:
+				var rs_di: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.monster_level(d, idx) == 7, false)
+				if rs_di >= 0:
+					CustomDuelOps.send_from_deck_to_gy(duel, p, rs_di)
+			if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 3134), rs_send):
+				rs_send.call()
+			return true
+		3135: # Inferno Fire Blast
+			var if_z: int = _inferno_target(duel, p)
+			if if_z < 0:
+				return true
+			CustomDuelOps.damage(duel, opp, CustomDuelOps.base_atk(duel, CustomDuelOps.zone_idx(duel, p, if_z)))
+			# "Red-Eyes B. Dragon" cannot attack the turn this card is activated.
+			for if_zz in 5:
+				if CustomDuelOps.zone_idx(duel, p, if_zz) != 0 and CustomDuelOps.raw_id(duel, CustomDuelOps.zone_idx(duel, p, if_zz)) in CustomDuelOps.NATIVE_RED_EYES:
+					CustomDuelOps.zflags(duel, p, if_zz)["cannot_atk_turn"] = t
+			CustomDuelOps.pflags(duel, p)["inferno_fire_blast_turn"] = t
+			return true
+		3137: # Return of the Dragon Lords (the GY replacement effect is not implemented)
+			var dl_i: int = _dragon_lords_target(duel, p)
+			if dl_i >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0 and not CustomDuelOps.is_necrovalley_active(duel):
+				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, dl_i, p, true, false)
+			return true
 		3132: # Red-Eyes Insight
 			CustomDuelOps.mark_hopt(duel, p, 3132)
 			var ri_cost: Vector2i = _red_eyes_insight_cost(duel, p)

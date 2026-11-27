@@ -770,7 +770,13 @@
     "2000": "ad_89631139.webp",
     "1746": "ad_44397496.webp",
     "1747": "ad_92353449.webp",
-    "1748": "ad_18491580.webp"
+    "1748": "ad_18491580.webp",
+    "1749": "ad_32566831.webp",
+    "1750": "ad_52684508.webp",
+    "1751": "ad_6853254.webp",
+    "1752": "ad_36262024.webp",
+    "1753": "ad_66574418.webp",
+    "1754": "ad_27657173.webp"
   },
   "cards": [
     {
@@ -33295,6 +33301,243 @@
       ],
       "image": "ad_18491580.webp",
       "prop": 1310056648,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1749,
+      "internal_id": 3134,
+      "password": "32566831",
+      "names": {
+        "eng": "Cards of the Red Stone",
+        "ara": "بطاقات الحجر الأحمر"
+      },
+      "descriptions": {
+        "eng": "Send 1 Level 7 \"Red-Eyes\" monster from your hand to the Graveyard; draw 2 cards, then you can send 1 Level 7 \"Red-Eyes\" monster from your Deck to the Graveyard. You can only activate 1 \"Cards of the Red Stone\" per turn.",
+        "ara": "أرسل وحش 1 \"أحمر العينين\" من المستوى 7 من يدك إلى المقبرة؛ اسحب بطاقتين، ثم يمكنك إرسال وحش 1 \"أحمر العينين\" من المستوى 7 من مجموعتك إلى المقبرة. يمكنك تفعيل \"بطاقات الحجر الأحمر\" واحدة فقط في كل دور."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_32566831.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1750,
+      "internal_id": 3135,
+      "password": "52684508",
+      "names": {
+        "eng": "Inferno Fire Blast",
+        "ara": "انفجار نار الجحيم"
+      },
+      "descriptions": {
+        "eng": "Target 1 \"Red-Eyes B. Dragon\" in your Monster Zone; inflict damage to your opponent equal to its original ATK. \"Red-Eyes B. Dragon\" cannot attack the turn you activate this card.",
+        "ara": "استهدف \"التنين الأسود أحمر العينين\" 1 في منطقة وحوشك؛ أنزل بخصمك ضرراً يساوي هجومه الأصلي. لا يمكن لـ\"التنين الأسود أحمر العينين\" الهجوم في الدور الذي تفعّل فيه هذه البطاقة."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_52684508.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1751,
+      "internal_id": 3137,
+      "password": "6853254",
+      "names": {
+        "eng": "Return of the Dragon Lords",
+        "ara": "عودة أسياد التنانين"
+      },
+      "descriptions": {
+        "eng": "Target 1 Level 7 or 8 Dragon monster in your GY; Special Summon it. If a Dragon monster(s) you control would be destroyed by battle or card effect, you can banish this card from your GY instead.",
+        "ara": "استهدف وحش تنين 1 من المستوى 7 أو 8 في مقبرتك؛ استدعِه بشكل خاص. إذا كان وحش تنين (أو أكثر) تتحكم به سيُدمَّر في المعركة أو بتأثير بطاقة، يمكنك نفي هذه البطاقة من مقبرتك بدلاً من ذلك."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_6853254.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1752,
+      "internal_id": 3136,
+      "password": "36262024",
+      "names": {
+        "eng": "Black Dragon's Chick",
+        "ara": "فرخ التنين الأسود"
+      },
+      "descriptions": {
+        "eng": "You can send this face-up card you control to the Graveyard; Special Summon 1 \"Red-Eyes B. Dragon\" from your hand.",
+        "ara": "يمكنك إرسال هذه البطاقة المكشوفة التي تتحكم بها إلى المقبرة؛ استدعِ \"التنين الأسود أحمر العينين\" 1 من يدك بشكل خاص."
+      },
+      "atk": 800,
+      "defense": 500,
+      "level": 1,
+      "attribute": "dark",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_36262024.webp",
+      "prop": 1108647986,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1753,
+      "internal_id": 3138,
+      "password": "66574418",
+      "names": {
+        "eng": "The Black Stone of Legend",
+        "ara": "الحجر الأسود الأسطوري"
+      },
+      "descriptions": {
+        "eng": "You can Tribute this card; Special Summon 1 Level 7 or lower \"Red-Eyes\" monster from your Deck, except \"Red-Eyes B. Chick\". If this card is in your Graveyard: You can target 1 Level 7 or lower \"Red-Eyes\" monster in your Graveyard, except \"Red-Eyes B. Chick\"; shuffle it into the Deck, and if you do, add this card to your hand. You can only use 1 \"The Black Stone of Legend\" effect per turn, and only once that turn.",
+        "ara": "يمكنك التضحية بهذه البطاقة؛ استدعِ وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل من مجموعتك بشكل خاص، ما عدا \"فرخ التنين الأسود\". إذا كانت هذه البطاقة في مقبرتك: يمكنك استهداف وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل في مقبرتك، ما عدا \"فرخ التنين الأسود\"؛ اخلطه في المجموعة، وإذا فعلت، أضف هذه البطاقة إلى يدك. يمكنك استخدام تأثير واحد فقط من \"الحجر الأسود الأسطوري\" في كل دور، ومرة واحدة فقط في ذلك الدور."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 1,
+      "attribute": "dark",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_66574418.webp",
+      "prop": 1108606976,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1754,
+      "internal_id": 3139,
+      "password": "27657173",
+      "names": {
+        "eng": "Red-Eyes Black Meteor Dragon",
+        "ara": "تنين أحمر العينين النيزك الأسود"
+      },
+      "descriptions": {
+        "eng": "You can send 1 Level 5 or higher Normal Monster from your hand or Deck to the GY; Special Summon this card from your hand, then increase its Level by 1. During your Main Phase, except the turn this card was sent to the GY: You can banish this card from your GY; add 1 \"Red-Eyes Fusion\" from your Deck or GY to your hand. You can only use each effect of \"Red-Eyes Black Meteor Dragon\" once per turn.",
+        "ara": "يمكنك إرسال وحش عادي 1 من المستوى 5 أو أعلى من يدك أو مجموعتك إلى المقبرة؛ استدعِ هذه البطاقة من يدك بشكل خاص، ثم ارفع مستواها بمقدار 1. خلال مرحلتك الرئيسية، ما عدا الدور الذي أُرسلت فيه هذه البطاقة إلى المقبرة: يمكنك نفي هذه البطاقة من مقبرتك؛ أضف \"اندماج أحمر العينين\" 1 من مجموعتك أو مقبرتك إلى يدك. يمكنك استخدام كل تأثير من \"تنين أحمر العينين النيزك الأسود\" مرة واحدة فقط في كل دور."
+      },
+      "atk": 2000,
+      "defense": 2000,
+      "level": 6,
+      "attribute": "dark",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_27657173.webp",
+      "prop": 1276481736,
       "monster_kind": "effect",
       "effect_alias": 0,
       "subcategory": "normal",
