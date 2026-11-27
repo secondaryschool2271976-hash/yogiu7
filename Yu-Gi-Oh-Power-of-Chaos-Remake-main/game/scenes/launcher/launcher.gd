@@ -101,7 +101,7 @@ func _exit_tree() -> void:
 func _ready() -> void:
 	# Recurso propio del remake, incluido expresamente en la copia publica.
 	var music_path := "res://assets/music/launcher_theme.mp3"
-	if not Audio.AUDIO_DISABLED and ResourceLoader.exists(music_path):
+	if Audio.MENU_SOUND and not Audio.AUDIO_DISABLED and ResourceLoader.exists(music_path):
 		MUSIC = load(music_path)
 	_halo = Sprite2D.new()
 	# Halo a doble resolucion, dibujado a la mitad: caida suave sin escalones.

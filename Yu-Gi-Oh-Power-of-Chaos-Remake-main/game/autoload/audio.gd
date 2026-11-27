@@ -20,7 +20,11 @@ var _bg_prev_master_mute := false
 ## aislado del juego: no se carga ningun archivo de sonido, y el motor sigue sin esperar a los
 ## sonidos (sfx_finished devuelve true, igual que con el volumen en 0). Los archivos de audio NO
 ## se borran. Para reactivar el audio: cambiar a false (una sola linea).
-const AUDIO_DISABLED := true
+const AUDIO_DISABLED := false
+## El audio solo suena dentro de un duelo (Joey, Yugi, Kaiba). Menus, launcher, editor de mazos y
+## lista de cartas quedan en silencio, sin musica de fondo ni sonidos de interfaz.
+const MENU_SOUND := false
+const DUEL_SCREENS := ["replay_viewer.gd", "bust_up_scene.gd", "bust_up_rival.gd", "janken_scene.gd", "janken_kaiba.gd", "janken_joey.gd", "joey_native_duel.gd"]
 const SFX_CHANNELS := 6
 const LAUNCHER_MUSIC_BUS := &"Launcher Music"
 ## Niveles del volumen de opciones (0..15) a 0..127: DAT_005adb40.
@@ -83,8 +87,20 @@ func set_launcher_music_muted(muted: bool) -> void:
 	AudioServer.set_bus_mute(AudioServer.get_bus_index(LAUNCHER_MUSIC_BUS), muted)
 
 
+## true si la pantalla actual es un duelo (o su presentacion). Fuera de ahi no suena nada.
+func in_duel_screen() -> bool:
+	if MENU_SOUND: return true
+	var screen: Node = Game._screen if is_instance_valid(Game) else null
+	if not is_instance_valid(screen): return false
+	var script: Script = screen.get_script()
+	while script != null:
+		if str(script.resource_path).get_file() in DUEL_SCREENS: return true
+		script = script.get_base_script()
+	return false
+
+
 func preload_music(rel_path: String) -> void:
-	if AUDIO_DISABLED: return
+	if AUDIO_DISABLED or not in_duel_screen(): return
 	var path := Assets.resolve(rel_path)
 	if not path.is_empty():
 		_load(path)
@@ -92,7 +108,7 @@ func preload_music(rel_path: String) -> void:
 
 func play_music(rel_path: String, loop := true) -> void:
 	if log_played: played_log.append(rel_path.get_file().to_lower())
-	if AUDIO_DISABLED: return
+	if AUDIO_DISABLED or not in_duel_screen(): return
 	var path := Assets.resolve(rel_path)
 	if path == "" or path == _music_path:
 		return
@@ -168,7 +184,7 @@ func voice_disabled(rel_path: String) -> bool:
 
 func play_sfx(rel_path: String) -> void:
 	if log_played: played_log.append(rel_path.get_file().to_lower())
-	if AUDIO_DISABLED: return
+	if AUDIO_DISABLED or not in_duel_screen(): return
 	if voice_disabled(rel_path): return
 	if level == 0: return # 583d40/583e10: sonido deshabilitado.
 	var path := Assets.resolve(rel_path)
@@ -224,7 +240,7 @@ func _advance_speech() -> void:
 
 ## 583ed0/584290: terminado cuando el buffer ya no reproduce; sin sonido devuelve1.
 func sfx_finished(rel_path: String) -> bool:
-	if AUDIO_DISABLED: return true
+	if AUDIO_DISABLED or not in_duel_screen(): return true
 	if voice_disabled(rel_path): return true
 	if level == 0: return true
 	var path := Assets.resolve(rel_path)
@@ -267,6 +283,9 @@ func fade_native(duration: int) -> void:
 
 
 func _process(delta: float) -> void:
+	# Al salir de un duelo al menu se corta cualquier sonido que siga.
+	if (_music.playing or not _music_path.is_empty()) and not in_duel_screen():
+		stop_all()
 	if _fades.is_empty():
 		_fade_clock = 0.0
 		return
