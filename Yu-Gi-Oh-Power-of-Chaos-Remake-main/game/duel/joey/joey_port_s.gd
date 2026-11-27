@@ -158,8 +158,9 @@ func f5a5120() -> int:
 		return 0
 	if phase == 100:
 		var n := m.u8(JoeyMem.pl(p) + 8)
-		if f5699c0(0x593) == 0 and n > 6:
-			f5bcdc0(p, n - 6, 0, 0)
+		var limit := CustomCardEffects.hand_limit(self, p)
+		if f5699c0(0x593) == 0 and n > limit:
+			f5bcdc0(p, n - limit, 0, 0)
 			return 0
 		_js_next_phase()
 		return 0
