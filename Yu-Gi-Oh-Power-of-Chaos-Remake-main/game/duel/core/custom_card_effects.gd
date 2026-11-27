@@ -199,6 +199,9 @@ static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := 
 	elif CustomEffectsSpells.handles(cid):
 		st_src["effect_source"] = "spell"
 		st_src["effect_targeted"] = false
+		# Timidity (2834): su resolucion solo deja la marca que consulta destroy_zone.
+		if cid == 2834:
+			CustomDuelOps.set_timidity(duel)
 		handled = CustomEffectsSpells.resolve(duel, p, cid, loc, z, ctx)
 		st_src["effect_source"] = ""
 		if handled:
