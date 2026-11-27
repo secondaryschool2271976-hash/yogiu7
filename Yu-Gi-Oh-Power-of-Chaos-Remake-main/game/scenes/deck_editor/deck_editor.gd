@@ -2707,8 +2707,16 @@ func _deck_files() -> PackedStringArray:
 	for f in DirAccess.get_files_at(_decks_dir()):
 		if f.get_extension().to_lower() == "ydc":
 			out.append(f.get_basename())
+	# Lo importado o guardado mas recientemente va primero: entre los ~50 mazos preparados del
+	# juego, un mazo nuevo quedaba enterrado en orden alfabetico y parecia que no se importaba.
 	var arr: Array = Array(out)
-	arr.sort_custom(func(a: String, b: String) -> bool: return a.naturalnocasecmp_to(b) < 0)
+	var stamps := {}
+	for n: String in arr:
+		stamps[n] = FileAccess.get_modified_time(_decks_dir().path_join(n + ".ydc"))
+	arr.sort_custom(func(a: String, b: String) -> bool:
+		if stamps[a] != stamps[b]:
+			return int(stamps[a]) > int(stamps[b])
+		return a.naturalnocasecmp_to(b) < 0)
 	return PackedStringArray(arr)
 
 

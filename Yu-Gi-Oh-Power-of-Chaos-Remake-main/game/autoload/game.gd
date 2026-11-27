@@ -808,16 +808,22 @@ var card_test_scenario: Dictionary = {}
 
 ## Empieza un duelo de practica con `card_id` en la mano inicial del jugador.
 ## opts: field_p/field_o/grave_p/grave_o = [[{"card": id, "zone": z, "c": c}]], lp_p/lp_o.
-func open_card_effect_test(card_id: int, opts := {}) -> void:
+func open_card_effect_test(opts := {}) -> void:
+	var decks: Array = [null, null]
+	for p in 2:
+		var d: Variant = opts.get("deck_p" if p == 0 else "deck_o", null)
+		if d is Dictionary:
+			decks[p] = {"main": PackedInt32Array(d.get("main", [])), "side": PackedInt32Array(d.get("side", [])),
+					"fusion": PackedInt32Array(d.get("fusion", []))}
 	card_test_scenario = {
 		"description": "Card effect test",
 		"first": 0,
-		"hands": [[card_id], []],
+		"hands": [Array(opts.get("hand_p", [])), Array(opts.get("hand_o", []))],
 		"field": [Array(opts.get("field_p", [])), Array(opts.get("field_o", []))],
 		"grave": [Array(opts.get("grave_p", [])), Array(opts.get("grave_o", []))],
 		"lp": ([int(opts.get("lp_p", 8000)), int(opts.get("lp_o", 8000))] if (opts.has("lp_p") or opts.has("lp_o")) else []),
 		"fusion": [[], []],
-		"decks": [null, null],
+		"decks": decks,
 	}
 	DuelResume.clear()
 	duel_mode = 0

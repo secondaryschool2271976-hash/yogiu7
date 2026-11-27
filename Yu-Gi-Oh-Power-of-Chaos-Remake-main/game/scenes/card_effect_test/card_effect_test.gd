@@ -3,14 +3,19 @@ extends Control
 ## la mano inicial y, si se indica, cartas en el campo/cementerio de cada lado y LP.
 ## El duelo lo monta Game.open_card_effect_test() con la maquinaria de DuelScenario.
 ##
-## Interfaz: arriba se elige el lado (Jugador / Oponente); cada carta de la lista tiene un boton
-## "Add" (campo) y "GY" (cementerio) que la anade al lado activo, en el orden en que se eligen.
-## Tocar el nombre de la carta la elige como la carta de la mano (la que se prueba).
+## Interfaz: arriba se elige el lado (Jugador / Oponente) y su mazo (por defecto, el activo, uno
+## guardado o uno del juego). Cada carta de la lista tiene "Hand" (mano), "Add" (campo: monstruo a
+## la zona de monstruos, magia/trampa a la zona de magia/trampa segun su tipo) y "GY" (cementerio).
+## Cada lado muestra cuatro secciones con TODAS las cartas anadidas: mano, campo, magia/trampa y
+## cementerio. Tocar una carta anadida la quita.
 ## Todo va dentro de un ScrollContainer y los botones de empezar/volver viven en una barra fija.
 
 const MAX_RESULTS := 80
 const ROW_HEIGHT := 52
-const FIELD_MAX := 10
+const MON_MAX := 5
+const ST_MAX := 5
+const HAND_MAX := 5
+const KINDS := ["hand", "field", "st", "grave"]
 
 const C_BG := Color(0.92, 0.96, 1.0)
 const C_TEXT := Color(0.12, 0.16, 0.28)
@@ -27,13 +32,16 @@ var _list_box: VBoxContainer
 var _status: Label
 var _lp_o: LineEdit
 var _lp_p: LineEdit
-var _hand_id := 0
 var _side := 0  # 0 = jugador, 1 = oponente
-var _field: Array = [[], []]
+var _hand: Array = [[], []]
+var _field: Array = [[], []]  # monstruos
+var _st: Array = [[], []]     # magia / trampa
 var _grave: Array = [[], []]
+var _deck_src: Array = [{"kind": "default"}, {"kind": "default"}]
+var _deck_btns: Array = []
+var _deck_overlay: Control = null
 var _tab_buttons: Array = []
 var _slots_box: VBoxContainer
-var _hand_label: Label
 var _rtl := false
 var _last_press := {}
 
@@ -128,9 +136,9 @@ func _build() -> void:
 	margin.add_child(col)
 
 	col.add_child(_label(_txt("Card Effect Test", "اختبار تأثير البطاقة", "Prueba de efecto"), 28))
-	col.add_child(_label(_txt("1. Choose Player or Opponent. 2. Search a card and tap Add (field) or GY (graveyard). 3. Tap a card name to make it the card in your hand. 4. Press Start.",
-			"١. اختر اللاعب أو الخصم. ٢. ابحث عن بطاقة واضغط Add (الملعب) أو GY (المقبرة). ٣. اضغط اسم البطاقة لتكون البطاقة في يدك. ٤. اضغط ابدأ.",
-			"1. Elige Jugador u Oponente. 2. Busca una carta y pulsa Add (campo) o GY (cementerio). 3. Toca el nombre de una carta para ponerla en tu mano. 4. Pulsa Empezar."), 14))
+	col.add_child(_label(_txt("1. Choose Player or Opponent, and optionally a deck for that side. 2. Search a card and tap Hand, Add (field or spell/trap by card type) or GY (graveyard). 3. Tap an added card to remove it. 4. Press Start.",
+			"١. اختر اللاعب أو الخصم، ثم اختر مجموعة لهذا الجانب إن أردت. ٢. ابحث عن بطاقة واضغط Hand (اليد) أو Add (الملعب أو السحر/الفخ حسب نوع البطاقة) أو GY (المقبرة). ٣. اضغط على بطاقة مضافة لحذفها. ٤. اضغط ابدأ.",
+			"1. Elige Jugador u Oponente y, si quieres, un mazo para ese lado. 2. Busca una carta y pulsa Hand (mano), Add (campo o magia/trampa según el tipo) o GY (cementerio). 3. Toca una carta añadida para quitarla. 4. Pulsa Empezar."), 14))
 
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 10)
@@ -144,6 +152,20 @@ func _build() -> void:
 		t.pressed.connect(_set_side.bind(s))
 		tabs.add_child(t)
 		_tab_buttons.append(t)
+
+	var decks_row := HBoxContainer.new()
+	decks_row.add_theme_constant_override("separation", 10)
+	col.add_child(decks_row)
+	_deck_btns = []
+	for s2 in [0, 1]:
+		var db := Button.new()
+		db.custom_minimum_size = Vector2(0, 50)
+		db.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		db.clip_text = true
+		_tap(db, _open_deck_picker.bind(s2))
+		decks_row.add_child(db)
+		_deck_btns.append(db)
+	_update_deck_buttons()
 
 	var search := LineEdit.new()
 	search.placeholder_text = _txt("Search a card by name", "ابحث عن بطاقة بالاسم", "Busca una carta por nombre")
@@ -172,9 +194,6 @@ func _build() -> void:
 	list_scroll.add_child(_list_box)
 
 	col.add_child(_label(_txt("Added cards (in the order you picked them)", "البطاقات المضافة (بترتيب اختيارك)", "Cartas añadidas (en el orden elegido)"), 18))
-
-	_hand_label = _label("", 16)
-	col.add_child(_hand_label)
 
 	_slots_box = VBoxContainer.new()
 	_slots_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -281,11 +300,18 @@ func _list_add(text: String, id: int) -> void:
 	_tap(name_btn, _on_name_pressed.bind(id))
 	row.add_child(name_btn)
 
+	var hand_btn := Button.new()
+	hand_btn.text = "Hand"
+	hand_btn.custom_minimum_size = Vector2(84, ROW_HEIGHT)
+	hand_btn.set_meta("role", "hand")
+	_tap(hand_btn, _on_add_pressed.bind(id, "hand"))
+	row.add_child(hand_btn)
+
 	var add_btn := Button.new()
 	add_btn.text = "Add"
 	add_btn.custom_minimum_size = Vector2(76, ROW_HEIGHT)
 	add_btn.set_meta("role", "add")
-	_tap(add_btn, _on_add_pressed.bind(id, "field"))
+	_tap(add_btn, _on_add_pressed.bind(id, "board"))
 	row.add_child(add_btn)
 
 	var gy_btn := Button.new()
@@ -316,22 +342,18 @@ func _tap(button: Button, callback: Callable) -> void:
 
 
 func _style_row(row: HBoxContainer) -> void:
-	var id := int(row.get_meta("id"))
 	for child in row.get_children():
 		if not (child is Button):
 			continue
 		match str(child.get_meta("role")):
 			"name":
-				if id == _hand_id:
-					_color_button(child, C_HAND, 16)
-					child.add_theme_color_override("font_color", C_TEXT)
-					child.add_theme_color_override("font_hover_color", C_TEXT)
-					child.add_theme_color_override("font_pressed_color", C_TEXT)
-					child.add_theme_color_override("font_focus_color", C_TEXT)
-				else:
-					_color_button(child, C_CARD, 16)
-					for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-						child.add_theme_color_override(k, C_TEXT)
+				_color_button(child, C_CARD, 16)
+				for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+					child.add_theme_color_override(k, C_TEXT)
+			"hand":
+				_color_button(child, C_HAND, 16)
+				for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+					child.add_theme_color_override(k, C_TEXT)
 			"add":
 				_color_button(child, C_ADD, 18)
 			"gy":
@@ -347,39 +369,72 @@ func _refresh_rows() -> void:
 
 
 func _on_name_pressed(id: int) -> void:
-	_hand_id = id
-	_refresh_rows()
-	_update_slots()
-	_status.text = _txt("In hand: %s" % _card_name_by_id(id), "في اليد: %s" % _card_name_by_id(id), "En la mano: %s" % _card_name_by_id(id))
+	var card := CardDB.by_id(id)
+	_status.text = "%s  (%s)" % [_card_name_by_id(id), _kind_label(card)]
 
 
+func _kind_label(card: Dictionary) -> String:
+	match str(card.get("category", "monster")):
+		"spell": return _txt("Spell", "سحر", "Magia")
+		"trap": return _txt("Trap", "فخ", "Trampa")
+	return _txt("Monster", "وحش", "Monstruo")
+
+
+func _is_st(id: int) -> bool:
+	var cat := str(CardDB.by_id(id).get("category", "monster"))
+	return cat == "spell" or cat == "trap"
+
+
+func _list_for(side: int, kind: String) -> Array:
+	match kind:
+		"hand": return _hand[side]
+		"field": return _field[side]
+		"st": return _st[side]
+	return _grave[side]
+
+
+func _kind_title(kind: String) -> String:
+	match kind:
+		"hand": return _txt("Hand", "اليد", "Mano")
+		"field": return _txt("Field (monsters)", "الملعب (الوحوش)", "Campo (monstruos)")
+		"st": return _txt("Spell/Trap", "السحر والفخاخ", "Magia/Trampa")
+	return _txt("Graveyard", "المقبرة", "Cementerio")
+
+
+## kind: "hand", "board" (monstruo -> campo, magia/trampa -> zona M/T segun el tipo) o "grave".
 func _on_add_pressed(id: int, kind: String) -> void:
-	var lst: Array = _field[_side] if kind == "field" else _grave[_side]
-	if kind == "field" and lst.size() >= FIELD_MAX:
-		_status.text = _txt("The %s field is full (10)." % _side_name(_side), "ملعب %s ممتلئ (10)." % _side_name(_side), "El campo de %s está lleno (10)." % _side_name(_side))
+	if kind == "board":
+		kind = "st" if _is_st(id) else "field"
+	var lst: Array = _list_for(_side, kind)
+	var cap := 99
+	match kind:
+		"hand": cap = HAND_MAX
+		"field": cap = MON_MAX
+		"st": cap = ST_MAX
+	if lst.size() >= cap:
+		_status.text = _txt("%s: %s is full (%d)." % [_side_name(_side), _kind_title(kind), cap],
+				"%s: %s ممتلئ (%d)." % [_side_name(_side), _kind_title(kind), cap],
+				"%s: %s está lleno (%d)." % [_side_name(_side), _kind_title(kind), cap])
 		return
 	lst.append(id)
-	var where := _txt("field", "الملعب", "campo") if kind == "field" else _txt("graveyard", "المقبرة", "cementerio")
-	_status.text = _txt("Added %s to %s %s (#%d)" % [_card_name_by_id(id), _side_name(_side), where, lst.size()],
-			"أُضيفت %s إلى %s - %s (رقم %d)" % [_card_name_by_id(id), _side_name(_side), where, lst.size()],
-			"Añadida %s a %s %s (n.º %d)" % [_card_name_by_id(id), _side_name(_side), where, lst.size()])
+	_status.text = _txt("Added %s to %s - %s (#%d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
+			"أُضيفت %s إلى %s - %s (رقم %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
+			"Añadida %s a %s - %s (n.º %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()])
 	_update_slots()
 
 
 func _remove_card(side: int, kind: String, index: int) -> void:
-	var lst: Array = _field[side] if kind == "field" else _grave[side]
+	var lst: Array = _list_for(side, kind)
 	if index >= 0 and index < lst.size():
 		lst.remove_at(index)
 	_update_slots()
 
 
-## Casillas debajo de la lista: lo anadido a cada lado, numerado en el orden elegido.
-## Tocar un chip lo quita.
+## Casillas debajo de la lista: por lado, cuatro secciones (mano, campo, magia/trampa y
+## cementerio) con todo lo anadido, numerado en el orden elegido. Tocar un chip lo quita.
 func _update_slots() -> void:
 	if _slots_box == null:
 		return
-	_hand_label.text = _txt("In hand (card to test): ", "في اليد (البطاقة المختبرة): ", "En la mano (carta a probar): ") \
-			+ (_card_name_by_id(_hand_id) if _hand_id > 0 else _txt("none, tap a card name", "لا شيء، اضغط اسم بطاقة", "ninguna, toca un nombre"))
 	for child in _slots_box.get_children():
 		_slots_box.remove_child(child)
 		child.queue_free()
@@ -390,11 +445,10 @@ func _update_slots() -> void:
 		var v := VBoxContainer.new()
 		v.add_theme_constant_override("separation", 4)
 		panel.add_child(v)
-		v.add_child(_label(_side_name(s), 18, _side_color(s).darkened(0.25)))
-		for kind in ["field", "grave"]:
-			var lst: Array = _field[s] if kind == "field" else _grave[s]
-			var title := _txt("Field", "الملعب", "Campo") if kind == "field" else _txt("Graveyard", "المقبرة", "Cementerio")
-			v.add_child(_label(title + ":" + ("" if not lst.is_empty() else " " + _txt("empty", "فارغ", "vacío")), 14))
+		v.add_child(_label(_side_name(s) + "  ·  " + _deck_label(s), 18, _side_color(s).darkened(0.25)))
+		for kind in KINDS:
+			var lst: Array = _list_for(s, kind)
+			v.add_child(_label("%s (%d):%s" % [_kind_title(kind), lst.size(), "" if not lst.is_empty() else " " + _txt("empty", "فارغ", "vacío")], 14))
 			var flow := HFlowContainer.new()
 			flow.add_theme_constant_override("h_separation", 6)
 			flow.add_theme_constant_override("v_separation", 6)
@@ -403,9 +457,140 @@ func _update_slots() -> void:
 				var chip := Button.new()
 				chip.text = "%d. %s  ✕" % [i + 1, _card_name_by_id(int(lst[i]))]
 				chip.custom_minimum_size = Vector2(0, 40)
-				_color_button(chip, _side_color(s) if kind == "field" else C_GY, 14)
-				chip.pressed.connect(_remove_card.bind(s, kind, i))
+				var chip_color := _side_color(s)
+				if kind == "grave":
+					chip_color = C_GY
+				elif kind == "hand":
+					chip_color = Color(0.80, 0.55, 0.05)
+				_color_button(chip, chip_color, 14)
+				_tap(chip, _remove_card.bind(s, kind, i))
 				flow.add_child(chip)
+
+
+# ---------------------------------------------------------------- mazos
+
+func _deck_label(side: int) -> String:
+	var src: Dictionary = _deck_src[side]
+	match str(src.get("kind", "default")):
+		"active": return _txt("Active deck", "المجموعة النشطة", "Mazo activo")
+		"default": return _txt("Default deck", "المجموعة الافتراضية", "Mazo por defecto")
+	return str(src.get("label", "?"))
+
+
+func _update_deck_buttons() -> void:
+	for s in range(_deck_btns.size()):
+		var b: Button = _deck_btns[s]
+		b.text = "%s: %s" % [_txt("Deck", "المجموعة", "Mazo"), _deck_label(s)]
+		_color_button(b, _side_color(s).darkened(0.1), 15)
+
+
+## Origenes de mazo: por defecto, activo, guardados en el dispositivo (.ydc) y los del juego.
+func _deck_sources() -> Array:
+	var out: Array = []
+	out.append({"kind": "default"})
+	out.append({"kind": "active"})
+	var dir := Paths.save_dir.path_join("decks")
+	if DirAccess.dir_exists_absolute(dir):
+		var files := Array(DirAccess.get_files_at(dir))
+		files.sort_custom(func(a: String, b: String) -> bool: return a.naturalnocasecmp_to(b) < 0)
+		for f: String in files:
+			if f.get_extension().to_lower() == "ydc":
+				out.append({"kind": "ydc", "path": dir.path_join(f), "label": f.get_basename()})
+	var presets: Dictionary = load("res://scenes/duel/rival_deck_choice.gd").PRESET_DECKS
+	for g in ["yugi", "kaiba", "joey"]:
+		for raw: Variant in presets.get(g, []):
+			var e: Dictionary = raw
+			var p := str(e.get("path", ""))
+			if p == "" or not Assets.exists(p):
+				continue
+			out.append({"kind": "json", "path": p, "label": "[%s] %s" % [g, _txt(str(e.get("en", "")), str(e.get("ar", "")), str(e.get("es", "")))]})
+	return out
+
+
+func _open_deck_picker(side: int) -> void:
+	_close_deck_picker()
+	var layer := ColorRect.new()
+	layer.color = Color(0.05, 0.08, 0.16, 0.97)
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(layer)
+	_deck_overlay = layer
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for edge in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + edge, 14)
+	layer.add_child(margin)
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 8)
+	if _rtl:
+		page.layout_direction = Control.LAYOUT_DIRECTION_RTL
+	margin.add_child(page)
+	page.add_child(_label(_txt("Deck for %s" % _side_name(side), "مجموعة %s" % _side_name(side), "Mazo de %s" % _side_name(side)), 24, Color(1, 1, 1)))
+	var sc := ScrollContainer.new()
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	page.add_child(sc)
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 6)
+	sc.add_child(box)
+	for src: Dictionary in _deck_sources():
+		var b := Button.new()
+		var kind := str(src.get("kind", ""))
+		var text := str(src.get("label", ""))
+		if kind == "default":
+			text = _txt("Default deck (original)", "المجموعة الافتراضية (الأصلية)", "Mazo por defecto (original)")
+		elif kind == "active":
+			text = _txt("Active deck (from the deck editor)", "المجموعة النشطة (من محرر المجموعات)", "Mazo activo (del editor)")
+		elif kind == "ydc":
+			text = "📁 " + text
+		else:
+			text = "🃏 " + text
+		b.text = text
+		b.clip_text = true
+		b.custom_minimum_size = Vector2(0, 54)
+		_color_button(b, Color(0.20, 0.30, 0.55), 16)
+		_tap(b, _pick_deck.bind(side, src))
+		box.add_child(b)
+	var close := Button.new()
+	close.text = _txt("Back", "رجوع", "Volver")
+	close.custom_minimum_size = Vector2(0, 56)
+	_color_button(close, Color(0.45, 0.52, 0.68), 19)
+	_tap(close, _close_deck_picker)
+	page.add_child(close)
+
+
+func _close_deck_picker() -> void:
+	if is_instance_valid(_deck_overlay):
+		_deck_overlay.queue_free()
+	_deck_overlay = null
+
+
+func _pick_deck(side: int, src: Dictionary) -> void:
+	_deck_src[side] = src
+	_close_deck_picker()
+	_update_deck_buttons()
+	_update_slots()
+	_status.text = _txt("%s deck: %s" % [_side_name(side), _deck_label(side)], "مجموعة %s: %s" % [_side_name(side), _deck_label(side)], "Mazo de %s: %s" % [_side_name(side), _deck_label(side)])
+
+
+## El mazo elegido como {main, side, fusion}, o {} para usar el de defecto del duelo.
+func _load_deck(side: int) -> Dictionary:
+	var src: Dictionary = _deck_src[side]
+	var raw: Variant = null
+	match str(src.get("kind", "default")):
+		"active":
+			var decks: Dictionary = SaveData.data.get("decks", {})
+			raw = decks.get("yugi", {})
+		"ydc":
+			raw = Ydc.load(str(src.get("path", "")))
+		"json":
+			raw = Assets.read_json(str(src.get("path", "")))
+	if not (raw is Dictionary) or (raw as Dictionary).get("main", []).is_empty():
+		return {}
+	var d: Dictionary = raw
+	return {"main": Array(d.get("main", [])), "side": Array(d.get("side", [])), "fusion": Array(d.get("fusion", []))}
 
 
 func _card_name_by_id(id: int) -> String:
@@ -476,28 +661,36 @@ func _refresh(query: String) -> void:
 
 
 func _on_start() -> void:
-	if _hand_id <= 0:
-		_status.text = _txt("Tap a card name first: it is the card in your hand.", "اضغط اسم بطاقة أولًا: هي البطاقة التي في يدك.", "Toca primero el nombre de una carta: será la de tu mano.")
-		return
 	var opts := {}
-	for s in [0, 1]:
-		var key := "p" if s == 0 else "o"
+	for s2 in [0, 1]:
+		var key := "p" if s2 == 0 else "o"
 		var entries: Array = []
 		var mz := 0
 		var sz := 5
-		for id in _field[s]:
-			if mz < 5:
+		for id in _field[s2]:
+			if mz < MON_MAX:
 				entries.append({"card": int(id), "zone": mz, "c": 0})
 				mz += 1
-			elif sz < 10:
+		for id in _st[s2]:
+			if sz >= 10:
+				break
+			var card := CardDB.by_id(int(id))
+			if str(card.get("category", "")) == "spell" and CardDB.card_subcategory(card) == "field":
+				entries.append({"card": int(id), "zone": 10, "c": 0})
+			else:
 				entries.append({"card": int(id), "zone": sz, "c": 1})
 				sz += 1
 		if not entries.is_empty():
 			opts["field_" + key] = entries
-		if not _grave[s].is_empty():
-			opts["grave_" + key] = _grave[s].duplicate()
+		if not _grave[s2].is_empty():
+			opts["grave_" + key] = _grave[s2].duplicate()
+		if not _hand[s2].is_empty():
+			opts["hand_" + key] = _hand[s2].duplicate()
+		var deck := _load_deck(s2)
+		if not deck.is_empty():
+			opts["deck_" + key] = deck
 	if _lp_o.text.strip_edges().is_valid_int():
 		opts["lp_o"] = int(_lp_o.text.strip_edges())
 	if _lp_p.text.strip_edges().is_valid_int():
 		opts["lp_p"] = int(_lp_p.text.strip_edges())
-	Game.open_card_effect_test(_hand_id, opts)
+	Game.open_card_effect_test(opts)
