@@ -748,6 +748,13 @@ static func _copies_in(deck_data: Dictionary, id: int) -> int:
 	return n
 
 
+func base_name_for_unique(name: String) -> String:
+	var parts := name.rsplit(" ", true, 1)
+	if parts.size() == 2 and parts[1].is_valid_int():
+		return parts[0]
+	return name
+
+
 ## Imports an external .ydc deck file (from PC or mobile) into all 3 games (Yugi, Kaiba, Joey),
 ## unlocks/ensures the required card copies in the player's collection, and saves a normalized
 ## .ydc copy in saves/decks/ with the current installation's header so it works in every Deck Editor.
@@ -799,7 +806,18 @@ func import_ydc_to_all_games(path: String, custom_name: String = "") -> Dictiona
 	var decks_dir := Paths.save_dir.path_join("decks")
 	DirAccess.make_dir_recursive_absolute(decks_dir)
 	var dest_path := decks_dir.path_join(safe_name + ".ydc")
-	Ydc.save(dest_path, clean_deck, deck_file_header(true))
+	if custom_name == "":
+		# Archivo externo: si ya hay otro mazo distinto con ese nombre no se pisa, se guarda con numero.
+		var n := 2
+		while FileAccess.file_exists(dest_path):
+			var prev := Ydc.load(dest_path)
+			if prev.get("main", []) == clean_deck["main"] and prev.get("fusion", []) == clean_deck["fusion"] and prev.get("side", []) == clean_deck["side"]:
+				break
+			safe_name = "%s %d" % [base_name_for_unique(safe_name), n]
+			dest_path = decks_dir.path_join(safe_name + ".ydc")
+			n += 1
+	if not Ydc.save(dest_path, clean_deck, deck_file_header(true)) or not FileAccess.file_exists(dest_path):
+		return {"ok": false, "error": "write_failed"}
 	var active_applied := false
 	if total_cards > 0:
 		var decks_dict: Dictionary = data.get_or_add("decks", {})

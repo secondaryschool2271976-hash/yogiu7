@@ -2707,8 +2707,9 @@ func _deck_files() -> PackedStringArray:
 	for f in DirAccess.get_files_at(_decks_dir()):
 		if f.get_extension().to_lower() == "ydc":
 			out.append(f.get_basename())
-	out.sort()
-	return out
+	var arr: Array = Array(out)
+	arr.sort_custom(func(a: String, b: String) -> bool: return a.naturalnocasecmp_to(b) < 0)
+	return PackedStringArray(arr)
 
 
 ## Importar: lista grande con seleccion multiple (reemplaza la ventana pequena del original,
@@ -2805,6 +2806,9 @@ func _import_external_many(paths: PackedStringArray) -> void:
 			_import_error(0x1029, "dlg_ok_ok_derr")
 			return
 		decks.append(res["deck"])
+		if not _deck_files().has(str(res.get("name", ""))):
+			_import_error(0x1029, "dlg_ok_ok_derr")
+			return
 	if decks.is_empty():
 		return
 	if is_instance_valid(_file_dialog):
