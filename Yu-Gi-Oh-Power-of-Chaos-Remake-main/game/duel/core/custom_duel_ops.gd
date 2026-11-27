@@ -1266,6 +1266,8 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 	var to_z = free_monster_zone(duel, to_p)
 	if to_z < 0 or zone_idx(duel, from_p, from_z) == 0:
 		return -1
+	if bool(zflags(duel, from_p, from_z).get("cannot_switch_control", false)):
+		return -1
 	var cid: int = zone_id(duel, from_p, from_z)
 	var was_face = is_face_up(duel, from_p, from_z)
 	var was_def = not is_atk_pos(duel, from_p, from_z)
@@ -1293,6 +1295,8 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 
 static func swap_control(duel, z0: int, z1: int) -> bool:
 	if zone_idx(duel, 0, z0) == 0 or zone_idx(duel, 1, z1) == 0:
+		return false
+	if bool(zflags(duel, 0, z0).get("cannot_switch_control", false)) or bool(zflags(duel, 1, z1).get("cannot_switch_control", false)):
 		return false
 	if is_joey(duel):
 		var e0 = zone_entry(duel, 0, z0)
