@@ -606,12 +606,8 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		2962:
 			# Royal Magical Library: +300 DEF per Spell in your GY (max +1200)
 			def_add = mini(1200, _core_gy_type(duel, p, 22) * 300)
-		2991:
-			atk_add = maxi(2400, _core_top_gy_stat_sum(duel, p, 2, false))
 		2994:
 			atk_add = _core_field_monsters(duel, opp) * 500
-		3030:
-			atk_add = maxi(2400, _core_top_gy_stat_sum(duel, p, 1, false) * 2)
 		3034:
 			# Mirage Knight: gains opponent's highest face-up monster ATK
 			atk_add = _core_highest_other_atk(duel, p, z, opp)
@@ -1107,12 +1103,8 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 			v[0] += _joey_amazoness_on_field(duel, p) * 100
 		2962:
 			v[1] += mini(1200, _joey_gy_type(duel, p, 22) * 300)
-		2991:
-			v[0] += maxi(2400, _joey_top_gy_stat_sum(duel, p, 2, false))
 		2994:
 			v[0] += _joey_field_monsters(duel, opp) * 500
-		3030:
-			v[0] += maxi(2400, _joey_top_gy_stat_sum(duel, p, 1, false) * 2)
 		3034:
 			v[0] += _joey_highest_other_atk(duel, p, z, opp)
 		3066:
