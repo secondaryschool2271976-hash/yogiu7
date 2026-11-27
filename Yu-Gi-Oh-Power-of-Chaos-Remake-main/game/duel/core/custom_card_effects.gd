@@ -360,6 +360,11 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 
 
 static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, _is_direct := false) -> void:
+	# Dark Scorpion Combination (3006): esos monstruos hacen exactamente 400 de dano de batalla
+	# cuando atacan directamente ese turno.
+	var fbd = CustomDuelOps.zflags(duel, atk_p & 1, atk_z).get("fixed_battle_dmg_turn", [])
+	if fbd is Array and fbd.size() == 2 and int(fbd[0]) == CustomDuelOps.turn_number(duel):
+		CustomDuelOps.set_stat_val(duel, atk_p & 1, atk_z, int(fbd[1]), -1, true)
 	CustomEffectsMonsters1.on_damage_calc(duel, atk_p, atk_z, def_p, def_z)
 	CustomEffectsMonsters2.on_damage_calc(duel, atk_p, atk_z, def_p, def_z)
 
