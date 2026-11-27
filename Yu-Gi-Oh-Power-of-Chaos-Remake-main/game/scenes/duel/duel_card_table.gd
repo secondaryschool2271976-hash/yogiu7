@@ -122,7 +122,11 @@ func sync_from_memory(duel: Duel) -> void:
 		for loc in PILES:
 			if inflight[p].has(loc):
 				continue
+			# El giro de la pila (cmd 0x20) no esta en la memoria del motor: conservarlo, o un sync entre
+			# dos giros del mazo (Cyber Jar) lo borra y el segundo giro deja el mazo boca arriba.
+			var kept_face = piles[p][loc].get("face", null)
 			piles[p][loc] = memory_pile(duel, p, loc)
+			if kept_face != null: piles[p][loc]["face"] = kept_face
 
 
 ## Compara al terminar una secuencia. Las cartas separadas por 0x78 siguen
