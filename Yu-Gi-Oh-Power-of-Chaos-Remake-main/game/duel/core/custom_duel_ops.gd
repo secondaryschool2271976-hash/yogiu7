@@ -1196,7 +1196,11 @@ static func tribute_zone(duel, p: int, z: int) -> bool:
 		return false
 	var cid = raw_id(duel, idx)
 	if is_joey(duel):
-		duel.f577cf0(p, z, JoeyMem.zone(p, z), 1, 0)
+		# f577cf0 solo encola el comando de ofrenda y no vacia la zona: se manda la carta
+		# al cementerio por la misma ruta que la destruccion (576960) y se comprueba.
+		duel.f577b90(p, z)
+		if duel.m.u32(JoeyMem.zone(p, z)) & 0xfff != 0:
+			duel.f577b30(p, z)
 	else:
 		duel.f54ea40(p, z)
 	clear_zone_state(duel, p, z)
