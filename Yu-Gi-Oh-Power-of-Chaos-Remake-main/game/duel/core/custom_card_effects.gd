@@ -391,6 +391,14 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 	if def_z >= 0 and def_z < 5:
 		battled.append("%d:%d" % [def_p & 1, def_z])
 	st_battle["battled_this_turn"] = battled
+	# Un atacante con dos ataques recupera la accion una vez por turno, despues de la batalla.
+	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
+		var acid: int = CustomDuelOps.zone_id(duel, atk_p & 1, atk_z)
+		if max_attacks(duel, atk_p & 1, atk_z, acid) > 1:
+			var azf: Dictionary = CustomDuelOps.zflags(duel, atk_p & 1, atk_z)
+			if int(azf.get("extra_atk_used_turn", -1)) != CustomDuelOps.turn_number(duel):
+				azf["extra_atk_used_turn"] = CustomDuelOps.turn_number(duel)
+				CustomDuelOps.clear_attacked(duel, atk_p & 1, atk_z)
 	CustomEffectsMonsters1.on_battle_end(duel, atk_p, atk_z, def_p, def_z, atk_destroyed, def_destroyed)
 	CustomEffectsMonsters2.on_battle_end(duel, atk_p, atk_z, def_p, def_z, atk_destroyed, def_destroyed)
 	check_and_apply_win(duel)
