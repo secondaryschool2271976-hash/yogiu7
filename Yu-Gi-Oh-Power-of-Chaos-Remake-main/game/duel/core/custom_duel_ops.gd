@@ -1096,6 +1096,9 @@ static func tribute_zone(duel, p: int, z: int) -> bool:
 	var idx = zone_idx(duel, p, z)
 	if idx == 0 or z >= 5:
 		return false
+	# Ojama Trio (3015) y Multiplication of Ants (3111): sus fichas no se pueden ofrendar.
+	if bool(zflags(duel, p, z).get("cannot_tribute", false)):
+		return false
 	var cid = raw_id(duel, idx)
 	if is_joey(duel):
 		duel.f577cf0(p, z, JoeyMem.zone(p, z), 1, 0)
