@@ -1,0 +1,25 @@
+name: Apply import patch
+on:
+  push:
+    branches:
+      - import-save-name
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sICD+4CWsCA2ltcC5wYXRjaAClVl9v2zYQf3Y+xUFDUBm25D9JY9RAigYrWmRDsaLFHoqmIGiRspnKokZS+bO3DSu29WsMW9Zgw1D0pX3el5C/ze4oOXbWomgaBI6o493vjnc/3kmoNIUomioHvPekjO6r6JtZ9FAfSxPpNPpyxrWNHsk5fy6jOVd5b8rnssdLpzPNRc/yI8kEdzyeCphcE2BD5UKeQDocyuFOGscjyUfbfAKDfn9ne3sjiqJrx7jR6XSuH+edOxCNbt3sDobQ8c9bgKK0zBNQ80Ibx05FwpxmPMsY4diw4G42hsfOqHzahaS0Ts9ZjltLIexCELQhug13VeKUzvkGtFpWypzNefH0uTx9hirOlBLlR9zAhFvpEWC8uw4YW8QrmBRTdNtGZZWu6e6Sm/FG1GqtyYCii6fSsVRlMmz7Je3TNr5eRuy0Wl/AXi6MVgKKUgoJAuMpcw7fPtqHMNG5k7kb93pxHPcKo+bcnG5u7d3VxznlcnN474HaHPbn/HsdY6LaY7AIIRMtVKoSDqf4XnvBM3GwWAGQGZSZU3ONKeBz3cWQDYfvSkk7uZ5PjIRpyY3gQqM5J7HAHzfJTB1pxMw1hgiFkak61JDoeZnH5IVy6Z1LQZn0qSiNYrUMT29kkfFEhsHBQdCFoBe0l2aOq4xsGnOfNpsp0u2h6ntilugyd7SJhYaBx/EYux5q3X6M9pdlS+PxmvF6DS+0P1a4D3EBxZ9PhpqLlqcrLgYBSlNtIJmBylf+POswgGQWK8uOeKYEUwKZglWXJmyDN1nbw9M2QsIJIGJBo1PmilLLuAv7bbgNg+Fo3BzvGuh4uI86wPvYWp20g7duhkdaSXZXebicpdiWExSE/S4Mt6kOV7PZ7jfXeM2sLh20LkEFdfeRgsj7PGiKQ2vLhDJUnIdYXBvX3UyZmGrNDrXKw8CrIbfFZ00Em8hc2l7GsQnOpLlYMOoGRmf2igPiU/CaeTHaErw/SOJ466aUg8HWZ86LT/J4xfHxSZg0TXaGo+4OdOgxGF0ME6Zzthool2aInxRH2IE9CYIH2Evhxqa90Qwg6oLhJrZn1E1UwbMu4FtaWvXvm9yvLV6ONrZFoWyhczXJsJPmkGkLW3BYyqm2cdD12PsNqTyRaicE/QBP6ZHuIaqul489KE+MthZw+CGWH38QPimnCnrwNVcTjs+vtDzF24b4bdiEp4TsSdwFSh5Luj5W7VcUKUue4bWpW80R8ttpx33r7TfiK5K8Q9fprjJ7SSKtjVGLyRNlnWV8gvOmdDK8QGz71kINLaVOsbJa9khLbeJ/6oSfeg15gtOQzoJ3Gj8JMqIMdh66wVjUpv+21o+FnWWAUmakRXv8j5MPQ+SZnjKHcKQQHOQBdIBhhyCAYPGi+nvxw+KX6m31CnDxEhY/VmfVHyh/BdXZ4idc/LV4gQrvUHwO1Z/4eLN40dSz+p12vd7LD6rXogsXY6x2O4bqvHq7+Ll63XhEheo1vn0AICR31fniJSqcVf+0awtSrH6r3qH6r0Q3Osn95RQnOnLIsCocywv0uWBpbjdED2vBcujbJqQ9/DCQicTBb4hqCFLz13MkAymU02bp6zFlnYrqZrKmN7kDbhsXvio1txr4fQd2po+R3c4bOV2ATv2yhr5hG4ceCineeY/ia7V+hjfgcp0LXZQFw77hpJGCJiz+/Qfoot0PpgsAAA=="
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/imp.patch
+          git apply --check /tmp/imp.patch
+          git apply /tmp/imp.patch
+          git config user.name "Instinct Agent"
+          git config user.email "agent@users.noreply.github.com"
+          git add -A -- Yu-Gi-Oh-Power-of-Chaos-Remake-main
+          git commit -m "Import: keep file name, show saved deck count"
+          git push origin HEAD:import-save-name
