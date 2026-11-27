@@ -19,6 +19,7 @@ var _grave_o: LineEdit
 var _grave_p: LineEdit
 var _lp_o: LineEdit
 var _lp_p: LineEdit
+var _summary: Label
 var _picked_id := 0
 var _picked_button: Button = null
 var _rtl := false
@@ -28,6 +29,7 @@ func _ready() -> void:
 	_rtl = Assets.lang == "a"
 	_build()
 	_refresh("")
+	_update_summary()
 	get_viewport().size_changed.connect(_relayout)
 	_relayout()
 
@@ -144,6 +146,16 @@ func _build() -> void:
 	_lp_o = _add_row(_grid, _txt("Opponent LP (blank = 8000)", "نقاط حياة الخصم", "LP rival (vacío = 8000)"))
 	_lp_p = _add_row(_grid, _txt("Your LP (blank = 8000)", "نقاط حياتك", "Tus LP (vacío = 8000)"))
 
+	_summary = Label.new()
+	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_summary.add_theme_font_size_override("font_size", 13)
+	_summary.modulate = Color(1, 1, 1, 0.8)
+	if _rtl:
+		_summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	col.add_child(_summary)
+	for edit in [_field_o, _grave_o, _grave_p]:
+		edit.text_changed.connect(func(_t: String) -> void: _update_summary())
+
 	_status = Label.new()
 	_status.text = _txt("Pick the card to test, then press Start.", "اختر البطاقة ثم اضغط ابدأ.", "Elige la carta y pulsa Empezar.")
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -221,15 +233,27 @@ func _list_add(text: String, id: int) -> void:
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.add_theme_font_size_override("font_size", 16)
 	b.pressed.connect(_on_row_pressed.bind(b, id))
+	b.gui_input.connect(_on_row_input.bind(b, id))
 	_list_box.add_child(b)
+
+
+## En Android el toque puede quedarse en el ScrollContainer y no llegar al boton: se escucha
+## tambien el toque de pantalla, y la seleccion se marca en la fila y en la linea de estado.
+func _on_row_input(event: InputEvent, button: Button, id: int) -> void:
+	if event is InputEventScreenTouch and not event.pressed:
+		_on_row_pressed(button, id)
 
 
 func _on_row_pressed(button: Button, id: int) -> void:
 	if _picked_button != null and _picked_button != button and is_instance_valid(_picked_button):
 		_picked_button.button_pressed = false
 	button.button_pressed = true
+	button.modulate = Color(1.0, 1.0, 1.0)
 	_picked_button = button
 	_picked_id = id
+	for child in _list_box.get_children():
+		if child != button and child is Button:
+			child.modulate = Color(1.0, 1.0, 1.0, 0.75)
 	_status.text = _txt("Selected: %s" % button.text, "المحددة: %s" % button.text, "Elegida: %s" % button.text)
 
 
@@ -247,11 +271,42 @@ func _on_add_pressed(target: String) -> void:
 		edit.text = str(_picked_id)
 	elif not cur.contains(str(_picked_id)):
 		edit.text = cur + ", " + str(_picked_id)
-	_status.text = _txt("Added #%d" % _picked_id, "أُضيفت #%d" % _picked_id, "Añadida #%d" % _picked_id)
+	_status.text = _txt("Added %s (#%d)" % [_card_name_by_id(_picked_id), _picked_id],
+			"أُضيفت %s (#%d)" % [_card_name_by_id(_picked_id), _picked_id],
+			"Añadida %s (#%d)" % [_card_name_by_id(_picked_id), _picked_id])
+	_update_summary()
 
 
 func _list_selected() -> Array:
 	return [_picked_id] if _picked_id > 0 else []
+
+
+## Lista de nombres de lo que hay en cada casilla, para que se vea que se anadio.
+func _update_summary() -> void:
+	if _summary == null:
+		return
+	var lines: Array = []
+	lines.append(_txt("Opp field", "ملعب الخصم", "Campo rival") + ": " + _names(_field_o.text))
+	lines.append(_txt("Opp GY", "مقبرة الخصم", "Cem. rival") + ": " + _names(_grave_o.text))
+	lines.append(_txt("My GY", "مقبرتك", "Mi cem.") + ": " + _names(_grave_p.text))
+	_summary.text = "\n".join(lines)
+
+
+func _names(text: String) -> String:
+	var ids := _ids(text)
+	if ids.is_empty():
+		return _txt("empty", "فارغ", "vacío")
+	var out: Array = []
+	for id in ids:
+		out.append(_card_name_by_id(int(id)))
+	return ", ".join(out)
+
+
+func _card_name_by_id(id: int) -> String:
+	for card: Dictionary in CardDB.cards:
+		if int(card.get("internal_id", 0)) == id:
+			return _card_name(card)
+	return str(id)
 
 
 func _card_name(card: Dictionary) -> String:
@@ -260,15 +315,54 @@ func _card_name(card: Dictionary) -> String:
 	return str(names.get(lang, names.get("eng", "")))
 
 
+## Normaliza para buscar: quita tashkeel, iguala las variantes de alef/ya/ta marbuta/hamza y
+## convierte los digitos arabes a ASCII, asi "المسلح" encuentra "المسلّح" y "٢٥٠٠" encuentra 2500.
+func _norm(text: String) -> String:
+	var out := ""
+	for ch in text:
+		var code := ch.unicode_at(0)
+		if (code >= 0x064B and code <= 0x065F) or code == 0x0670 or (code >= 0x06D6 and code <= 0x06ED):
+			continue
+		if code >= 0x0660 and code <= 0x0669:
+			out += String.chr(0x30 + (code - 0x0660))
+			continue
+		if code >= 0x06F0 and code <= 0x06F9:
+			out += String.chr(0x30 + (code - 0x06F0))
+			continue
+		match code:
+			0x0622, 0x0623, 0x0625, 0x0627:
+				out += "ا"
+			0x0649, 0x064A, 0x0626:
+				out += "ي"
+			0x0629:
+				out += "ه"
+			0x0624:
+				out += "و"
+			_:
+				out += ch
+	return out.to_lower()
+
+
+func _card_matches(card: Dictionary, q: String) -> bool:
+	if q == "":
+		return true
+	if q.is_valid_int() and int(card.get("internal_id", 0)) == int(q):
+		return true
+	var names: Dictionary = card.get("names", {})
+	for key in ["ara", "eng", "spa"]:
+		if _norm(str(names.get(key, ""))).contains(q):
+			return true
+	return false
+
+
 func _refresh(query: String) -> void:
 	_list_clear()
-	var q := query.strip_edges().to_lower()
+	var q := _norm(query.strip_edges())
 	var shown := 0
 	for card: Dictionary in CardDB.cards:
-		var nm := _card_name(card)
-		if q != "" and not nm.to_lower().contains(q):
+		if not _card_matches(card, q):
 			continue
-		_list_add("%s  ·  #%d" % [nm, int(card.get("internal_id", 0))], int(card.get("internal_id", 0)))
+		_list_add("%s  ·  #%d" % [_card_name(card), int(card.get("internal_id", 0))], int(card.get("internal_id", 0)))
 		shown += 1
 		if shown >= MAX_RESULTS:
 			break
