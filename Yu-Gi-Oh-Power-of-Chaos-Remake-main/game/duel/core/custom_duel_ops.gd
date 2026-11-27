@@ -990,6 +990,9 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	if bool(zf.get("indest_once", false)):
 		zf["indest_once"] = false
 		return false
+	# Ojama Trio (3015): cada Ojama Token destruido hace 300 de dano a su controlador.
+	if bool(zf.get("ojama_token", false)):
+		damage(duel, p, 300, false)
 	# Different Dimension Gate (3043): al ser destruida devuelve al campo los monstruos que desterro.
 	var ddg: Array = zf.get("ddg_ids", [])
 	if not ddg.is_empty():
