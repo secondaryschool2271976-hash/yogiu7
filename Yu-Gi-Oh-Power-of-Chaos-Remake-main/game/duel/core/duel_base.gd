@@ -185,6 +185,8 @@ func list_close(value: int) -> void:
 	if list_open.is_empty() or list_open.get("closing", false):
 		return
 	list_open["closing"] = true
+	if list_open.has("custom_pick"):
+		list_open["custom_answer"] = value
 	call("f540d80", value)
 	call("f540d80", 0)
 
@@ -192,7 +194,11 @@ func list_close(value: int) -> void:
 ## Fin de la animacion de cierre (0x42ff70: +0x14 < -0xff pone a 0 el byte +4): la ranura
 ## queda libre y FUN_00540db0 deja de bloquear.
 func list_gone() -> void:
+	var pick: Variant = list_open.get("custom_pick", null)
+	var answer := int(list_open.get("custom_answer", 0))
 	list_open = {}
+	if pick != null:
+		CustomDuelOps.finish_pile_pick(self, answer, pick)
 
 
 ## La escena contesta el cuadro de dialogo abierto (FUN_0042fda0 -> FUN_00540d80).
