@@ -1231,6 +1231,9 @@ func f574d20(p: int) -> int:
 		f54eed0(p, own_index, source)
 		f54c860(p, (source << 8) | p, (source << 8) | p, 0x10c)
 	m.set_u16(0xa1160c, 0xffff)
+	if own_destroyed and _m_battle_immune(self, p, source):
+		own_destroyed = false
+		m.set_u8(0xa114c4 + p * 12, m.u8(0xa114c4 + p * 12) & ~8)
 	if own_destroyed:
 		_m_battle_destroy(p, source, own_id, own_index, defender, target, other_id, own_snapshot, 0xa1160c, (flags << 14) & 0xe000000)
 	if other_id == 0x419:
@@ -1252,10 +1255,22 @@ func f574d20(p: int) -> int:
 		f54eed0(defender, other_index, target)
 		f54c860(defender, (target << 8) | defender, (target << 8) | defender, 0x10c)
 	m.set_u16(0xa1160e, 0xffff)
+	if other_destroyed and _m_battle_immune(self, defender, target):
+		other_destroyed = false
+		m.set_u8(0xa114d0 - p * 12, m.u8(0xa114d0 - p * 12) & ~8)
 	if other_destroyed:
 		_m_battle_destroy(defender, target, other_id, other_index, p, source, own_id, other_snapshot, 0xa1160e, (flags << 17) & 0xe000000)
 	m.set_u8(0xa133f4, state + 1)
 	return 0
+
+func _m_battle_immune(duel, p: int, z: int) -> bool:
+	var v = CustomDuelOps.zflags(duel, p & 1, z).get("indest_battle", false)
+	if v is bool:
+		return v
+	if v is int or v is float:
+		return int(v) == CustomDuelOps.turn_number(duel)
+	return false
+
 
 func _m_battle_destroy(owner: int, z: int, id: int, index: int, opponent: int, other_z: int, other_id: int, snapshot: int, dest: int, owner_bits: int) -> void:
 	if other_id == 0x2f9: m.set_u8(DuelMem.pl(opponent) + 8, m.u8(DuelMem.pl(opponent) + 8) | 8)
