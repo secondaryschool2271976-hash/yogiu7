@@ -235,17 +235,35 @@ jobs:
             gh release edit "$tag" --notes-file "$notesFile" | Out-Null
           }
 
-          $uploaded = $false
-          for ($attempt = 1; $attempt -le 3; $attempt++) {
-            & gh release upload "$tag" @files --clobber
-            if ($LASTEXITCODE -eq 0) {
-              $uploaded = $true
-              break
+          $relId = (& gh api "repos/$($env:GH_REPO)/releases/tags/$tag" --jq '.id')
+          if (-not $relId) { throw "Failed to resolve release id for $tag" }
+          $relId = $relId.Trim()
+          foreach ($f in $files) {
+            $name = Split-Path $f -Leaf
+            $tmpName = "$name.next"
+            # Remove any stale temp upload left by a previously failed run.
+            $existing = & gh api "repos/$($env:GH_REPO)/releases/$relId/assets?per_page=100" | ConvertFrom-Json
+            $stale = $existing | Where-Object { $_.name -eq $tmpName } | Select-Object -First 1
+            if ($stale) { & gh api -X DELETE "repos/$($env:GH_REPO)/releases/assets/$($stale.id)" *> $null }
+            # Upload the replacement under a temporary name first, so the
+            # stable download URL never points at a missing file.
+            $uploaded = $false
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              & gh api -X POST "https://uploads.github.com/repos/$($env:GH_REPO)/releases/$relId/assets?name=$tmpName" -H "Content-Type: application/octet-stream" --input "$f" *> $null
+              if ($LASTEXITCODE -eq 0) { $uploaded = $true; break }
+              Write-Warning "Upload attempt $attempt for $name failed, retrying in 5s..."
+              Start-Sleep -Seconds 5
             }
-            Write-Warning "Release upload attempt $attempt failed, retrying in 5s..."
-            Start-Sleep -Seconds 5
+            if (-not $uploaded) { throw "Failed to upload $name to release $tag" }
+            # Swap: delete the old asset only after its replacement exists.
+            $assets = & gh api "repos/$($env:GH_REPO)/releases/$relId/assets?per_page=100" | ConvertFrom-Json
+            $oldId = ($assets | Where-Object { $_.name -eq $name } | Select-Object -First 1).id
+            $newId = ($assets | Where-Object { $_.name -eq $tmpName } | Select-Object -First 1).id
+            if (-not $newId) { throw "Uploaded asset $tmpName not found on release $tag" }
+            if ($oldId) { & gh api -X DELETE "repos/$($env:GH_REPO)/releases/assets/$oldId" *> $null }
+            & gh api -X PATCH "repos/$($env:GH_REPO)/releases/assets/$newId" -f "name=$name" *> $null
+            if ($LASTEXITCODE -ne 0) { throw "Failed to rename $tmpName to $name" }
           }
-          if (-not $uploaded) { throw "Failed to upload release assets to $tag" }
           Write-Host "Published $($files.Count) files to GitHub Release: $tag"
       - name: Mostrar diagnóstico de compilación en consola
         if: failure()
