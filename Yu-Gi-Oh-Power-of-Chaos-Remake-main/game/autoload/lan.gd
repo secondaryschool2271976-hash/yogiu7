@@ -105,6 +105,9 @@ var _remote_peer := 0
 var _hello_sent := false
 var _hello_received := false
 var _incoming: Array[PackedByteArray] = []
+## Paquetes del juego entregados a la aplicacion (el reloj del duelo en red lo usa como
+## senal de que el rival sigue jugando).
+var received_packets := 0
 var _query: PacketPeerUDP
 var _discovery: PacketPeerUDP
 var _announce_clock := 0.0
@@ -590,6 +593,7 @@ func _handle_game_packet(packet: PackedByteArray) -> void:
 	if kind == CLOSE_ACK:
 		_close_ack_received = true
 		return
+	received_packets += 1
 	_incoming.append(packet)
 
 
