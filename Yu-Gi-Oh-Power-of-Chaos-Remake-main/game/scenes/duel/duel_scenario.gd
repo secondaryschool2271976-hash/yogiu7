@@ -57,12 +57,12 @@ static func from_dict(data: Dictionary) -> DuelScenario:
 	s.description = str(data.get("description", ""))
 	s.first = int(data.get("first", 1))
 	s.seed = int(data.get("seed", -1))
-	s.decks = data.get("decks", [null, null])
-	s.hands = data.get("hands", [[], []])
-	s.field = data.get("field", [[], []])
-	s.grave = data.get("grave", [[], []])
-	s.lp = data.get("lp", [])
-	s.fusion = data.get("fusion", [[], []])
+	s.decks = Array(data.get("decks", [null, null]))
+	s.hands = Array(data.get("hands", [[], []]))
+	s.field = Array(data.get("field", [[], []]))
+	s.grave = Array(data.get("grave", [[], []]))
+	s.lp = Array(data.get("lp", []))
+	s.fusion = Array(data.get("fusion", [[], []]))
 	return s
 
 
