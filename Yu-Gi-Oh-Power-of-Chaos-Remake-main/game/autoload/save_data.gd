@@ -791,7 +791,7 @@ func import_ydc_to_all_games(path: String, custom_name: String = "") -> Dictiona
 		base_name = path.get_file().get_basename().strip_edges()
 	var safe_name := ""
 	for ch in base_name:
-		if ch.is_valid_identifier() or ch.is_valid_int() or ch in " -_":
+		if ch.is_valid_identifier() or ch.is_valid_int() or ch in " -_" or ch.unicode_at(0) > 127:
 			safe_name += ch
 	safe_name = safe_name.strip_edges().substr(0, 24)
 	if safe_name == "":
