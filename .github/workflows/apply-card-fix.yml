@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIALG/CWsC/62SX2/TMBTFn5NPcRASapQ4TWjXrJWGJvGAhISGeOMpurVvOkNiF8feun16nKwMJF77ZOec69/9F6W7DkIctActvwfxSYu7e/HVPrITthMf78mO4hsP9JPFQNosDzTwUgXul9I6Xsoweju0k9Da41geFPaX4aTaKD6hblhWa1mW143c8uoadVVt1utUCHGpitM8zy9W9e0tRF1vN0WDfD7rGlEbPXkt0QUj4Z3eB8/tszW8mN4WOO6gjS/wPJ8ZxAfsre13KZLEsQ/OoKN+5Pj9QA5SK9zA0WOr1Zmg1SmLru6gx/aH5adZz3apSJLpVnZXTSO7anGMWQp8jhFfeCjnGiYpK1AXqLI0T5K3OAdjtL0FG2l7AveQdiCjLBTDdo6NIjzBWDyQ1IQYE3G0w8iY4mZFkvP0AqUI4IGNZ6ctjtZN/qDHgeCCJ/wKPCmKR++ClNoaLK6azXZTZTFNhMb0Rxd4T+UEfO1qv33paq49DmA2hjKs3i/+bzPDO1SnLv71b25Q7aYn/5BWf0hIOI57nv/ZXTOt/7qyZ3LzBttpta97nO3f9LsWMVUDAAA="
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_duel_ops.gd"
+          git commit -m "Joey: tributing a monster for a card cost now really removes it from the field"
+          git push
