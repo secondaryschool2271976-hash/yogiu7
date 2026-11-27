@@ -72,7 +72,7 @@ static func can_normal_summon(duel, p: int, cid: int, is_set := false) -> bool:
 		return _has_archfiend_on_field(duel, p)
 	if GUARDIAN_EQUIP_REQ.has(cid):
 		var eq_id := int(GUARDIAN_EQUIP_REQ[cid])
-		return CustomDuelOps.has_faceup_id(duel, p, eq_id) or CustomDuelOps.has_faceup_id(duel, 1 - p, eq_id)
+		return CustomDuelOps.has_faceup_id(duel, p, eq_id)
 	return true
 
 
@@ -84,7 +84,7 @@ static func can_special_summon(duel, p: int, cid: int, loc: int, _slot: int) -> 
 		return false
 	if GUARDIAN_EQUIP_REQ.has(cid):
 		var eq_id := int(GUARDIAN_EQUIP_REQ[cid])
-		if not (CustomDuelOps.has_faceup_id(duel, p, eq_id) or CustomDuelOps.has_faceup_id(duel, 1 - p, eq_id)):
+		if not CustomDuelOps.has_faceup_id(duel, p, eq_id):
 			return false
 	match cid:
 		2833: # Fushioh Richie: Tribute Great Dezard w/ 2 kills
@@ -585,7 +585,7 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					if eq_z >= 5:
 						CustomDuelOps.link_equip(duel, p, eq_z, p, z)
 		3065: # Des Feral Imp FLIP: shuffle 1 from GY into Deck
-			if kind == "flip_summon" or kind == "flipped" and not CustomDuelOps.is_necrovalley_active(duel):
+			if (kind == "flip_summon" or kind == "flipped") and not CustomDuelOps.is_necrovalley_active(duel):
 				var gi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(_d, _idx, _s): return true, true)
 				if gi >= 0:
 					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, CustomDuelOps.LOC_DECK)
@@ -1080,12 +1080,18 @@ static func can_direct_attack(duel, p: int, z: int, cid: int) -> bool:
 		return true
 	if int(CustomDuelOps.zflags(duel, p, z).get("direct_atk_turn", -1)) == t:
 		return true
-	if cid == 3124:
+	if cid == 3124: # Black Tyranno: only when every card the opponent controls is a Defense Position monster
 		var opp = 1 - (p & 1)
+		var opp_monsters := 0
 		for zz in 5:
-			if CustomDuelOps.zone_idx(duel, opp, zz) != 0 and CustomDuelOps.is_atk_pos(duel, opp, zz):
+			if CustomDuelOps.zone_idx(duel, opp, zz) != 0:
+				opp_monsters += 1
+				if CustomDuelOps.is_atk_pos(duel, opp, zz):
+					return false
+		for zz in range(5, 11):
+			if CustomDuelOps.zone_idx(duel, opp, zz) != 0:
 				return false
-		return true
+		return opp_monsters > 0
 	return false
 
 
