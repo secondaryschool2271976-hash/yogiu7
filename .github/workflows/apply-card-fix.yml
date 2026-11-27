@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "LS0tIGEvWXUtR2ktT2gtUG93ZXItb2YtQ2hhb3MtUmVtYWtlLW1haW4vZ2FtZS9kdWVsL2NvcmUvY3VzdG9tX2VmZmVjdHNfbW9uc3RlcnNfMS5nZAorKysgYi9ZdS1HaS1PaC1Qb3dlci1vZi1DaGFvcy1SZW1ha2UtbWFpbi9nYW1lL2R1ZWwvY29yZS9jdXN0b21fZWZmZWN0c19tb25zdGVyc18xLmdkCkBAIC0xNjQ5LDggKzE2NDksMTEgQEAKIAkJCWlmIEN1c3RvbUR1ZWxPcHMuY2FuX2hvcHQoZHVlbCwgcCwgMjU4Myk6CiAJCQkJdmFyIGZpID0gQ3VzdG9tRHVlbE9wcy5jaG9vc2VfcGlsZV9jYXJkKGR1ZWwsIHAsIEN1c3RvbUR1ZWxPcHMuTE9DX0RFQ0ssIGZ1bmMoZCwgaWR4LCBfcyk6IHJldHVybiBDdXN0b21EdWVsT3BzLm5hbWVfbWF0Y2hlcyhkLCBpZHgsICJmaW5hbCBnZWFzIiksIHRydWUpCiAJCQkJaWYgZmkgPj0gMDoKLQkJCQkJQ3VzdG9tRHVlbE9wcy5tYXJrX2hvcHQoZHVlbCwgcCwgMjU4MykKLQkJCQkJQ3VzdG9tRHVlbE9wcy5hZGRfZnJvbV9waWxlX3RvX2hhbmQoZHVlbCwgcCwgQ3VzdG9tRHVlbE9wcy5MT0NfREVDSywgZmkpCisJCQkJCXZhciBnYW5kb3JhX3NlYXJjaDogQ2FsbGFibGUgPSBmdW5jKCkgLT4gdm9pZDoKKwkJCQkJCUN1c3RvbUR1ZWxPcHMubWFya19ob3B0KGR1ZWwsIHAsIDI1ODMpCisJCQkJCQlDdXN0b21EdWVsT3BzLmFkZF9mcm9tX3BpbGVfdG9faGFuZChkdWVsLCBwLCBDdXN0b21EdWVsT3BzLkxPQ19ERUNLLCBmaSkKKwkJCQkJaWYgbm90IEN1c3RvbUR1ZWxPcHMuYXNrX29wdGlvbmFsKGR1ZWwsIHAsIEN1c3RvbUR1ZWxPcHMuZWZmZWN0X3Byb21wdChkdWVsLCAyNTgzKSwgZ2FuZG9yYV9zZWFyY2gpOgorCQkJCQkJZ2FuZG9yYV9zZWFyY2guY2FsbCgpCiAJCTI2MTg6ICMgTW9yZW1hcnNobWFsbG9uOiBpZiBkZXN0cm95ZWQgYnkgY2FyZCBlZmZlY3QgLT4gU1MgYW5vdGhlciArIDEwMDAgZG1nCiAJCQlpZiBub3QgYnlfYmF0dGxlIGFuZCBDdXN0b21EdWVsT3BzLmNhbl9ob3B0KGR1ZWwsIHAsIDI2MTgpIGFuZCBDdXN0b21EdWVsT3BzLmZyZWVfbW9uc3Rlcl96b25lKGR1ZWwsIHApID49IDA6CiAJCQkJQ3VzdG9tRHVlbE9wcy5tYXJrX2hvcHQoZHVlbCwgcCwgMjYxOCkK"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_monsters_1.gd
+          git commit -m "Gandora-X Blackmetal Rampaging Dragon: Final Geas search is optional and asks the player"
+          git push
