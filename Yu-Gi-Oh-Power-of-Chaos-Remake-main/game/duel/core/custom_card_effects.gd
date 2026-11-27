@@ -494,6 +494,9 @@ static func can_direct_attack(duel, p: int, z: int, cid := -1) -> bool:
 
 
 static func has_pierce(duel, p: int, z: int, cid := -1) -> bool:
+	# Meteorain (2953): los monstruos del jugador perforan durante ese turno.
+	if int(CustomDuelOps.pflags(duel, p & 1).get("piercing_turn", -1)) == CustomDuelOps.turn_number(duel):
+		return true
 	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
 	return CustomEffectsMonsters1.has_pierce(duel, p, z, id) or CustomEffectsMonsters2.has_pierce(duel, p, z, id)
 
