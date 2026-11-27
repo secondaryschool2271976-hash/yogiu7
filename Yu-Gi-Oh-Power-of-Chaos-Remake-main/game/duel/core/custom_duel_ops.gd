@@ -1539,6 +1539,58 @@ static func next_optional_prompt(duel) -> void:
 	_open_optional_prompt(duel, str(nxt["text"]), nxt["yes"])
 
 
+## Pide al jugador que elija una carta de una pila con la ventana de lista del motor
+## (FUN_00407580). Devuelve true si la pregunta quedo abierta: al elegir, on_pick recibe el
+## indice de la carta en la pila, o -1 si cerro sin elegir. Solo para el jugador humano.
+static func ask_pile_card(duel, p: int, loc: int, filter: Callable, on_pick: Callable) -> bool:
+	if not (duel is Duel):
+		return false
+	if (p & 1) != 0 or int(duel.game_mode) != DuelBase.GAME_NORMAL or int(duel.auto_answer) != -1:
+		return false
+	if DisplayServer.get_name() == "headless":
+		return false
+	if not duel.list_open.is_empty() or not duel.dialog_open.is_empty():
+		return false
+	duel.f407580(p & 1, loc, 0, 0)
+	var m = duel.m
+	var n: int = m.u16(0xa11924)
+	var keep: Array = []
+	var w := 0
+	for i in n:
+		var idx: int = m.u16(0xa11624 + i * 4) & 0xfff
+		if idx == 0 or not filter.call(duel, idx, i):
+			continue
+		if w != i:
+			m.set_u16(0xa11624 + w * 4, m.u16(0xa11624 + i * 4))
+			m.set_u16(0xa11824 + w * 2, m.u16(0xa11824 + i * 2))
+		keep.append(i)
+		w += 1
+	m.set_u16(0xa11924, w)
+	if w == 0:
+		on_pick.call(-1)
+		return true
+	duel.list_open = {"p": p & 1, "loc": loc, "mode": 1, "native_selection": true,
+		"selection_limit": 1, "custom_pick": {"keep": keep, "cb": on_pick}}
+	duel.present("list_open", duel.list_open.duplicate())
+	return true
+
+
+## Cierra la lista de ask_pile_card: pasa la marca del jugador a la carta de la pila.
+static func finish_pile_pick(duel, marks: int, pick: Dictionary) -> void:
+	var cb: Variant = pick.get("cb", null)
+	var keep: Array = pick.get("keep", [])
+	var idx := -1
+	if marks > 0:
+		for k in mini(duel.f4073e0(), keep.size()):
+			if duel.f407570(k) != 0:
+				idx = int(keep[k])
+				break
+	for k in duel.f4073e0():
+		duel.f407540(k, 0)
+	if cb is Callable and (cb as Callable).is_valid():
+		(cb as Callable).call(idx)
+
+
 static func choose_pile_card(duel, p: int, loc: int, filter: Callable, prefer_highest := true) -> int:
 	p &= 1
 	var n = pile_count(duel, p, loc)
