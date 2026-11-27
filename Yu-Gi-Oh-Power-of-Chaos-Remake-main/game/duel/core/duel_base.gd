@@ -199,6 +199,7 @@ func list_gone() -> void:
 	list_open = {}
 	if pick != null:
 		CustomDuelOps.finish_pile_pick(self, answer, pick)
+	_drain_optional_prompts()
 
 
 ## La escena contesta el cuadro de dialogo abierto (FUN_0042fda0 -> FUN_00540d80).
@@ -232,9 +233,14 @@ func dialog_close(value: int) -> void:
 
 
 func dialog_gone() -> void:
-	var was_custom: bool = dialog_open.has("custom_done")
 	dialog_open = {}
-	if was_custom:
+	_drain_optional_prompts()
+
+
+## Abre la siguiente pregunta opcional en cola cuando ya no queda cuadro ni lista abiertos:
+## una pregunta que no cabia en pantalla espera aqui en vez de resolverse sola.
+func _drain_optional_prompts() -> void:
+	if dialog_open.is_empty() and list_open.is_empty():
 		CustomDuelOps.next_optional_prompt(self)
 
 
