@@ -825,8 +825,8 @@ func f576350() -> int:
 				issue((other << 15) | 0x4c, 0, 0, 0)
 				if f5431f0(p, 1, 0) > 0: f53baa0(f401ad0(0x5ea) | (other << 31) | 0x266e0000, 0)
 		_:
-			if f542f30(0, 0x593) < 1 and f542f30(1, 0x593) < 1 and m.u8(DuelMem.pl(p) + 2) > 6:
-				f53e830(p, m.u8(DuelMem.pl(p) + 2) - 6, 0, 0)
+			if f542f30(0, 0x593) < 1 and f542f30(1, 0x593) < 1 and m.u8(DuelMem.pl(p) + 2) > CustomCardEffects.hand_limit(self, p):
+				f53e830(p, m.u8(DuelMem.pl(p) + 2) - CustomCardEffects.hand_limit(self, p), 0, 0)
 			return 1
 	m.set_u8(0xa133fc, m.u8(0xa133fc) + 1)
 	return 0
@@ -1628,7 +1628,7 @@ func f572340(p: int) -> int:
 			var at := DuelMem.zone(1, z)
 			if (m.u8(at + 6) & 2) != 0 and (m.u32(at) & 0xfff) != 0 					and effect_card_id(m.u16(at) & 0xfff) == 0x52e and f543fc0() == 0x14d:
 				return 0
-			if f579890() != 0:
+			if f579890() != 0 and CustomCardEffects.can_attack_target(self, p, source, other, z):
 				m.set_u16(0xa114c0, m.u16(0xa114c0) ^ (((z << 11) ^ m.u16(0xa114c0)) & 0x3800))
 				m.set_u8(0xa133f4, state + 1)
 		if (m.u32(0xa114a8) & 0x102) != 0:
@@ -1716,7 +1716,6 @@ func f5732e0() -> int:
 		m.set_u8(0xa133f4, 3)
 		return 0
 	return 1
-
 
 
 
