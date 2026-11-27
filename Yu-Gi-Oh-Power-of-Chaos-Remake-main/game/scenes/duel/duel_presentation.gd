@@ -552,7 +552,7 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 				else: d["to_pos"] = DuelGeometry.location(target_p, target_z)
 			d["hidden"] = hidden_hand and p == 1 and (duel.m.u8(DuelMem.MOVING_CARD + 6) & 2) == 0
 			d["src"] = [p, int(e.get("zone", 0)), 0]
-			var dst_p := owner
+			var dst_p: int = owner
 			var dst_loc := DuelMem.LOC_GRAVE
 			if kind == "field_to_hand":
 				dst_p = owner
@@ -955,7 +955,7 @@ func _render_exodia_hand(frame: int) -> void:
 		var t = frame - int(g["start"])
 		if t < 0 or t >= 31:
 			continue
-		var c := (t + 1) * 8
+		var c: int = (t + 1) * 8
 		var pos = hand(p, int(g["slot"]), int(active["count"])) + Vector2(0, c / 4 if p == 1 else -c / 4)
 		var sprite = _card(int(g["card"]), pos, p == 0, DuelGeometry.HAND_SIZE)
 		if sprite != null:
@@ -1128,7 +1128,7 @@ func _render_battle() -> void:
 			BasicEffects._asset(self, "atk_icon", zone(p, i), 0x10000, 0xa0, p << 8)
 	if st == 3 and int(_battle["zone"]) >= 0:
 		var at = zone(p, int(_battle["zone"]))
-		var dir := pointer - at
+		var dir: Vector2 = pointer - at
 		var angle := int(atan2(dir.x, -dir.y) * 256.0 / PI)
 		BasicEffects._asset(self, "atk_icon", at, 0x10000, 256, (angle * mini(int(_battle["counter"]), 0x80)) / 0x80)
 
@@ -1203,7 +1203,7 @@ func _render_sacrifice(s: Dictionary) -> void:
 	var after := c - 0x80
 	if after > 0:
 		var alpha := mini(DuelVisualMath.cos_fx(c - 0x100) >> 8, 0xff)
-		var angle := def_bit << 7
+		var angle: int = def_bit << 7
 		var scale := 0x10000
 		if after >= 0x80:
 			scale = (0x180 - after) * 0x100
