@@ -1377,6 +1377,45 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 	return best
 
 
+## Pregunta Si/No al jugador local para un efecto opcional ("puedes"). Si se puede preguntar
+## (duelo normal Yugi/Kaiba, turno del jugador 0, con ventana) devuelve true y `on_yes` se
+## ejecuta SOLO si contesta Si (el motor queda en espera mientras el cuadro esta abierto).
+## Si no se puede preguntar (CPU, LAN/online, repeticion, Joey o sin pantalla) devuelve false y
+## quien llama debe aplicar el comportamiento automatico de siempre.
+static func ask_optional(duel, p: int, text: String, on_yes: Callable) -> bool:
+	if not (duel is Duel):
+		return false
+	if (p & 1) != 0 or int(duel.game_mode) != DuelBase.GAME_NORMAL or int(duel.auto_answer) != -1:
+		return false
+	if DisplayServer.get_name() == "headless":
+		return false
+	var st = state(duel)
+	var queue: Array = st.get_or_add("optional_prompts", [])
+	var busy: bool = not duel.dialog_open.is_empty() or not duel.list_open.is_empty()
+	if busy:
+		# Solo se encola detras de otra pregunta propia; con un dialogo del motor se actua solo.
+		if duel.dialog_open.has("custom_yes") or duel.dialog_open.has("custom_done") or not queue.is_empty():
+			queue.append({"text": text, "yes": on_yes})
+			return true
+		return false
+	_open_optional_prompt(duel, text, on_yes)
+	return true
+
+
+static func _open_optional_prompt(duel, text: String, on_yes: Callable) -> void:
+	duel.dialog_open = {"type": 1, "msg": -1, "literal": text, "subs": [], "buttons": 2, "default": -1, "custom_yes": on_yes}
+	duel.present("dialog_open", duel.dialog_open.duplicate())
+
+
+static func next_optional_prompt(duel) -> void:
+	var st = state(duel)
+	var queue: Array = st.get_or_add("optional_prompts", [])
+	if queue.is_empty() or not duel.dialog_open.is_empty():
+		return
+	var nxt: Dictionary = queue.pop_front()
+	_open_optional_prompt(duel, str(nxt["text"]), nxt["yes"])
+
+
 static func choose_pile_card(duel, p: int, loc: int, filter: Callable, prefer_highest := true) -> int:
 	p &= 1
 	var n = pile_count(duel, p, loc)
