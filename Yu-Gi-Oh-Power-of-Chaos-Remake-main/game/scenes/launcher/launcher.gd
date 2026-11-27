@@ -68,6 +68,7 @@ var _admin_code_button := Button.new()
 var _card_back_button := Button.new()
 var _ydc_button := Button.new()
 var _ydc_export_button := Button.new()
+var _card_test_button := Button.new()
 var _online_hub: CanvasLayer = null
 var _reward_modals: CanvasLayer = null
 var _card_back_modal: CanvasLayer = null
@@ -311,6 +312,14 @@ func _setup_reward_controls() -> void:
 	_style_feature_button(_ydc_export_button, Color(0.08, 0.28, 0.24, 0.96), Color(0.14, 0.38, 0.32, 0.98), GOLD)
 	add_child(_ydc_export_button)
 
+	_card_test_button.focus_mode = Control.FOCUS_NONE
+	_card_test_button.visible = show_ui
+	_card_test_button.pressed.connect(func() -> void:
+		if not _leaving:
+			Game.goto(load("res://scenes/card_effect_test/card_effect_test.tscn").instantiate()))
+	_style_feature_button(_card_test_button, Color(0.16, 0.12, 0.30, 0.96), Color(0.24, 0.18, 0.42, 0.98), GOLD)
+	add_child(_card_test_button)
+
 	if show_ui:
 		_reward_modals = RewardModals.new()
 		_reward_modals.card_unlocked.connect(func(_cid: int) -> void: _refresh_wheel_label())
@@ -467,6 +476,14 @@ func _refresh_reward_buttons() -> void:
 	if is_instance_valid(_ydc_export_button):
 		_ydc_export_button.text = "📤 Export .YDC"
 		_ydc_export_button.reset_size()
+	if is_instance_valid(_card_test_button):
+		if Assets.lang == "a":
+			_card_test_button.text = "🧪 اختبار تأثير البطاقة"
+		elif Assets.lang == "s":
+			_card_test_button.text = "🧪 Prueba de efecto"
+		else:
+			_card_test_button.text = "🧪 Card Effect Test"
+		_card_test_button.reset_size()
 	_refresh_wheel_label()
 
 
@@ -680,7 +697,7 @@ func _layout_online_hero(below_y: float) -> void:
 
 func _layout_feature_dock(dock_y: float) -> void:
 	var dock_buttons: Array[Button] = []
-	for btn: Button in [_wheel_button, _special_wheel_button, _code_button, _card_back_button, _ydc_button, _ydc_export_button, _admin_code_button]:
+	for btn: Button in [_wheel_button, _special_wheel_button, _code_button, _card_back_button, _ydc_button, _ydc_export_button, _admin_code_button, _card_test_button]:
 		if btn.visible:
 			dock_buttons.append(btn)
 	if dock_buttons.is_empty():
