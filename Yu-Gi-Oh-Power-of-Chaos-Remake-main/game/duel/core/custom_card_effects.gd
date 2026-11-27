@@ -80,7 +80,8 @@ static func build_core_ctx(duel, e: int, other: int, hand: int) -> Dictionary:
 	var p: int = flags & 1
 	var reason: int = (flags >> 10) & 0x3f
 	var ev: String = map_core_event(reason, other)
-	var ctx: Dictionary = {"event": ev, "other": other, "hand": hand, "target_link": -1, "target_card_id": 0}
+	var ctx: Dictionary = {"event": ev, "other": other, "hand": hand, "target_link": -1, "target_card_id": 0,
+			"destroyed_id": int(CustomDuelOps.state(duel).get("last_destroyed_id", 0))}
 	if other != 0:
 		var oidx: int = duel.m.u16(other) & 0xfff
 		ctx["chain_p"] = duel.m.u8(other + 2) & 1
@@ -383,6 +384,8 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 
 
 static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect := false, was_tributed_for_p := -1) -> void:
+	# Ultima carta destruida: la usan las Trampas que reaccionan a una destruccion (Rope of Life).
+	CustomDuelOps.state(duel)["last_destroyed_id"] = cid
 	# Dark Ruler Ha Des (2744): un monstruo destruido en batalla por un Demonio del rival ve su
 	# efecto anulado, asi que no se dispara.
 	if by_battle and CustomDuelOps.ha_des_negates(duel, p, cid):
