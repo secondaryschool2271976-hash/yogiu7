@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAACnCWsC/62QP2+DMBDF5/ApbgTBgZuQPyC1itShY6tunZCBM3GKbQS2mn774iZqt0z4BtvP7/1051YKAYidtMCzD4cvEl9P+Ga+aEQj8PnEzYTvpPgnoeJSZx1XlLWO+qwxI2WNm6xRlRcqM0xp10K9DCeQuqULiO2+2GzWaVoc1qzeNvDA2C7PA0RcquMgjuPFuj4eAddsl+whvm6zMFluZQPC6QZarnhHoY8kMJQgtU2AK+O0vV3kVNXc2p6gfATB+4kiwCf/VgawksIbzoa+fxmR11b+lM4/dciJhUMCSmoZXqEJsIuYVxTNRpphZYB/gVyw9k4g/jeSKO6SR7Ju1LdBApjrB/ha0FJaAgAA"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_duel_ops.gd"
+          git commit -m "Fix custom damage healing target on Yugi/Kaiba engines"
+          git push
