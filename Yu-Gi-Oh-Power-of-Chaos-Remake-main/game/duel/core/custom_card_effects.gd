@@ -271,7 +271,10 @@ static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
 			st["summoned_this_turn"] = {0: [], 1: []}
 			st["destroyed_this_turn"] = {0: [], 1: []}
 			st["sent_gy_this_turn"] = {0: [], 1: []}
-		if ph == CustomDuelOps.PHASE_SP:
+		if ph == CustomDuelOps.PHASE_DP:
+			_prepare_draw_phase(duel, turn_p, t)
+		elif ph == CustomDuelOps.PHASE_SP:
+			_reconcile_skipped_draw(duel, turn_p)
 			CustomEffectsTraps.on_standby_tick(duel, turn_p)
 			CustomEffectsSpells.on_standby_tick(duel, turn_p)
 			CustomEffectsMonsters1.on_standby_tick(duel, turn_p)
@@ -352,7 +355,72 @@ static func on_sent_to_gy(duel, p: int, cid: int, from_loc: int, opp_effect := f
 
 
 static func on_draw(duel, draw_p: int, count: int) -> void:
+	if _cancel_skipped_draw(duel, draw_p, count):
+		return
 	CustomEffectsMonsters1.on_draw(duel, draw_p, count)
+
+
+## Yata-Garasu (2703) and Fenrir (3085) skip the opponent's next Draw Phase and Reckless Greed
+## (2827) skips two; Hino-Kagu-Tsuchi (2763) makes the opponent discard their hand there.
+## The engine draws on its own, so a skipped draw is undone: the card goes back on top of the
+## deck and nothing sees it.
+static func _prepare_draw_phase(duel, turn_p: int, t: int) -> void:
+	var st = CustomDuelOps.state(duel)
+	var p: int = turn_p & 1
+	var pf: Dictionary = CustomDuelOps.pflags(duel, p)
+	var skip := false
+	if int(pf.get("skip_dp_turn", -1)) == t:
+		pf.erase("skip_dp_turn")
+		skip = true
+	elif int(pf.get("skip_draw_phases", 0)) > 0:
+		pf["skip_draw_phases"] = int(pf["skip_draw_phases"]) - 1
+		skip = true
+	st["dp_skip_p"] = p if skip else -1
+	st["dp_hand_before"] = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
+	if int(pf.get("discard_all_dp_turn", -1)) == t:
+		pf.erase("discard_all_dp_turn")
+		var hc: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
+		for i in hc:
+			CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
+
+
+## Si el motor ya habia robado antes de nuestro tick del Draw Phase, se deshace aqui.
+static func _reconcile_skipped_draw(duel, turn_p: int) -> void:
+	var st = CustomDuelOps.state(duel)
+	var p: int = int(st.get("dp_skip_p", -1))
+	if p < 0:
+		return
+	st["dp_skip_p"] = -1
+	var before: int = int(st.get("dp_hand_before", -1))
+	st["dp_hand_before"] = -1
+	if p != (turn_p & 1) or before < 0:
+		return
+	var now: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
+	if now <= before:
+		return
+	CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, now - 1, p, CustomDuelOps.LOC_DECK, false)
+
+
+## Cancela el robo del Draw Phase cuando llega antes de que lo deshagamos en el Standby.
+static func _cancel_skipped_draw(duel, draw_p: int, count: int) -> bool:
+	var st = CustomDuelOps.state(duel)
+	if int(st.get("dp_skip_p", -1)) != (draw_p & 1):
+		return false
+	if CustomDuelOps.phase(duel) != CustomDuelOps.PHASE_DP:
+		return false
+	if int(st.get("dp_hand_before", -1)) != CustomDuelOps.pile_count(duel, draw_p & 1, CustomDuelOps.LOC_HAND):
+		return false
+	st["dp_skip_p"] = -1
+	st["dp_hand_before"] = -1
+	var n: int = count
+	while n > 0:
+		var hc: int = CustomDuelOps.pile_count(duel, draw_p & 1, CustomDuelOps.LOC_HAND)
+		if hc <= 0:
+			break
+		if CustomDuelOps.move_pile_card(duel, draw_p & 1, CustomDuelOps.LOC_HAND, hc - 1, draw_p & 1, CustomDuelOps.LOC_DECK, false) <= 0:
+			break
+		n -= 1
+	return true
 
 
 static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
