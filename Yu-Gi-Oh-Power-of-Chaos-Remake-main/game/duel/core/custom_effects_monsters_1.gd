@@ -2251,19 +2251,33 @@ static func _count_other_monsters_hand_field(duel, p: int, skip_hand_slot: int) 
 
 
 static func _find_armed_lv10_combo(duel, p: int) -> Array:
+	# Armed Dragon monsters on the field and/or in the GY whose total Levels equal 10.
+	var lv_of := {2510: 3, 2511: 5, 2512: 7, 2508: 10, 2509: 10}
+	var cands: Array = []
 	for z in 5:
 		var idx = CustomDuelOps.zone_idx(duel, p, z)
-		if idx != 0 and CustomDuelOps.raw_id(duel, idx) in [2508, 2509]:
-			return [{"where": "field", "idx": z}]
+		if idx != 0:
+			var rid = CustomDuelOps.raw_id(duel, idx)
+			if lv_of.has(rid):
+				cands.append({"where": "field", "idx": z, "lv": int(lv_of[rid])})
 	for i in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE):
-		var rid = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i))
-		if rid in [2508, 2509]:
-			return [{"where": "gy", "idx": i}]
-	var lv7_z = CustomDuelOps.find_zone_of_id(duel, p, 2512, true)
-	var lv3_z = CustomDuelOps.find_zone_of_id(duel, p, 2510, true)
-	if lv7_z >= 0 and lv3_z >= 0:
-		return [{"where": "field", "idx": lv7_z}, {"where": "field", "idx": lv3_z}]
-	return []
+		var rid2 = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i))
+		if lv_of.has(rid2):
+			cands.append({"where": "gy", "idx": i, "lv": int(lv_of[rid2])})
+	var n := cands.size()
+	var best: Array = []
+	for mask in range(1, 1 << n):
+		var total := 0
+		var chosen: Array = []
+		for k in n:
+			if (mask >> k) & 1:
+				total += int(cands[k]["lv"])
+				chosen.append(cands[k])
+		if total == 10 and (best.is_empty() or chosen.size() < best.size()):
+			best = chosen
+	# Banish GY cards from the highest index down so earlier indexes stay valid.
+	best.sort_custom(func(a, b): return (str(a["where"]) == "field" and str(b["where"]) != "field") or (str(a["where"]) == str(b["where"]) and int(a["idx"]) > int(b["idx"])))
+	return best
 
 
 static func _find_god_slime_tribute(duel, p: int) -> int:
