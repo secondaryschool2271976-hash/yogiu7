@@ -880,11 +880,21 @@ static func sync_visuals(duel) -> void:
 		duel.present("table_sync", {})
 
 
+static func _count_dragon_discard(duel, p: int, idx: int) -> void:
+	p &= 1
+	if idx == 0 or int(pflags(duel, p).get("super_rejuv_turn", -1)) != turn_number(duel):
+		return
+	if ctype(duel, idx) == 1: # Dragon
+		var pf = pflags(duel, p)
+		pf["dragons_discarded_turn"] = int(pf.get("dragons_discarded_turn", 0)) + 1
+
+
 static func discard_hand_slot(duel, p: int, hand_i: int, trigger := 1) -> int:
 	p &= 1
 	if hand_i < 0 or hand_i >= pile_count(duel, p, LOC_HAND):
 		return 0
 	var idx = pile_idx(duel, p, LOC_HAND, hand_i)
+	_count_dragon_discard(duel, p, idx)
 	if is_joey(duel):
 		move_pile_card(duel, p, LOC_HAND, hand_i, p, LOC_GRAVE)
 	else:
