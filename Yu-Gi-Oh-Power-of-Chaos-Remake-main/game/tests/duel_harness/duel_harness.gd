@@ -142,6 +142,10 @@ func _scenario(data: String, sc: Dictionary) -> void:
 			names.append("%d=%s" % [id, _name_of(id)])
 	print("cards: ", names)
 	print("before: ", _state(duel))
+	var flow: Dictionary = sc.get("flow", {})
+	if not flow.is_empty():
+		_flow(duel, flow)
+		return
 	var act: Dictionary = sc.get("act", {})
 	if act.is_empty():
 		return
@@ -262,3 +266,38 @@ func _check_expect(duel: Duel, sc: Dictionary) -> void:
 		if not _same(got, want):
 			print("  !! expected %s == %s, got %s" % [key, want, got])
 			failures += 1
+
+
+## Engine-flow mode: let the real turn state machine run (CPU attacks, trap windows) and log what happens.
+## flow: {turn, phase, frames, answer}. Logs phase/LP changes and every ui_pending prompt.
+func _flow(duel: Duel, flow: Dictionary) -> void:
+	if flow.has("turn"):
+		duel.m.set_u16(0xa133f0, int(flow["turn"]))
+	if flow.has("auto_answer"):
+		duel.auto_answer = int(flow["auto_answer"])
+	var last := ""
+	var prompts := 0
+	var clicks := 0
+	for i in int(flow.get("frames", 20000)):
+		duel.ui_phase_hover = -1
+		duel.ui_mouse_click = false
+		if flow.has("click_phase") and i % 50 == 25 and clicks < int(flow.get("max_clicks", 6)):
+			duel.ui_phase_hover = int(flow["click_phase"])
+			duel.ui_mouse_click = true
+			clicks += 1
+		var busy := duel.frame()
+		if not duel.ui_pending.is_empty():
+			prompts += 1
+			print("  frame %d ui_pending: %s" % [i, duel.ui_pending])
+			if flow.has("answer"):
+				duel.ui_answer(int(flow["answer"]))
+			if prompts > 30:
+				break
+		var st := _state(duel) + " sb=%x atk=%x dlg=%s run=%s" % [duel.m.u8(0xa133f4), duel.m.u32(0xa114c0), str(duel.dialog_open), str(duel.is_running())]
+		if st != last:
+			print("  f%d %s" % [i, st])
+			last = st
+		if not busy and duel.ui_pending.is_empty() and not flow.has("click_phase"):
+			print("  idle at frame ", i)
+			break
+	print("flow end: ", _state(duel))
