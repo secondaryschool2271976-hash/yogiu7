@@ -18,6 +18,7 @@ TOOL_TOP = {"tools/pyproject.toml", "tools/prepare_public.py", "tools/build_wind
             # CI builds the APK from the Android snapshot of this same tree (build_android.py).
             "tools/build_android.py", "tools/android/build_apk.py", "tools/android/pack_data.gd",
             "game/tests/android_bundle_test.gd", "game/tests/android_engine_bundle_test.gd",
+            "game/tests/online_turn_timer_test.gd",
             "game/assets/icons/launcher-adaptive-foreground.svg", "game/assets/icons/launcher-adaptive-background.svg",
             "game/assets/icons/launcher-adaptive-monochrome.svg"}
 OWN_ASSETS = {"game/assets/music/launcher_theme.mp3",
