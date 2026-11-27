@@ -967,6 +967,9 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
+	# Frontier Wiseman (2731): a Warrior protected from Spell effects is not destroyed by them.
+	if not by_battle and str(state(duel).get("effect_source", "")) == "spell" and bool(zf.get("spell_immune", false)):
+		return false
 	if bool(zf.get("indest_once", false)):
 		zf["indest_once"] = false
 		return false
