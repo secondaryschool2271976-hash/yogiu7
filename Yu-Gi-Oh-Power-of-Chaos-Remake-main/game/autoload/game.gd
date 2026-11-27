@@ -801,6 +801,35 @@ func open_joey_demo() -> void:
 	open_normal_duel("joey", 1)
 
 
+## Herramienta de prueba de efectos: escenario en memoria que normal_duel aplica al empezar
+## (misma maquinaria que --scenario, ver DuelScenario). Vacio = duelo normal.
+var card_test_scenario: Dictionary = {}
+
+
+## Empieza un duelo de practica con `card_id` en la mano inicial del jugador.
+## opts: field_p/field_o/grave_p/grave_o = [[{"card": id, "zone": z, "c": c}]], lp_p/lp_o.
+func open_card_effect_test(card_id: int, opts := {}) -> void:
+	card_test_scenario = {
+		"description": "Card effect test",
+		"first": 0,
+		"hands": [[card_id], []],
+		"field": [Array(opts.get("field_p", [])), Array(opts.get("field_o", []))],
+		"grave": [Array(opts.get("grave_p", [])), Array(opts.get("grave_o", []))],
+		"lp": ([int(opts.get("lp_p", 8000)), int(opts.get("lp_o", 8000))] if (opts.has("lp_p") or opts.has("lp_o")) else []),
+		"fusion": [[], []],
+		"decks": [null, null],
+	}
+	DuelResume.clear()
+	duel_mode = 0
+	match_duel = 1
+	match_results = [0, 0, 0]
+	match_outcome = 0
+	joey_demo = false
+	rival_deck = choose_rival_deck("yugi")
+	current_game = "yugi"
+	open_normal_duel("yugi", 0)
+
+
 func open_normal_duel(game: String, start_options := -1) -> void:
 	current_game = game
 	if game == "joey":
