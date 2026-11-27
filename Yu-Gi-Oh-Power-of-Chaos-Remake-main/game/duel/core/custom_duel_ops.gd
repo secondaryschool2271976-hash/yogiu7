@@ -993,6 +993,9 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	var zf = zflags(duel, p, z)
 	if by_battle and bool(zf.get("indest_battle", false)):
 		return false
+	# Armityle the Chaos Phantasm (2513, 2514): no puede ser destruido en batalla.
+	if by_battle and raw_id(duel, idx) in [2513, 2514]:
+		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
 	# Blaze Cannon (2517) y el Ra revivido por Ancient Chant: el monstruo no puede ser afectado
