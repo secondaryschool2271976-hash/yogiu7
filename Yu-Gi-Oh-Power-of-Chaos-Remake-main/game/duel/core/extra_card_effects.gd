@@ -555,6 +555,8 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 		if _union_equipped_to(duel, owner, z, 2974): # Kiryu: +900 ATK/DEF
 			atk_delta += 900
 			def_delta += 900
+		if _union_equipped_to(duel, owner, z, 3082): # Shooting Star Bow - Ceal: -1000 ATK, ataca directo
+			atk_delta -= 1000
 		if m_type == 3 and _core_has_active_raw_id(duel, owner, 2778, owner, z):
 			atk_delta += 700
 			def_delta += 700
@@ -912,6 +914,8 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 		if _union_equipped_to(duel, owner, z, 2974): # Kiryu: +900 ATK/DEF
 			atk_delta += 900
 			def_delta += 900
+		if _union_equipped_to(duel, owner, z, 3082): # Shooting Star Bow - Ceal: -1000 ATK, ataca directo
+			atk_delta -= 1000
 		if m_type == 3 and _joey_has_active_raw_id(duel, owner, 2778, owner, z):
 			atk_delta += 700
 			def_delta += 700
