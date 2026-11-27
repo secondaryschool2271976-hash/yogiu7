@@ -347,11 +347,21 @@ static func on_draw(duel, draw_p: int, count: int) -> void:
 
 static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
 	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	var zf: Dictionary = CustomDuelOps.zflags(duel, p & 1, z)
+	if bool(zf.get("cannot_attack", false)):
+		return false
+	if int(zf.get("cannot_attack_turn", -1)) == CustomDuelOps.turn_number(duel):
+		return false
 	return CustomEffectsMonsters1.can_attack(duel, p, z, id) and CustomEffectsMonsters2.can_attack(duel, p, z, id)
 
 
 static func can_direct_attack(duel, p: int, z: int, cid := -1) -> bool:
 	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	var zf: Dictionary = CustomDuelOps.zflags(duel, p & 1, z)
+	if int(zf.get("cannot_direct_turn", -1)) == CustomDuelOps.turn_number(duel):
+		return false
+	if bool(zf.get("direct_atk", false)):
+		return true
 	return CustomEffectsMonsters1.can_direct_attack(duel, p, z, id) or CustomEffectsMonsters2.can_direct_attack(duel, p, z, id)
 
 
@@ -362,7 +372,8 @@ static func has_pierce(duel, p: int, z: int, cid := -1) -> bool:
 
 static func max_attacks(duel, p: int, z: int, cid := -1) -> int:
 	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
-	return maxi(CustomEffectsMonsters1.max_attacks(duel, p, z, id), CustomEffectsMonsters2.max_attacks(duel, p, z, id))
+	var granted: int = int(CustomDuelOps.zflags(duel, p & 1, z).get("max_attacks", 0))
+	return maxi(maxi(CustomEffectsMonsters1.max_attacks(duel, p, z, id), CustomEffectsMonsters2.max_attacks(duel, p, z, id)), granted)
 
 
 static func check_win(duel) -> int:
