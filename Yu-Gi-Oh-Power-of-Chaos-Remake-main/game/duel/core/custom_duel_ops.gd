@@ -992,6 +992,10 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
+	# Blaze Cannon (2517) y el Ra revivido por Ancient Chant: el monstruo no puede ser afectado
+	# por otras cartas ese turno, asi que no lo destruye ningun efecto.
+	if not by_battle and int(zf.get("unaffected_until_turn", -1)) >= turn_number(duel):
+		return false
 	# D. D. Dragon (3036): a Spell/Trap effect that does not target it cannot destroy it.
 	if not by_battle and str(state(duel).get("effect_source", "")) in ["spell", "trap"] \
 			and not bool(state(duel).get("effect_targeted", false)) and bool(zf.get("nontarget_st_immune", false)):
@@ -1752,4 +1756,3 @@ static func negate_chain_entry(duel, target_entry_idx: int, destroy_card := true
 		var tloc = (flags >> 4) & 0x3f
 		if tloc <= 10:
 			destroy_zone(duel, tp, tloc)
-
