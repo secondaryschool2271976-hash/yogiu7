@@ -306,6 +306,30 @@ static func _core_gy_exodia(duel, p: int) -> int:
 	return n
 
 
+## Ancient Chant (2507) desde el Cementerio: si el Ra Invocado ese turno, su ATK/DEF originales
+## son exactamente las de los monstruos ofrendados para su Invocacion.
+static func _ra_ancient_chant(duel, p: int, z: int) -> bool:
+	p &= 1
+	if int(CustomDuelOps.pflags(duel, p).get("ancient_chant_ra_buff_turn", -1)) != CustomDuelOps.turn_number(duel):
+		return false
+	return int(CustomDuelOps.zflags(duel, p, z).get("summoned_turn", -1)) == CustomDuelOps.turn_number(duel)
+
+
+## Suma de los 3 ultimos monstruos que entraron al Cementerio, que son los ofrendados.
+static func _ra_tributed_stat(duel, p: int, use_def: bool) -> int:
+	var total: int = 0
+	var found: int = 0
+	var n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
+	for i in range(n - 1, -1, -1):
+		var idx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
+		if CustomDuelOps.is_monster(duel, idx):
+			total += CustomDuelOps.base_def(duel, idx) if use_def else CustomDuelOps.base_atk(duel, idx)
+			found += 1
+			if found >= 3:
+				break
+	return total
+
+
 static func _core_top_gy_stat_sum(duel, p: int, count: int, use_def := false) -> int:
 	var m: DuelMem = duel.m
 	var pl = DuelMem.pl(p)
@@ -462,9 +486,14 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 	var def_add = 0
 	match raw_id:
 		2501:
-			# The Winged Dragon of Ra: inherits power from 3 Tributes (top 3 GY monsters, min 3000)
-			m.set_u32(out + 4, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, false)))
-			m.set_u32(out + 8, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, true)))
+			# The Winged Dragon of Ra: inherits power from 3 Tributes (top 3 GY monsters, min 3000).
+			# Ancient Chant (2507) desde el Cementerio: sin minimo, exactamente lo ofrendado.
+			if _ra_ancient_chant(duel, p, z):
+				m.set_u32(out + 4, _ra_tributed_stat(duel, p, false))
+				m.set_u32(out + 8, _ra_tributed_stat(duel, p, true))
+			else:
+				m.set_u32(out + 4, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, false)))
+				m.set_u32(out + 8, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, true)))
 		2505:
 			# Holactie the Creator of Light
 			var lp_stat = maxi(5000, m.u16(pl + DuelMem.P_LP))
@@ -833,8 +862,12 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 	var opp_pl = JoeyMem.pl(opp)
 	match raw_id:
 		2501:
-			m.set_u32(out + 4, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, false)))
-			m.set_u32(out + 8, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, true)))
+			if _ra_ancient_chant(duel, p, z):
+				m.set_u32(out + 4, _ra_tributed_stat(duel, p, false))
+				m.set_u32(out + 8, _ra_tributed_stat(duel, p, true))
+			else:
+				m.set_u32(out + 4, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, false)))
+				m.set_u32(out + 8, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, true)))
 		2505:
 			var lp_stat = maxi(5000, m.u16(pl + JoeyMem.P_LP))
 			m.set_u32(out + 4, lp_stat)
