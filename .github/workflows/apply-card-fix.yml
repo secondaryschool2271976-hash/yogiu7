@@ -1,0 +1,28 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_duel_ops.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_monsters_1.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/joey/joey_base.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/scenes/duel/joey_presentation_adapter.gd"
+          git commit -m "Joey optional prompts + clean visuals after tribute cost"
+          git push
