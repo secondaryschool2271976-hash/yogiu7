@@ -1,0 +1,1206 @@
+{
+ "scenarios": [
+  {
+   "name": "AD10 SS with LV7",
+   "hand": [
+    [
+     2508
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2512,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2508,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.field.0": 0
+   }
+  },
+  {
+   "name": "AD10 SS no LV7",
+   "hand": [
+    [
+     2508
+    ],
+    []
+   ],
+   "field": [
+    [],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2508,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": false
+  },
+  {
+   "name": "AD10 effect",
+   "hand": [
+    [
+     81
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2508,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 34,
+      "zone": 1,
+      "c": 0
+     }
+    ]
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2508,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p1.field.0": 0,
+    "p1.field.1": 0,
+    "p0.hand.count": 5
+   }
+  },
+  {
+   "name": "AD5 effect",
+   "hand": [
+    [
+     81
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2511,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 34,
+      "zone": 1,
+      "c": 0
+     }
+    ]
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2511,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p1.field.0": 0,
+    "p1.field.1": 34
+   }
+  },
+  {
+   "name": "AD7 effect",
+   "hand": [
+    [
+     81
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2512,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 47,
+      "zone": 1,
+      "c": 0
+     },
+     {
+      "card": 34,
+      "zone": 2,
+      "c": 0
+     }
+    ]
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2512,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p1.field.0": 0,
+    "p1.field.1": 0,
+    "p1.field.2": 34
+   }
+  },
+  {
+   "name": "AD10W SS banish LV3+LV7",
+   "hand": [
+    [
+     2509
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2510,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 2512,
+      "zone": 1,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2509,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.field.0": 0,
+    "p0.field.1": 0
+   }
+  },
+  {
+   "name": "AD10W SS GY LV5+LV5",
+   "hand": [
+    [
+     2509
+    ],
+    []
+   ],
+   "field": [
+    [],
+    []
+   ],
+   "grave": [
+    [
+     2511,
+     2511
+    ],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2509,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.grave.count": 0
+   }
+  },
+  {
+   "name": "AD10W SS no combo",
+   "hand": [
+    [
+     2509
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2510,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2509,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": false
+  },
+  {
+   "name": "AD3 standby -> LV5",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2510,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [
+     2511
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2510,
+    "loc": "field",
+    "kind": "standby"
+   },
+   "expect": {
+    "p0.field.0": 2511
+   }
+  },
+  {
+   "name": "AD3 standby no LV5 in deck",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2510,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2510,
+    "loc": "field",
+    "kind": "standby"
+   },
+   "expect": {
+    "p0.field.0": 2510
+   }
+  },
+  {
+   "name": "Level Up AD3->AD5",
+   "hand": [
+    [
+     3130
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2510,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [
+     2511
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 3130,
+    "loc": "hand",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.field.0": 2511,
+    "p0.grave.has:2510": true
+   }
+  },
+  {
+   "name": "Level Up AD5->AD7",
+   "hand": [
+    [
+     3130
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2511,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [
+     2512
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 3130,
+    "loc": "hand",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.field.0": 2512
+   }
+  },
+  {
+   "name": "Level Up no target",
+   "hand": [
+    [
+     3130
+    ],
+    []
+   ],
+   "field": [
+    [],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 3130,
+    "loc": "hand",
+    "kind": "activate"
+   },
+   "expect_can": false
+  },
+  {
+   "name": "Vier reacts to Cyber Dragon summon",
+   "hand": [
+    [
+     2536
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2531,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2531,
+    "loc": "field",
+    "kind": "summon_trigger",
+    "how": "normal"
+   },
+   "expect": {
+    "p0.hand.has:2536": false,
+    "p0.field.1": 2536
+   }
+  },
+  {
+   "name": "Vier no reaction non-cyber",
+   "hand": [
+    [
+     2536
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 47,
+    "loc": "field",
+    "kind": "summon_trigger",
+    "how": "normal"
+   },
+   "expect": {
+    "p0.hand.has:2536": true
+   }
+  },
+  {
+   "name": "Nachster SS Cyber Dragon(2100) from GY on summon",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2535,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [
+     2531
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2535,
+    "loc": "field",
+    "kind": "summon_trigger",
+    "how": "normal"
+   },
+   "expect": {
+    "p0.grave.count": 0,
+    "p0.field.1": 2531
+   }
+  },
+  {
+   "name": "Nachster no 2100 machine in GY",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2535,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [
+     81
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2535,
+    "loc": "field",
+    "kind": "summon_trigger",
+    "how": "normal"
+   },
+   "expect": {
+    "p0.grave.count": 1
+   }
+  },
+  {
+   "name": "Brain Controller summon adds Brain Control",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2523,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2523,
+    "loc": "field",
+    "kind": "summon_trigger",
+    "how": "normal"
+   },
+   "deck_top": [
+    [
+     2522
+    ],
+    []
+   ],
+   "expect": {
+    "p0.hand.has:2522": true
+   }
+  },
+  {
+   "name": "Vampiric Orchis SS Des Dendle",
+   "hand": [
+    [
+     2914
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2937,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "grave": [
+    [],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2937,
+    "loc": "field",
+    "kind": "summon_trigger",
+    "how": "normal"
+   },
+   "expect": {
+    "p0.field.1": 2914
+   }
+  },
+  {
+   "name": "cyberjar_flip",
+   "first": 1,
+   "deck_only": [
+    [
+     34,
+     47,
+     81,
+     5,
+     1,
+     73,
+     552,
+     500,
+     34,
+     47,
+     81,
+     5,
+     1,
+     73,
+     552,
+     500,
+     34,
+     47,
+     81,
+     5,
+     1,
+     73,
+     552,
+     500,
+     34,
+     47,
+     81,
+     5,
+     1,
+     73,
+     552,
+     500,
+     34,
+     47,
+     81,
+     5,
+     1,
+     73,
+     552,
+     500
+    ],
+    [
+     47,
+     1,
+     81,
+     81,
+     73,
+     34,
+     5,
+     47,
+     47,
+     1,
+     81,
+     81,
+     73,
+     34,
+     5,
+     47,
+     47,
+     1,
+     81,
+     81,
+     73,
+     34,
+     5,
+     47,
+     47,
+     1,
+     81,
+     81,
+     73,
+     34,
+     5,
+     47,
+     47,
+     1,
+     81,
+     81,
+     73,
+     34,
+     5,
+     47
+    ]
+   ],
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 1106,
+      "zone": 0,
+      "c": 11
+     }
+    ],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ],
+   "flow": {
+    "frames": 700,
+    "click_phase": 5,
+    "auto_answer": 0,
+    "log_decks": true
+   }
+  },
+  {
+   "name": "Obelisk effect 3 monsters",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2500,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 47,
+      "zone": 1,
+      "c": 0
+     },
+     {
+      "card": 81,
+      "zone": 2,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 34,
+      "zone": 1,
+      "c": 0
+     }
+    ]
+   ],
+   "act": {
+    "p": 0,
+    "card": 2500,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p1.field.0": 0,
+    "p1.field.1": 0,
+    "p1.grave.count": 2
+   }
+  },
+  {
+   "name": "Obelisk effect only 2 monsters",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2500,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 47,
+      "zone": 1,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 34,
+      "zone": 1,
+      "c": 0
+     }
+    ]
+   ],
+   "act": {
+    "p": 0,
+    "card": 2500,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": false
+  },
+  {
+   "name": "Ra effect pay 1000",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2501,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 34,
+      "zone": 0,
+      "c": 0
+     }
+    ]
+   ],
+   "act": {
+    "p": 0,
+    "card": 2501,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.lp": 7000
+   }
+  },
+  {
+   "name": "Ra effect LP 900",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2501,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 34,
+      "zone": 0,
+      "c": 0
+     }
+    ]
+   ],
+   "act": {
+    "p": 0,
+    "card": 2501,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": false,
+   "lp": [
+    900,
+    8000
+   ]
+  },
+  {
+   "name": "Gandora effect",
+   "hand": [
+    [],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2581,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 81,
+      "zone": 1,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 34,
+      "zone": 1,
+      "c": 0
+     },
+     {
+      "card": 2521,
+      "zone": 5,
+      "c": 1
+     }
+    ]
+   ],
+   "act": {
+    "p": 0,
+    "card": 2581,
+    "loc": "field",
+    "kind": "activate"
+   },
+   "expect_can": true,
+   "expect": {
+    "p0.lp": 4000,
+    "p1.field.0": 0,
+    "p1.field.1": 0,
+    "p1.field.5": 0,
+    "p0.field.1": 0
+   }
+  },
+  {
+   "name": "Holactie SS tributes three gods",
+   "hand": [
+    [
+     2505
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2500,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 2501,
+      "zone": 1,
+      "c": 0
+     },
+     {
+      "card": 2502,
+      "zone": 2,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2505,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": true
+  },
+  {
+   "name": "Holactie SS missing Ra",
+   "hand": [
+    [
+     2505
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 2500,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 2502,
+      "zone": 1,
+      "c": 0
+     }
+    ],
+    []
+   ],
+   "act": {
+    "p": 0,
+    "card": 2505,
+    "loc": "hand",
+    "kind": "special_summon"
+   },
+   "expect_can": false
+  },
+  {
+   "name": "axe_feralimp",
+   "first": 0,
+   "hand": [
+    [],
+    [
+     303
+    ]
+   ],
+   "field": [
+    [],
+    [
+     {
+      "card": 5,
+      "zone": 0
+     }
+    ]
+   ],
+   "flow": {
+    "frames": 1500,
+    "click_phase": 5,
+    "auto_answer": 0,
+    "turn": 2
+   }
+  },
+  {
+   "name": "axe_elf",
+   "first": 0,
+   "hand": [
+    [],
+    [
+     303
+    ]
+   ],
+   "field": [
+    [],
+    [
+     {
+      "card": 1,
+      "zone": 0
+     }
+    ]
+   ],
+   "flow": {
+    "frames": 1500,
+    "click_phase": 5,
+    "auto_answer": 0,
+    "turn": 2
+   }
+  },
+  {
+   "name": "axe_redeyes",
+   "first": 0,
+   "hand": [
+    [],
+    [
+     303
+    ]
+   ],
+   "field": [
+    [],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ],
+   "flow": {
+    "frames": 1500,
+    "click_phase": 5,
+    "auto_answer": 0,
+    "turn": 2
+   }
+  },
+  {
+   "name": "axe_gsos",
+   "first": 0,
+   "hand": [
+    [],
+    [
+     303
+    ]
+   ],
+   "field": [
+    [],
+    [
+     {
+      "card": 73,
+      "zone": 0
+     }
+    ]
+   ],
+   "flow": {
+    "frames": 1500,
+    "click_phase": 5,
+    "auto_answer": 0,
+    "turn": 2
+   }
+  }
+ ]
+}
