@@ -206,7 +206,7 @@ static func damage(duel, p: int, amount: int, is_battle := false) -> int:
 	if is_joey(duel):
 		duel.f5784e0(p, mini(amount, 0xffff))
 	else:
-		duel.f54f0d0(p, mini(amount, 0xffff))
+		duel.f54ef90(p, mini(amount, 0xffff))
 	return amount
 
 
