@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAN68CWsC/7VUYW/iOBD9DL9iRKUTEUlIaKEFidP2tlx16u52te3u6YRQZOIJeAl2znbawq+/cQIsrba6+9BTJDuxn9+8mTcOF1kGQbAQFlj3rzK4FsHtMvisHlEHKgveL5kywRdcsxUGayZkd8HW2OUl5t1UaeympbFqnaRM8wSzDFNrwgWH+dtxNYXk+AQXPOpHEYbhOefDHo8gjqLB2VkzCIK3VN7sdDpvqv7dOwj6w1N/AB03xTHQirHMihSyUqaQLjFdJUzyhBVFvkkehWw7Vg+CX0FIO2pCQ6MttYTHJtDTOTmByZPiojQ+/CEz1FLBVy2YDx9wgZIzvakBjLZJj2QWffhTyAVyuCm1mKslfPg29OEj+17CNdNbtNaHa43MVmtVjMN6lTp8wlSrNZMpatg4rKyPXzGYiC0bweX9Tfdq8juIdaHR0ImIcA8sVxoy8Z1xBQW9lpJBWqK0LGx2UiWNhbv7y/vkbnKf3Ewmn++S324/fb2D0Rimvf5534def3hG46B/7sYL9z4cxj6cRqeRGy8GNMa9eNbs0POstmsqQrZJCmVs4tZNVVkfipGrrA/b3ZyWOmF2dfTFMau+Khe+kZlK94SzooBfxhDTywPTkAoOY3hfOX9FzLeFCbdKYiL4PhIF8aomGMTkfgSdQXzhx2cvu+ANlJImke3ETOoG/Ojqi9r0wiU1WI6mTYo9l0bjFdxOBxljhSxVaY7y8F2+vpPquTZsnEB1TpfkNR34WQOk5UbtesCwHIHjUQOMAHPAv0tRKOoUTlfLwFxJOsgxr/jXiuoO7V3S3V26PhghYc4MemAQTEldCShTsWY0wQNuXZwCNaeUENqXTwgqgys0BRM6DEOPWq/yb4VYHMpJTu4CAdXRWUtRftqbmBNtdMyxN2HHQZ//kaPyjCpKBpl2i2InBm2LLAoaDadk7FjbBJgeNmceRX59EzqHtF6wk6ojdp4dn9/v1eSv7e25aYW4nYTOARcu0NYZkHuWtXyIPNeTxPUS5Aifg0jmXKn8B2TJ8ox2M0Zl8khwdYP6sX9OF2gQ0fS/3B+nIxNPyJNFVbIVbpJFfV8qrzWmyWIEVyK1Qkn3nx3v8dMKO6ugxOLyrdB1OtQJda4wHru2qBw4NvEIS4uEpdGrvPh31DPH62IaO22RZW6pNatTqdNwWRj3s9aaOfXPgNPVrPkPfTUYLBEIAAA="
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_card_effects.gd"
+          git commit -m "Equip and other bonuses now add to cards whose ATK comes from a count (Gren Maju Da Eiza...)"
+          git push
