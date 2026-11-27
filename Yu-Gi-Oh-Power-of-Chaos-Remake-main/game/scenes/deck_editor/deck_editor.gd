@@ -2711,7 +2711,42 @@ func _deck_files() -> PackedStringArray:
 	return out
 
 
+## Importar: lista grande con seleccion multiple (reemplaza la ventana pequena del original,
+## donde un toque en la fila equivocada importaba ese mazo al instante).
+func _open_import_picker() -> void:
+	var picker: CanvasLayer = preload("res://scenes/deck_editor/deck_import_picker.gd").new()
+	picker.setup(_decks_dir(), _deck_files())
+	_modal = picker
+	_hover = ""
+	_pressed = ""
+	picker.cancelled.connect(func() -> void:
+		_modal = null
+		Audio.play_sfx("%s/voice/internal/return.wav" % game))
+	picker.browse_external.connect(func() -> void:
+		_modal = null
+		picker.queue_free()
+		_open_external_ydc_picker())
+	picker.confirmed.connect(func(names: PackedStringArray) -> void:
+		_modal = null
+		_import_many(names))
+	Audio.play_sfx("%s/voice/internal/decide.wav" % game)
+	add_child(picker)
+
+
+## Los mazos marcados se guardan todos (y sus cartas pasan a la coleccion); el primero de la
+## lista queda abierto en el editor. Se importa en orden inverso para que el primero sea el activo.
+func _import_many(names: PackedStringArray) -> void:
+	if names.is_empty():
+		return
+	for i in range(names.size() - 1, 0, -1):
+		SaveData.import_ydc_to_all_games(_decks_dir().path_join(names[i] + ".ydc"), names[i])
+	_import(names[0])
+
+
 func _open_file_dialog(mode: String) -> void:
+	if mode == "import":
+		_open_import_picker()
+		return
 	var bg := _script_tex(mode, 0)
 	var dlg_script: Script = preload("res://scenes/deck_editor/deck_file_dialog.gd")
 	var d: Node = dlg_script.new(
