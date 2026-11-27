@@ -400,7 +400,7 @@ static func render(owner: Node2D, event: Dictionary, frame: int) -> void:
 	if mode == "next_turn":
 		var counter := frame * 8
 		var color = "b" if int(event.get("p", 0)) == 0 else "r"
-		var name := "nex_?_" + color
+		var name: String = "nex_?_" + color
 		var offset := 0.0
 		if counter < 64: offset = (64 - counter) * 2.0
 		elif counter <= 320: name += str(clampi((counter - 64) / 16 + 1, 1, 8))
@@ -767,7 +767,7 @@ static func _render_blueeyes(owner: Node2D, event: Dictionary, frame: int) -> vo
 	if base != null and counter < 64:
 		base.free()
 		var texture := Assets.texture("kaiba/bust_up/" + layout.resource(0))
-		var extent := counter * 16
+		var extent: int = counter * 16
 		var first := maxi(0, extent - 424)
 		var strips := _strips(owner, texture)
 		for y in mini(600, first): strips.add(Rect2(0, y, 800, 1), Vector2(0, y))
@@ -779,7 +779,7 @@ static func _render_blueeyes(owner: Node2D, event: Dictionary, frame: int) -> vo
 		for pair in [[1, 2], [3, 4]]:
 			var index: int = pair[0] if counter == 64 else pair[1]
 			if layout.value(index) != null and int(layout.value(index)) != 0: _sprite(owner, "kaiba", layout.resource(index), Vector2(layout.position(index)))
-		var mouth := (counter >> 3) & 3
+		var mouth: int = (counter >> 3) & 3
 		if mouth != 0 and counter < 0x20000:
 			var index: int = [0, 5, 6, 5][mouth]
 			_sprite(owner, "kaiba", layout.resource(index), Vector2(layout.position(index)))
