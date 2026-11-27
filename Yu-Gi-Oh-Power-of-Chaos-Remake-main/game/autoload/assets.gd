@@ -883,6 +883,14 @@ func texture_card_deferred(rel_path: String, fallback_rel_path: String, max_per_
 		var resolved := resolve(rel_path)
 		if resolved != "" and _textures.has(resolved):
 			return _textures[resolved]
+		# Arte incrustado (card_art_b64.json): una vez decodificado queda en cache y no debe gastar
+		# el presupuesto por fotograma; si no, solo las primeras cartas de la pantalla (mazo,
+		# bolsa) recibian su imagen y el resto se quedaba con el marco vacio.
+		if resolved == "":
+			var emb_norm := rel_path.replace("\\", "/").to_lower()
+			var emb_key := "card_b64:%s:%s" % ["mini" if emb_norm.begins_with("common/mini/") else "card", emb_norm.get_file().get_basename()]
+			if _textures.has(emb_key):
+				return _textures[emb_key]
 	var frame := Engine.get_process_frames()
 	if frame != _card_budget_frame:
 		_card_budget_frame = frame
