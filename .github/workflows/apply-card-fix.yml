@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "LS0tIGEvWXUtR2ktT2gtUG93ZXItb2YtQ2hhb3MtUmVtYWtlLW1haW4vZ2FtZS9kdWVsL2pvZXkvam9leV9wb3J0X3pxLmdkCisrKyBiL1l1LUdpLU9oLVBvd2VyLW9mLUNoYW9zLVJlbWFrZS1tYWluL2dhbWUvZHVlbC9qb2V5L2pvZXlfcG9ydF96cS5nZApAQCAtNDM2LDExICs0MzYsMzggQEAKIAkJZjViY2ZhMChfenFfb3duZXIoZSksIG0udTE2KGUpKQogCWVsaWYgc3RlcCA9PSAxOgogCQlmNWI5MTcwKCgobS51MTYoZSArIDIpIDw8IDE1KSB8IDB4ODgpICYgMHhmZmZmZmZmZiwgKG0udTgoZSArIDIpID4+IDEpICYgMzEsIG0udTE2KDB4YTU3ODIyKSArIDEsIDApCi0JZWxzZTogcmV0dXJuIDEKKwllbHNlOgorCQlfZG5hX2RlYnVnKGUpCisJCXJldHVybiAxCiAJbS5zZXRfdTgoMHhhNTVjOGUsIG0udTgoMHhhNTVjOGUpICsgMSkKIAlyZXR1cm4gMAogCiAKKyMjIFRFTVBPUkFMOiBtdWVzdHJhIGVuIHBhbnRhbGxhIGxhIHJlc3B1ZXN0YSwgZWwgY29udGFkb3IgZGUgbGEgY2FydGEgeSBlbCB0aXBvIGVmZWN0aXZvLgorZnVuYyBfZG5hX2RlYnVnKGU6IGludCkgLT4gdm9pZDoKKwlpZiAoZWZmZWN0X2NhcmRfaWQobS51MTYoZSkpICYgMHhmZmZmKSAhPSAweDQ3OToKKwkJcmV0dXJuCisJdmFyIHRleHQ6IFN0cmluZyA9ICJETkEgYW5zd2VyPSVkIGNvdW50ZXI9JWQiICUgW20udTE2KDB4YTU3ODIyKSwgbS51MTYoX3pxX3pvbmUoZSkgKyBKb2V5TWVtLlpfQ09VTlRFUildCisJZm9yIHEgaW4gMjoKKwkJZm9yIHogaW4gNToKKwkJCWlmIChtLnUzMihKb2V5TWVtLnpvbmUocSwgeikpICYgMHhmZmYpICE9IDA6CisJCQkJdGV4dCArPSAiIHwgcCVkIHolZCB0eXBlPSVkIiAlIFtxLCB6LCBmNTZmNmQwKHEsIHopXQorCXZhciBsb29wOiBNYWluTG9vcCA9IEVuZ2luZS5nZXRfbWFpbl9sb29wKCkKKwlpZiBsb29wIGlzIFNjZW5lVHJlZToKKwkJdmFyIGxheWVyIDo9IENhbnZhc0xheWVyLm5ldygpCisJCWxheWVyLmxheWVyID0gMjAwCisJCXZhciBsYWJlbCA6PSBMYWJlbC5uZXcoKQorCQlsYWJlbC50ZXh0ID0gdGV4dAorCQlsYWJlbC5wb3NpdGlvbiA9IFZlY3RvcjIoOCwgOCkKKwkJbGFiZWwuYWRkX3RoZW1lX2ZvbnRfc2l6ZV9vdmVycmlkZSgiZm9udF9zaXplIiwgMjApCisJCWxhYmVsLmFkZF90aGVtZV9jb2xvcl9vdmVycmlkZSgiZm9udF9jb2xvciIsIENvbG9yKDEsIDEsIDApKQorCQlsYWJlbC5hZGRfdGhlbWVfY29sb3Jfb3ZlcnJpZGUoImZvbnRfb3V0bGluZV9jb2xvciIsIENvbG9yKDAsIDAsIDApKQorCQlsYWJlbC5hZGRfdGhlbWVfY29uc3RhbnRfb3ZlcnJpZGUoIm91dGxpbmVfc2l6ZSIsIDYpCisJCWxheWVyLmFkZF9jaGlsZChsYWJlbCkKKwkJKGxvb3AgYXMgU2NlbmVUcmVlKS5yb290LmFkZF9jaGlsZChsYXllcikKKwkJKGxvb3AgYXMgU2NlbmVUcmVlKS5jcmVhdGVfdGltZXIoMTIuMCkudGltZW91dC5jb25uZWN0KGxheWVyLnF1ZXVlX2ZyZWUpCisKKwogZnVuYyBmNTkzYmYwKGU6IGludCkgLT4gaW50OgogCWlmIF96cV9jcHUoZSk6CiAJCWY1OTJhNTAoZSwgMCkK"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/joey/joey_port_zq.gd
+          git commit -m "TEMPORARY debug: show DNA Surgery answer, counter and effective Type on screen"
+          git push
