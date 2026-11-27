@@ -35,18 +35,22 @@ var _replay_seed := 0
 var _lan := false
 ## Cartel de espera del rival en red (Joey 456360).
 var _wait_label: DuelWaitLabel = null
-const ONLINE_TURN_LIMIT_SEC := 120.0
-const ONLINE_OPPONENT_GRACE_SEC := 10.0
+const ONLINE_TURN_LIMIT_SEC := OnlineTurnTimer.TURN_LIMIT_SEC
+const ONLINE_OPPONENT_GRACE_SEC := OnlineTurnTimer.OPPONENT_GRACE_SEC
+## Reloj del duelo en red (turno propio, respuesta a una carta del rival y espera del rival).
+var _online_timer := OnlineTurnTimer.new()
 var _online_timer_enabled := false
 var _online_turn_left := ONLINE_TURN_LIMIT_SEC
+## Tiempo que le queda al rival, contado desde este lado.
+var _online_opp_left := ONLINE_TURN_LIMIT_SEC
 var _online_turn_owner := -1
 var _online_auto_ending := false
 var _online_auto_tick := 0
-var _online_auto_elapsed := 0.0
-var _online_resp_wait := 0.0
 var _online_resp_auto_decline := false
-var _online_net_wait_stuck := 0.0
 var _online_timer_paused := false
+## Ultimo paquete recibido y ultimo paso del motor vistos por el reloj (progreso del rival).
+var _online_rx_seen := 0
+var _online_exec_seen := -1
 var _forfeit_handled := false
 var _online_timer_panel: Control = null
 var _online_timer_border: ColorRect = null
@@ -851,7 +855,8 @@ func _refresh_online_timer_hud() -> void:
 	_online_timer_panel.visible = _online_timer_enabled and not _finished and _result == null and not _forfeit_handled
 	if not _online_timer_panel.visible:
 		return
-	var secs := ceili(maxf(0.0, _online_turn_left))
+	var shown := _online_opp_left if _online_turn_owner == 1 else _online_turn_left
+	var secs := ceili(maxf(0.0, shown))
 	var mm := secs / 60
 	var ss := secs % 60
 	var time_str := "%02d:%02d" % [mm, ss]
@@ -866,7 +871,7 @@ func _refresh_online_timer_hud() -> void:
 	if _online_timer_who_label != null and is_instance_valid(_online_timer_who_label):
 		_online_timer_who_label.text = who
 	_online_timer_label.text = time_str
-	var ratio := clampf(_online_turn_left / ONLINE_TURN_LIMIT_SEC, 0.0, 1.0)
+	var ratio := clampf(shown / ONLINE_TURN_LIMIT_SEC, 0.0, 1.0)
 	_online_timer_bar.size.x = 84.0 * ratio
 	var accent := Color(0.28, 0.82, 0.98, 0.96) if _online_turn_owner == 0 else Color(0.90, 0.74, 0.28, 0.94)
 	if is_paused_wait:
@@ -922,51 +927,28 @@ func _step_online_timer(delta: float, presenting: bool) -> void:
 	if _online_timer_panel == null or not is_instance_valid(_online_timer_panel):
 		_setup_online_timer_hud()
 	var turn_owner := _duel.m.u16(0xa133f2) & 1
-	if turn_owner != _online_turn_owner:
-		_online_turn_owner = turn_owner
-		_online_turn_left = ONLINE_TURN_LIMIT_SEC
-		_online_auto_ending = false
-		_online_auto_tick = 0
-		_online_auto_elapsed = 0.0
-		_online_resp_wait = 0.0
-		_online_resp_auto_decline = false
-		_online_net_wait_stuck = 0.0
-		_online_timer_paused = false
-	_online_timer_paused = false
-	_online_resp_auto_decline = false
 	var start_shaded: bool = _visual != null and _visual._start_banner_shade
 	var net_waiting: bool = _duel.net_waiting()
-	if not start_shaded and not presenting:
-		var local_prompt_open := _is_local_prompt_open(turn_owner)
-		var waiting_on_opponent: bool = turn_owner == 0 and not _online_auto_ending and net_waiting and not local_prompt_open
-		if turn_owner == 1 and local_prompt_open:
-			_online_resp_wait += delta
-			if _online_resp_wait >= 25.0:
-				_online_resp_auto_decline = true
-		elif waiting_on_opponent:
-			_online_resp_wait = 0.0
-			_online_timer_paused = true
-		else:
-			_online_resp_wait = 0.0
-			_online_turn_left = maxf(0.0, _online_turn_left - delta)
-	elif turn_owner == 0 and not _online_auto_ending and net_waiting and not start_shaded:
-		_online_timer_paused = true
-	if turn_owner == 0 and _online_turn_left <= 0.0:
-		if not _online_auto_ending:
-			_online_auto_ending = true
-			_online_auto_tick = 0
-			_online_auto_elapsed = 0.0
-		elif not presenting and not start_shaded and not net_waiting:
-			_online_auto_elapsed += delta
-			if _online_auto_elapsed >= 6.0:
-				# Safeguard: never leave the player locked out if an unusual sub-state prevents auto-end.
-				_online_auto_ending = false
-				_online_auto_tick = 0
-				_online_auto_elapsed = 0.0
-				_online_turn_left = 15.0
+	# Progreso del rival: llego un paquete suyo o el motor avanzo desde el ultimo paso.
+	var progressed := Lan.received_packets != _online_rx_seen or _duel.executed != _online_exec_seen
+	_online_rx_seen = Lan.received_packets
+	_online_exec_seen = _duel.executed
+	var was_auto_ending := _online_auto_ending
+	_online_timer.step(delta, turn_owner, _is_local_prompt_open(turn_owner), net_waiting,
+			presenting, start_shaded, progressed)
+	_online_turn_owner = _online_timer.turn_owner
+	_online_turn_left = _online_timer.turn_left
+	_online_opp_left = _online_timer.opponent_turn_left
+	_online_timer_paused = _online_timer.paused
+	_online_resp_auto_decline = _online_timer.auto_decline
+	_online_auto_ending = _online_timer.auto_ending
+	if _online_auto_ending and not was_auto_ending:
+		_online_auto_tick = 0
 	_refresh_online_timer_hud()
-	# Timeout ends only the active player's turn (each side auto-ends its own turn at 00:00);
-	# never award a match win or terminate the duel on turn timeout.
+	# El reloj del rival se cuenta tambien aqui: si su turno pasa del limite con su gracia, o si
+	# mi reloj lleva demasiado tiempo pausado esperandole sin que llegue nada, no se le espera mas.
+	if _online_timer.opponent_stalled:
+		_finish_online_forfeit_win("timeout")
 
 
 func _online_step_auto_end(steps: int, decline_only: bool) -> void:
