@@ -282,9 +282,19 @@ static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
 			CustomEffectsMonsters1.on_end_phase(duel, turn_p)
 			CustomEffectsMonsters2.on_end_phase(duel, turn_p)
 			_expire_temp_stats(st, t)
+			_clear_turn_level_flags(st)
 		_run_delayed_tasks(duel, t, ph)
 	on_continuous_enforce(duel)
 	check_and_apply_win(duel)
+
+
+## Cyber Dragon Drei makes Cyber Dragons Level 5 only until the end of the turn.
+static func _clear_turn_level_flags(st: Dictionary) -> void:
+	var zf_all: Dictionary = st.get("zone_flags", {})
+	for key in zf_all.keys():
+		var zf: Dictionary = zf_all[key]
+		if zf.has("set_level_5"):
+			zf.erase("set_level_5")
 
 
 static func on_continuous_enforce(duel) -> void:
