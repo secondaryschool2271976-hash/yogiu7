@@ -92,7 +92,7 @@ static func memory_pile(duel: Duel, p: int, loc: int) -> Dictionary:
 	var top := -1
 	if n > 0:
 		# El mazo tiene la carta de arriba en la posicion 0; las demas pilas, al final.
-		var slot := 0 if loc == DuelMem.LOC_DECK else n - 1
+		var slot: int = 0 if loc == DuelMem.LOC_DECK else n - 1
 		top = duel.cards.id_of(duel.m.u16(DuelMem.pl(p) + list_at + slot * 4) & 0xfff)
 	return {"count": n, "top": top}
 
