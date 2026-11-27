@@ -974,6 +974,11 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	# Frontier Wiseman (2731): a Warrior protected from Spell effects is not destroyed by them.
 	if not by_battle and str(state(duel).get("effect_source", "")) == "spell" and bool(zf.get("spell_immune", false)):
 		return false
+	# Timidity (2834): mientras esta activa nadie puede destruir Magias/Trampas boca abajo.
+	if z >= 5 and z <= 9 and not is_face_up(duel, p, z) \
+			and (int(pflags(duel, 0).get("timidity_until_turn", -1)) >= turn_number(duel) \
+			or int(pflags(duel, 1).get("timidity_until_turn", -1)) >= turn_number(duel)):
+		return false
 	if bool(zf.get("indest_once", false)):
 		zf["indest_once"] = false
 		return false
@@ -1397,10 +1402,14 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 	var sides: Array = [1 - (owner_p & 1), owner_p & 1] if target_opp else [owner_p & 1, 1 - (owner_p & 1)]
 	var best_score = -999999
 	var best = {}
+	var tn := turn_number(duel)
 	for pl in sides:
 		for z in 11:
 			var idx = zone_idx(duel, pl, z)
 			if idx == 0:
+				continue
+			# Mayakashi Metamorphosis (2605): el monstruo elegido no puede ser objetivo ese turno.
+			if pl != (owner_p & 1) and int(zflags(duel, pl, z).get("untargetable_until_turn", -1)) >= tn:
 				continue
 			if filter.call(duel, pl, z, idx):
 				var score = 0
@@ -1504,6 +1513,20 @@ static func collect_matching_zones(duel, filter: Callable) -> Array[Dictionary]:
 
 static func is_skill_drain_active(duel) -> bool:
 	return has_faceup_id(duel, 0, 2644) or has_faceup_id(duel, 1, 2644)
+
+
+## Dark Ruler Ha Des (2744): niega los efectos de los monstruos destruidos en batalla con
+## monstruos Demonio que controles. El monstruo destruido ya esta en el cementerio cuando se
+## disparan sus efectos, asi que se consulta aqui, no en la zona.
+static func ha_des_negates(duel, owner_p: int, cid: int) -> bool:
+	var opp := 1 - (owner_p & 1)
+	if not has_faceup_id(duel, opp, 2744) or is_skill_drain_active(duel):
+		return false
+	for z in 5:
+		var idx = zone_idx(duel, opp, z)
+		if idx != 0 and is_face_up(duel, opp, z) and monster_race(duel, idx) == 3:
+			return true
+	return false
 
 
 static func is_necrovalley_active(duel) -> bool:
