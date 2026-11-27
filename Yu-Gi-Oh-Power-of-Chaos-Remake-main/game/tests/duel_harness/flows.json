@@ -1,0 +1,182 @@
+{
+ "scenarios": [
+  {
+   "first": 1,
+   "hand": [
+    [],
+    []
+   ],
+   "flow": {
+    "frames": 600,
+    "click_phase": 5
+   },
+   "name": "mf_nomon",
+   "field": [
+    [
+     {
+      "card": 1056,
+      "zone": 5,
+      "c": 1
+     }
+    ],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ]
+  },
+  {
+   "first": 1,
+   "hand": [
+    [],
+    []
+   ],
+   "flow": {
+    "frames": 600,
+    "click_phase": 5
+   },
+   "name": "mf_atk",
+   "field": [
+    [
+     {
+      "card": 1056,
+      "zone": 5,
+      "c": 1
+     },
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ]
+  },
+  {
+   "first": 1,
+   "hand": [
+    [],
+    []
+   ],
+   "flow": {
+    "frames": 600,
+    "click_phase": 5
+   },
+   "name": "mf_def",
+   "field": [
+    [
+     {
+      "card": 1056,
+      "zone": 5,
+      "c": 1
+     },
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 1
+     }
+    ],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ]
+  },
+  {
+   "first": 1,
+   "hand": [
+    [],
+    []
+   ],
+   "flow": {
+    "frames": 600,
+    "click_phase": 5
+   },
+   "name": "mf_multi",
+   "field": [
+    [
+     {
+      "card": 1056,
+      "zone": 5,
+      "c": 1
+     },
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     },
+     {
+      "card": 47,
+      "zone": 1,
+      "c": 1
+     },
+     {
+      "card": 47,
+      "zone": 2,
+      "c": 0
+     },
+     {
+      "card": 47,
+      "zone": 3,
+      "c": 0
+     },
+     {
+      "card": 47,
+      "zone": 4,
+      "c": 1
+     }
+    ],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ]
+  },
+  {
+   "name": "sangan_battle",
+   "first": 1,
+   "hand": [
+    [],
+    []
+   ],
+   "deck_top": [
+    [
+     47,
+     47
+    ],
+    []
+   ],
+   "field": [
+    [
+     {
+      "card": 47,
+      "zone": 0,
+      "c": 0
+     }
+    ],
+    [
+     {
+      "card": 81,
+      "zone": 0
+     }
+    ]
+   ],
+   "flow": {
+    "frames": 700,
+    "click_phase": 5,
+    "auto_answer": 0
+   }
+  }
+ ]
+}
