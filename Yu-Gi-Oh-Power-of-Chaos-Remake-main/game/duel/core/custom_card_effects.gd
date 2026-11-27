@@ -380,6 +380,11 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 
 
 static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect := false, was_tributed_for_p := -1) -> void:
+	# Dark Ruler Ha Des (2744): un monstruo destruido en batalla por un Demonio del rival ve su
+	# efecto anulado, asi que no se dispara.
+	if by_battle and CustomDuelOps.ha_des_negates(duel, p, cid):
+		check_and_apply_win(duel)
+		return
 	CustomEffectsMonsters1.on_destroyed(duel, p, cid, by_battle, opp_effect, was_tributed_for_p)
 	CustomEffectsMonsters2.on_destroyed(duel, p, cid, by_battle, opp_effect, was_tributed_for_p)
 	check_and_apply_win(duel)
