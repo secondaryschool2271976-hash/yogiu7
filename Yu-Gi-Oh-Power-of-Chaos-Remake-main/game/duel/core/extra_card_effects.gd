@@ -435,6 +435,16 @@ static func _core_dreadroot_active(duel) -> bool:
 	return _core_has_active_raw_id(duel, 0, 2662) or _core_has_active_raw_id(duel, 1, 2662)
 
 
+static func _union_equipped_to(duel, p: int, z: int, union_id: int) -> bool:
+	var links: Dictionary = CustomDuelOps.state(duel).get("equip_links", {})
+	for ek in links.keys():
+		var link: Dictionary = links[ek]
+		if int(link.get("card_id", 0)) == union_id \
+				and int(link.get("target_p", -1)) == (p & 1) and int(link.get("target_z", -1)) == z:
+			return true
+	return false
+
+
 static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int) -> Vector2i:
 	var m: DuelMem = duel.m
 	var raw_id: int = duel.cards.id_of(m.u16(out) & 0xfff)
@@ -455,10 +465,6 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 			# The Winged Dragon of Ra: inherits power from 3 Tributes (top 3 GY monsters, min 3000)
 			m.set_u32(out + 4, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, false)))
 			m.set_u32(out + 8, maxi(3000, _core_top_gy_stat_sum(duel, p, 3, true)))
-		2502:
-			var hc = m.u8(pl + DuelMem.P_HAND_N)
-			m.set_u32(out + 4, hc * 1000)
-			m.set_u32(out + 8, hc * 1000)
 		2505:
 			# Holactie the Creator of Light
 			var lp_stat = maxi(5000, m.u16(pl + DuelMem.P_LP))
@@ -467,17 +473,6 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		2506:
 			# Amulet Dragon: +100 ATK per Spell in both GYs
 			atk_add = (_core_gy_type(duel, p, 22) + _core_gy_type(duel, opp, 22)) * 100
-		2513, 2514:
-			if (m.u8(0xa133f2) & 1) == (p & 1):
-				atk_add = 10000
-		2518, 2627:
-			atk_add = _core_gy_type(duel, p, 1) * 300
-		2524:
-			atk_add = 300
-		2536:
-			# Cyber Dragon Vier: +500 ATK/DEF
-			atk_add = 500
-			def_add = 500
 		2537:
 			# Cyber Dragon Zwei: +300 ATK if Spell in GY
 			if _core_gy_type(duel, p, 22) > 0:
@@ -485,43 +480,11 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		2539:
 			# Cyber End Dragon, the Final Strike Dragon: +500 ATK per Machine in GY
 			atk_add = _core_gy_type(duel, p, 7) * 500
-		2545:
-			# Dark Paladin: +500 ATK per Dragon on field or in either GY
-			var dragons = (
-				_core_other_type_on_field(duel, p, z, 1)
-				+ _core_other_type_on_field(duel, opp, -1, 1)
-				+ _core_gy_type(duel, p, 1)
-				+ _core_gy_type(duel, opp, 1)
-			)
-			atk_add = dragons * 500
-		2546:
-			# Dark Paladin - Wave-Motion: +500 ATK per other face-up monster on field
-			var others = maxi(0, _core_faceup_monsters(duel, p) - 1) + _core_faceup_monsters(duel, opp)
-			atk_add = others * 500
-		2552:
-			# Dragon Master Knight: +500 ATK per other Dragon you control
-			atk_add = _core_other_type_on_field(duel, p, z, 1) * 500
-		2564:
-			# Elemental HERO Neos Knight: gains half ATK of strongest GY monster (up to +1500)
-			atk_add = mini(1500, _core_top_gy_stat_sum(duel, p, 1, false) / 2)
-		2565:
-			# Elemental HERO Shining Flare Wingman: +300 ATK per Warrior in your GY
-			atk_add = _core_gy_type(duel, p, 15) * 300
 		2573:
 			atk_add = _core_gy_exodia(duel, p) * 500
 		2574:
 			m.set_u32(out + 4, maxi(4000, _core_top_gy_stat_sum(duel, p, 5, false)))
 			m.set_u32(out + 8, maxi(4000, _core_top_gy_stat_sum(duel, p, 5, true)))
-		2575:
-			atk_add = _core_gy_normal_monsters(duel, p) * 1000
-		2581, 2582, 2585:
-			var total_cards = (
-				m.u8(DuelMem.pl(0) + DuelMem.P_BANISH_N)
-				+ m.u8(DuelMem.pl(1) + DuelMem.P_BANISH_N)
-				+ m.u8(DuelMem.pl(0) + DuelMem.P_GRAVE_N)
-				+ m.u8(DuelMem.pl(1) + DuelMem.P_GRAVE_N)
-			)
-			atk_add = total_cards * 300
 		2583, 2584:
 			atk_add = maxi(2400, maxi(_core_top_gy_stat_sum(duel, p, 1, false), _core_highest_other_atk(duel, p, z)))
 		2588:
@@ -529,99 +492,30 @@ static func compute_stat_bonuses_core(duel, p: int, z: int, out: int, zone: int)
 		2611:
 			# Millennium Scorpion: +500 ATK per monster in opponent's GY (capped +2500)
 			atk_add = mini(2500, _core_gy_monsters(duel, opp) * 500)
-		2635:
-			atk_add = m.u8(pl + DuelMem.P_HAND_N) * 500
-		2636:
-			# Silent Magician LV4: +500 ATK per Spell in opponent's GY (max +2500)
-			atk_add = mini(2500, _core_gy_type(duel, opp, 22) * 500)
-		2638:
-			# Silent Magician Zero: +500 ATK per card in opponent's hand
-			atk_add = m.u8(opp_pl + DuelMem.P_HAND_N) * 500
 		2639:
 			# Silent Swordsman: +500 ATK per Warrior in your GY (max +2500)
 			atk_add = mini(2500, _core_gy_type(duel, p, 15) * 500)
-		2643:
-			# Silent Swordsman Zero: +500 ATK per monster in your GY (max +2500)
-			atk_add = mini(2500, _core_gy_monsters(duel, p) * 500)
-		2657:
-			atk_add = _core_gy_exodia(duel, p) * 1000
 		2660:
 			atk_add = m.u16(pl + DuelMem.P_LP)
 		2661:
 			var target_stat = _core_highest_other_atk(duel, p, z) + 100
 			m.set_u32(out + 4, target_stat)
 			m.set_u32(out + 8, target_stat)
-		2663:
-			var opp_cards = _core_field_cards(duel, opp) * 1000
-			atk_add = opp_cards
-			def_add = opp_cards
 		2664:
 			m.set_u32(out + 4, 4000)
 			m.set_u32(out + 8, 4000)
-		2669:
-			# Toon Dark Magician Girl: +300 ATK per Spellcaster in either GY
-			atk_add = (_core_gy_type(duel, p, 18) + _core_gy_type(duel, opp, 18)) * 300
-		2677, 2594:
-			var traps = _core_gy_type(duel, p, 21) * 1000
-			atk_add = traps
-			def_add = traps
-		2684:
-			var spells = _core_gy_type(duel, opp, 22) * 500
-			atk_add = spells
-			def_add = spells
 		2699:
 			# The Hunter with 7 Weapons: +1000 ATK when opponent controls a face-up monster
 			if _core_faceup_monsters(duel, opp) > 0:
 				atk_add = 1000
-		2706:
-			atk_add = maxi(1200, _core_highest_other_atk(duel, p, z, p & 1))
-			def_add = 800
 		2758:
 			# Spirit Ryu: +500 ATK/DEF per Dragon in your hand
 			var drg = _core_hand_type(duel, p, 1) * 500
 			atk_add = drg
 			def_add = drg
-		2771:
-			# Injection Fairy Lily: +2000 ATK when your LP > 2000
-			if m.u16(pl + DuelMem.P_LP) > 2000:
-				atk_add = 2000
-		2814:
-			# Royal Keeper: +300 ATK/DEF while face-up
-			atk_add = 300
-			def_add = 300
-		2840:
-			if _core_other_type_on_field(duel, p, z, 10) == 0:
-				atk_add = -1000
-				def_add = -1000
-		2899:
-			# Magical Marionette: +200 ATK per Spell in either GY
-			atk_add = (_core_gy_type(duel, p, 22) + _core_gy_type(duel, opp, 22)) * 200
-		2907:
-			atk_add = _core_amazoness_on_field(duel, p) * 400
-		2936, 2970:
-			# Skilled White / Dark Magician: +200 ATK per Spell in your GY (max +600)
-			atk_add = mini(600, _core_gy_type(duel, p, 22) * 200)
-		2940:
-			atk_add = _core_amazoness_on_field(duel, p) * 100
-		2962:
-			# Royal Magical Library: +300 DEF per Spell in your GY (max +1200)
-			def_add = mini(1200, _core_gy_type(duel, p, 22) * 300)
-		2994:
-			atk_add = _core_field_monsters(duel, opp) * 500
 		3034:
 			# Mirage Knight: gains opponent's highest face-up monster ATK
 			atk_add = _core_highest_other_atk(duel, p, z, opp)
-		3066:
-			atk_add = _core_gy_type(duel, p, 17) * 200
-		3086:
-			atk_add = _core_gy_monsters(duel, p) * 300
-		3121:
-			var ban = m.u8(pl + DuelMem.P_BANISH_N) * 400
-			atk_add = ban
-			def_add = ban
-		3123:
-			# Insect Princess: +500 ATK per Insect on opponent's field or GY
-			atk_add = (_core_other_type_on_field(duel, opp, -1, 10) + _core_gy_type(duel, opp, 10)) * 500
 	return Vector2i(atk_add, def_add)
 
 
@@ -643,48 +537,27 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	var atk_delta = 0
 	var def_delta = 0
 	if not skill_drain:
-		# Ally field-wide / Union-support auras
-		if m_type == 7:
-			if _core_has_active_raw_id(duel, owner, 2536, owner, z):
-				atk_delta += 500
-				def_delta += 500
-			if _core_has_active_raw_id(duel, owner, 2690, owner, z):
-				atk_delta += 400
-				def_delta += 400
-			if _core_has_active_raw_id(duel, owner, 2692, owner, z):
-				atk_delta += 600
-				def_delta += 600
-		if m_type == 13 and _core_has_active_raw_id(duel, owner, 2914, owner, z):
-			atk_delta += 300
-			def_delta += 300
-		if m_type == 3:
-			if _core_has_active_raw_id(duel, owner, 2915, owner, z):
-				atk_delta += 500
-				def_delta += 500
-			if _core_has_active_raw_id(duel, owner, 2778, owner, z):
-				atk_delta += 700
-				def_delta += 700
-		if (m_type == 1 or m_type == 15) and _core_has_active_raw_id(duel, owner, 2939, owner, z):
-			atk_delta += 500
-			def_delta += 500
-		if m_type == 1 and _core_has_active_raw_id(duel, owner, 2974, owner, z):
-			atk_delta += 1000
-			def_delta += 1000
-		if m_type == 2 and _core_has_active_raw_id(duel, owner, 2941, owner, z):
-			atk_delta += 500
-			def_delta += 500
-		if (m_type == 4 or m_type == 14):
-			if _core_has_active_raw_id(duel, owner, 2947, owner, z):
-				atk_delta += 500
-				def_delta += 500
-			if _core_has_active_raw_id(duel, owner, 2975, owner, z):
-				atk_delta += 500
-				def_delta += 500
-		if (m_type == 17 or m_type == 15) and _core_has_active_raw_id(duel, owner, 2959, owner, z):
-			atk_delta += 1000
-		if _core_has_active_raw_id(duel, owner, 2989, owner, z):
+		# Union monsters: the bonus applies only to the monster the union is equipped to.
+		if _union_equipped_to(duel, owner, z, 2690): # Y-Dragon Head: +400 ATK/DEF
 			atk_delta += 400
 			def_delta += 400
+		if _union_equipped_to(duel, owner, z, 2692): # Z-Metal Tank: +600 ATK/DEF
+			atk_delta += 600
+			def_delta += 600
+		if _union_equipped_to(duel, owner, z, 2939): # Pitch-Dark Dragon: +400 ATK/DEF
+			atk_delta += 400
+			def_delta += 400
+		if _union_equipped_to(duel, owner, z, 2941): # Zombie Tiger: +500 ATK/DEF
+			atk_delta += 500
+			def_delta += 500
+		if _union_equipped_to(duel, owner, z, 2959): # Koitsu: +3000 ATK
+			atk_delta += 3000
+		if _union_equipped_to(duel, owner, z, 2974): # Kiryu: +900 ATK/DEF
+			atk_delta += 900
+			def_delta += 900
+		if m_type == 3 and _core_has_active_raw_id(duel, owner, 2778, owner, z):
+			atk_delta += 700
+			def_delta += 700
 		# Maiden of the Aqua (2816): Umi field aura
 		if _core_has_active_raw_id(duel, 0, 2816) or _core_has_active_raw_id(duel, 1, 2816):
 			if m_type in [5, 8, 14, 19]:
@@ -693,13 +566,6 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 			elif m_type in [4, 7]:
 				atk_delta -= 200
 				def_delta -= 200
-		# Opponent debuff auras
-		if _core_has_active_raw_id(duel, opp, 2886):
-			atk_delta -= 800
-		if _core_has_active_raw_id(duel, opp, 2968):
-			atk_delta -= 500
-		if _core_has_active_raw_id(duel, opp, 2983):
-			atk_delta -= 500
 	# Continuous Spells / Traps & Field Spells
 	var a_forces = _core_count_active_st_raw_id(duel, owner, 2698)
 	if a_forces > 0 and m_type == 15:
@@ -721,12 +587,6 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 	if (_core_count_active_st_raw_id(duel, owner, 2645) > 0 or _core_count_active_st_raw_id(duel, owner, 2646) > 0) and raw_id in HERO_IDS:
 		if (m.u8(0xa133f2) & 1) == owner and _core_highest_other_atk(duel, p, z, opp) > int(m.u32(out + 4)):
 			atk_delta += 1000
-	if (_core_count_active_st_raw_id(duel, 0, 2619) > 0 or _core_count_active_st_raw_id(duel, 1, 2619) > 0) and m_lv >= 10:
-		atk_delta += 300
-		def_delta += 300
-	if (_core_count_active_st_raw_id(duel, owner, 2576) > 0 or _core_count_active_st_raw_id(duel, owner, 2577) > 0) and raw_id in SACRED_BEAST_IDS:
-		atk_delta += 500
-		def_delta += 500
 	# Extra Equip Spells & Equip Traps (direct stat modifiers without native alias subtraction).
 	if (m.u32(0xa133ec) & 0x100) == 0:
 		for i in m.u16(zone + 0x88):
@@ -761,8 +621,6 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 		m.set_u32(out + 4, maxi(0, int(m.u32(out + 4)) + atk_delta))
 	if def_delta != 0:
 		m.set_u32(out + 8, maxi(0, int(m.u32(out + 8)) + def_delta))
-	if not skill_drain and _core_has_active_raw_id(duel, opp, 2876) and int(m.u32(out + 4)) >= 1900:
-		m.set_u32(out + 4, maxi(0, int(m.u32(out + 4)) - 400))
 	if not skill_drain and raw_id != 2662 and _core_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f53fbd0(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f53fbd0(m.u32(out + 8)))
@@ -975,149 +833,48 @@ static func apply_own_effect_joey(duel, p: int, z: int, out: int, _zo: int, v: A
 		2501:
 			m.set_u32(out + 4, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, false)))
 			m.set_u32(out + 8, maxi(3000, _joey_top_gy_stat_sum(duel, p, 3, true)))
-		2502:
-			var hc = m.u8(pl + JoeyMem.P_HAND_N)
-			m.set_u32(out + 4, hc * 1000)
-			m.set_u32(out + 8, hc * 1000)
 		2505:
 			var lp_stat = maxi(5000, m.u16(pl + JoeyMem.P_LP))
 			m.set_u32(out + 4, lp_stat)
 			m.set_u32(out + 8, lp_stat)
 		2506:
 			v[0] += (_joey_gy_type(duel, p, 22) + _joey_gy_type(duel, opp, 22)) * 100
-		2513, 2514:
-			if (m.u8(JoeyMem.TURN) & 1) == (p & 1):
-				v[0] += 10000
-		2518, 2627:
-			v[0] += _joey_gy_type(duel, p, 1) * 300
-		2524:
-			v[0] += 300
-		2536:
-			v[0] += 500
-			v[1] += 500
 		2537:
 			if _joey_gy_type(duel, p, 22) > 0:
 				v[0] += 300
 		2539:
 			v[0] += _joey_gy_type(duel, p, 7) * 500
-		2545:
-			var dragons = (
-				_joey_other_type_on_field(duel, p, z, 1)
-				+ _joey_other_type_on_field(duel, opp, -1, 1)
-				+ _joey_gy_type(duel, p, 1)
-				+ _joey_gy_type(duel, opp, 1)
-			)
-			v[0] += dragons * 500
-		2546:
-			var others = maxi(0, _joey_faceup_monsters(duel, p) - 1) + _joey_faceup_monsters(duel, opp)
-			v[0] += others * 500
-		2552:
-			v[0] += _joey_other_type_on_field(duel, p, z, 1) * 500
-		2564:
-			v[0] += mini(1500, _joey_top_gy_stat_sum(duel, p, 1, false) / 2)
-		2565:
-			v[0] += _joey_gy_type(duel, p, 15) * 300
 		2573:
 			v[0] += _joey_gy_exodia(duel, p) * 500
 		2574:
 			m.set_u32(out + 4, maxi(4000, _joey_top_gy_stat_sum(duel, p, 5, false)))
 			m.set_u32(out + 8, maxi(4000, _joey_top_gy_stat_sum(duel, p, 5, true)))
-		2575:
-			v[0] += _joey_gy_normal_monsters(duel, p) * 1000
-		2581, 2582, 2585:
-			var total_cards = (
-				m.u8(JoeyMem.pl(0) + JoeyMem.P_BANISH_N)
-				+ m.u8(JoeyMem.pl(1) + JoeyMem.P_BANISH_N)
-				+ m.u8(JoeyMem.pl(0) + JoeyMem.P_GRAVE_N)
-				+ m.u8(JoeyMem.pl(1) + JoeyMem.P_GRAVE_N)
-			)
-			v[0] += total_cards * 300
 		2583, 2584:
 			v[0] += maxi(2400, maxi(_joey_top_gy_stat_sum(duel, p, 1, false), _joey_highest_other_atk(duel, p, z)))
 		2588:
 			v[1] += maxi(1000, _joey_highest_other_atk(duel, p, z, opp))
 		2611:
 			v[0] += mini(2500, _joey_gy_monsters(duel, opp) * 500)
-		2635:
-			v[0] += m.u8(pl + JoeyMem.P_HAND_N) * 500
-		2636:
-			v[0] += mini(2500, _joey_gy_type(duel, opp, 22) * 500)
-		2638:
-			v[0] += m.u8(opp_pl + JoeyMem.P_HAND_N) * 500
 		2639:
 			v[0] += mini(2500, _joey_gy_type(duel, p, 15) * 500)
-		2643:
-			v[0] += mini(2500, _joey_gy_monsters(duel, p) * 500)
-		2657:
-			v[0] += _joey_gy_exodia(duel, p) * 1000
 		2660:
 			v[0] += m.u16(pl + JoeyMem.P_LP)
 		2661:
 			var target_stat = _joey_highest_other_atk(duel, p, z) + 100
 			m.set_u32(out + 4, target_stat)
 			m.set_u32(out + 8, target_stat)
-		2663:
-			var opp_cards = _joey_field_cards(duel, opp) * 1000
-			v[0] += opp_cards
-			v[1] += opp_cards
 		2664:
 			m.set_u32(out + 4, 4000)
 			m.set_u32(out + 8, 4000)
-		2669:
-			v[0] += (_joey_gy_type(duel, p, 18) + _joey_gy_type(duel, opp, 18)) * 300
-		2677, 2594:
-			var traps = _joey_gy_type(duel, p, 21) * 1000
-			v[0] += traps
-			v[1] += traps
-		2684:
-			var spells = _joey_gy_type(duel, opp, 22) * 500
-			v[0] += spells
-			v[1] += spells
 		2699:
 			if _joey_faceup_monsters(duel, opp) > 0:
 				v[0] += 1000
-		2706:
-			v[0] += maxi(1200, _joey_highest_other_atk(duel, p, z, p & 1))
-			v[1] += 800
 		2758:
 			var drg = _joey_hand_type(duel, p, 1) * 500
 			v[0] += drg
 			v[1] += drg
-		2771:
-			if m.u16(pl + JoeyMem.P_LP) > 2000:
-				v[0] += 2000
-		2814:
-			v[0] += 300
-			v[1] += 300
-		2840:
-			if _joey_other_type_on_field(duel, p, z, 10) == 0:
-				v[0] -= 1000
-				v[1] -= 1000
-		2899:
-			v[0] += (_joey_gy_type(duel, p, 22) + _joey_gy_type(duel, opp, 22)) * 200
-		2907:
-			v[0] += _joey_amazoness_on_field(duel, p) * 400
-		2936, 2970:
-			v[0] += mini(600, _joey_gy_type(duel, p, 22) * 200)
-		2940:
-			v[0] += _joey_amazoness_on_field(duel, p) * 100
-		2962:
-			v[1] += mini(1200, _joey_gy_type(duel, p, 22) * 300)
-		2994:
-			v[0] += _joey_field_monsters(duel, opp) * 500
 		3034:
 			v[0] += _joey_highest_other_atk(duel, p, z, opp)
-		3066:
-			v[0] += _joey_gy_type(duel, p, 17) * 200
-		3086:
-			v[0] += _joey_gy_monsters(duel, p) * 300
-		3121:
-			var ban = m.u8(pl + JoeyMem.P_BANISH_N) * 400
-			v[0] += ban
-			v[1] += ban
-		3123:
-			v[0] += (_joey_other_type_on_field(duel, opp, -1, 10) + _joey_gy_type(duel, opp, 10)) * 500
-
 
 static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -> void:
 	var m: JoeyMem = duel.m
@@ -1137,47 +894,27 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	var atk_delta = 0
 	var def_delta = 0
 	if not skill_drain:
-		if m_type == 7:
-			if _joey_has_active_raw_id(duel, owner, 2536, owner, z):
-				atk_delta += 500
-				def_delta += 500
-			if _joey_has_active_raw_id(duel, owner, 2690, owner, z):
-				atk_delta += 400
-				def_delta += 400
-			if _joey_has_active_raw_id(duel, owner, 2692, owner, z):
-				atk_delta += 600
-				def_delta += 600
-		if m_type == 13 and _joey_has_active_raw_id(duel, owner, 2914, owner, z):
-			atk_delta += 300
-			def_delta += 300
-		if m_type == 3:
-			if _joey_has_active_raw_id(duel, owner, 2915, owner, z):
-				atk_delta += 500
-				def_delta += 500
-			if _joey_has_active_raw_id(duel, owner, 2778, owner, z):
-				atk_delta += 700
-				def_delta += 700
-		if (m_type == 1 or m_type == 15) and _joey_has_active_raw_id(duel, owner, 2939, owner, z):
-			atk_delta += 500
-			def_delta += 500
-		if m_type == 1 and _joey_has_active_raw_id(duel, owner, 2974, owner, z):
-			atk_delta += 1000
-			def_delta += 1000
-		if m_type == 2 and _joey_has_active_raw_id(duel, owner, 2941, owner, z):
-			atk_delta += 500
-			def_delta += 500
-		if (m_type == 4 or m_type == 14):
-			if _joey_has_active_raw_id(duel, owner, 2947, owner, z):
-				atk_delta += 500
-				def_delta += 500
-			if _joey_has_active_raw_id(duel, owner, 2975, owner, z):
-				atk_delta += 500
-				def_delta += 500
-		if (m_type == 17 or m_type == 15) and _joey_has_active_raw_id(duel, owner, 2959, owner, z):
-			atk_delta += 1000
-		if _joey_has_active_raw_id(duel, owner, 2989, owner, z):
+		# Union monsters: the bonus applies only to the monster the union is equipped to.
+		if _union_equipped_to(duel, owner, z, 2690): # Y-Dragon Head: +400 ATK/DEF
 			atk_delta += 400
 			def_delta += 400
+		if _union_equipped_to(duel, owner, z, 2692): # Z-Metal Tank: +600 ATK/DEF
+			atk_delta += 600
+			def_delta += 600
+		if _union_equipped_to(duel, owner, z, 2939): # Pitch-Dark Dragon: +400 ATK/DEF
+			atk_delta += 400
+			def_delta += 400
+		if _union_equipped_to(duel, owner, z, 2941): # Zombie Tiger: +500 ATK/DEF
+			atk_delta += 500
+			def_delta += 500
+		if _union_equipped_to(duel, owner, z, 2959): # Koitsu: +3000 ATK
+			atk_delta += 3000
+		if _union_equipped_to(duel, owner, z, 2974): # Kiryu: +900 ATK/DEF
+			atk_delta += 900
+			def_delta += 900
+		if m_type == 3 and _joey_has_active_raw_id(duel, owner, 2778, owner, z):
+			atk_delta += 700
+			def_delta += 700
 		if _joey_has_active_raw_id(duel, 0, 2816) or _joey_has_active_raw_id(duel, 1, 2816):
 			if m_type in [5, 8, 14, 19]:
 				atk_delta += 200
@@ -1185,12 +922,6 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 			elif m_type in [4, 7]:
 				atk_delta -= 200
 				def_delta -= 200
-		if _joey_has_active_raw_id(duel, opp, 2886):
-			atk_delta -= 800
-		if _joey_has_active_raw_id(duel, opp, 2968):
-			atk_delta -= 500
-		if _joey_has_active_raw_id(duel, opp, 2983):
-			atk_delta -= 500
 	# Continuous Spells / Traps & Field Spells
 	var a_forces = _joey_count_active_st_raw_id(duel, owner, 2698)
 	if a_forces > 0 and m_type == 15:
@@ -1211,12 +942,6 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 	if (_joey_count_active_st_raw_id(duel, owner, 2645) > 0 or _joey_count_active_st_raw_id(duel, owner, 2646) > 0) and raw_id in HERO_IDS:
 		if (m.u8(JoeyMem.TURN) & 1) == owner and _joey_highest_other_atk(duel, p, z, opp) > int(m.u32(out + 4)):
 			atk_delta += 1000
-	if (_joey_count_active_st_raw_id(duel, 0, 2619) > 0 or _joey_count_active_st_raw_id(duel, 1, 2619) > 0) and m_lv >= 10:
-		atk_delta += 300
-		def_delta += 300
-	if (_joey_count_active_st_raw_id(duel, owner, 2576) > 0 or _joey_count_active_st_raw_id(duel, owner, 2577) > 0) and raw_id in SACRED_BEAST_IDS:
-		atk_delta += 500
-		def_delta += 500
 	# Extra Equip Spells & Equip Traps (direct stat modifiers without native alias subtraction).
 	if (m.u32(0xa577ec) & 0x10000) == 0:
 		for i in m.u16(zo + JoeyMem.Z_LINKS_N):
@@ -1251,12 +976,9 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 		m.set_u32(out + 4, maxi(0, int(m.u32(out + 4)) + atk_delta))
 	if def_delta != 0:
 		m.set_u32(out + 8, maxi(0, int(m.u32(out + 8)) + def_delta))
-	if not skill_drain and _joey_has_active_raw_id(duel, opp, 2876) and int(m.u32(out + 4)) >= 1900:
-		m.set_u32(out + 4, maxi(0, int(m.u32(out + 4)) - 400))
 	if not skill_drain and raw_id != 2662 and _joey_dreadroot_active(duel):
 		m.set_u32(out + 4, duel.f5be050(m.u32(out + 4)))
 		m.set_u32(out + 8, duel.f5be050(m.u32(out + 8)))
 	var custom_stats = CustomCardEffects.modify_post_stats(duel, p, z, int(m.u32(out + 4)), int(m.u32(out + 8)))
 	m.set_u32(out + 4, maxi(0, custom_stats.x))
 	m.set_u32(out + 8, maxi(0, custom_stats.y))
-
