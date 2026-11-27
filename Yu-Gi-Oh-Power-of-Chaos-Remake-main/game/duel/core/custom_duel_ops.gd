@@ -375,7 +375,22 @@ static func monster_level(duel, idx: int) -> int:
 		return 10
 	if t >= 0x15:
 		return 0
-	return (prop_of(duel, idx) >> 25) & 0xf
+	var lvl: int = (prop_of(duel, idx) >> 25) & 0xf
+	# Cyber Dragon Drei (2533): Cyber Dragons become Level 5 for the rest of that turn.
+	var zf_all: Dictionary = state(duel).get("zone_flags", {})
+	if zf_all.is_empty():
+		return lvl
+	for p in 2:
+		for z in 5:
+			if zone_idx(duel, p, z) != idx:
+				continue
+			var key := "%d:%d" % [p, z]
+			if not zf_all.has(key):
+				continue
+			var zf: Dictionary = zf_all[key]
+			if bool(zf.get("set_level_5", false)):
+				return 5
+	return lvl
 
 
 static func base_atk(duel, idx: int) -> int:
