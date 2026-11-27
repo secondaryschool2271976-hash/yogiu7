@@ -575,24 +575,24 @@ static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) 
 	# Maju Garzett (2991) y Great Maju Garzett (3030): su ATK sale de los monstruos ofrendados,
 	# que pueden llegar al Cementerio despues del aviso de invocacion. Por eso el valor se fija
 	# la primera vez que ya estan ahi, y no en el momento de la invocacion.
-	var zf_g: Dictionary = CustomDuelOps.zflags(duel, p, z)
-	var need_g: int = int(zf_g.get("garrzett_pending", 0))
-	if need_g > 0 and not zf_g.has("garrzett_atk"):
-		var gy_n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
-		var total_g: int = 0
-		var found_g: int = 0
-		for i in range(gy_n - 1, -1, -1):
-			var idx_g: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
-			if CustomDuelOps.is_monster(duel, idx_g):
-				total_g += CustomDuelOps.base_atk(duel, idx_g)
-				found_g += 1
-				if found_g >= need_g:
-					break
-		if found_g >= need_g and total_g > 0:
-			zf_g["garrzett_atk"] = total_g * 2 if cid == 3030 else total_g
-			zf_g.erase("garrzett_pending")
-	if zf_g.has("garrzett_atk"):
-		atk = int(zf_g["garrzett_atk"])
+	if cid == 2991 or cid == 3030:
+		var zf_g: Dictionary = CustomDuelOps.zflags(duel, p, z)
+		if not zf_g.has("garrzett_atk"):
+			var need_g: int = 2 if cid == 2991 else 1
+			var gy_n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
+			var total_g: int = 0
+			var found_g: int = 0
+			for i in range(gy_n - 1, -1, -1):
+				var idx_g: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
+				if CustomDuelOps.is_monster(duel, idx_g):
+					total_g += CustomDuelOps.base_atk(duel, idx_g)
+					found_g += 1
+					if found_g >= need_g:
+						break
+			if found_g >= need_g and total_g > 0:
+				zf_g["garrzett_atk"] = total_g * 2 if cid == 3030 else total_g
+		if zf_g.has("garrzett_atk"):
+			atk = int(zf_g["garrzett_atk"])
 
 	if st["set_atk"].has(k):
 		var sa: Array = st["set_atk"][k]
