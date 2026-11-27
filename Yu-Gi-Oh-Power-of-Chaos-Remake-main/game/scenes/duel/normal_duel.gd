@@ -147,13 +147,14 @@ func _ready() -> void:
 			return
 		decks.append({"main": PackedInt32Array(original.get("main", [])), "side": PackedInt32Array(original.get("side", [])), "fusion": PackedInt32Array(original.get("fusion", []))})
 	# Mazo de Yugi elegido por 0x437c60 al entrar desde el menu (cpu*.ydc convertido a json).
-	var rival: Variant = Assets.read_json(Game.rival_deck) if Game.rival_deck != "" and Paths.cmdline_value("scenario") == "" else null
+	var is_scenario := Paths.cmdline_value("scenario") != "" or not Game.card_test_scenario.is_empty()
+	var rival: Variant = Assets.read_json(Game.rival_deck) if Game.rival_deck != "" and not is_scenario else null
 	if rival is Dictionary:
 		decks[1] = {"main": PackedInt32Array(rival.get("main", [])), "side": PackedInt32Array(rival.get("side", [])),
 				"fusion": PackedInt32Array(rival.get("fusion", []))}
 	var active: Dictionary = SaveData.data.get("decks", {}).get(game, {})
 	var is_lan_mode := Game.duel_mode == 3 and Lan.active()
-	var preset_player_path := LauncherSettings.get_offline_player_deck(game) if (not is_lan_mode and not Game.joey_demo and Paths.cmdline_value("scenario") == "" and is_instance_valid(LauncherSettings)) else ""
+	var preset_player_path := LauncherSettings.get_offline_player_deck(game) if (not is_lan_mode and not Game.joey_demo and not is_scenario and is_instance_valid(LauncherSettings)) else ""
 	var preset_player: Variant = Assets.read_json(preset_player_path) if (preset_player_path != "" and Assets.exists(preset_player_path)) else null
 	if preset_player is Dictionary and (preset_player as Dictionary).get("main", []).size() >= 40:
 		var pd: Dictionary = preset_player
@@ -177,6 +178,10 @@ func _ready() -> void:
 		scenario = DuelScenario.load_named(scenario_name)
 		if scenario == null:
 			printerr("Escenario no encontrado: ", scenario_name, " (disponibles: ", ", ".join(DuelScenario.list()), ")")
+	elif not Game.card_test_scenario.is_empty():
+		scenario = DuelScenario.from_dict(Game.card_test_scenario)
+		scenario_name = "card_test"
+		Game.card_test_scenario = {}
 	var first := 1 if _start_options < 0 else _start_options
 	# Con --ui-replay, la semilla del duel_start de la traza (la que el original pasa a 5418a0).
 	var rand_seed := Debug.next_duel_seed()
