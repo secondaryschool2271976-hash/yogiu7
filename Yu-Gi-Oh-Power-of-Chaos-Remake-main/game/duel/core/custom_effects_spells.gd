@@ -133,6 +133,10 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 		2727: # Fengsheng Mirror
 			return CustomDuelOps.pile_count(duel, opp, CustomDuelOps.LOC_HAND) > 0
 		2729, 2755, 2756, 2879, 2897, 2924, 2950, 2964, 3008, 3011, 3016, 3052, 3054, 3079, 3081, 3082, 3096:
+			# Una carta ya activada boca arriba en la zona de magias/trampas no se
+			# puede volver a activar (evita reutilizar equipos como 3054 o 3081).
+			if loc == CustomDuelOps.LOC_FIELD_ST and z >= 5 and z <= 10 and CustomDuelOps.is_face_up(duel, p, z):
+				return false
 			if cid == 3008 or cid == 3052:
 				if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) == 0:
 					return false
