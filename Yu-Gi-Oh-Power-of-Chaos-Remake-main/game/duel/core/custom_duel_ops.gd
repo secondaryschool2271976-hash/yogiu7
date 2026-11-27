@@ -1565,6 +1565,16 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 ## ejecuta SOLO si contesta Si (el motor queda en espera mientras el cuadro esta abierto).
 ## Si no se puede preguntar (CPU, LAN/online, repeticion, Joey o sin pantalla) devuelve false y
 ## quien llama debe aplicar el comportamiento automatico de siempre.
+## Texto de la pregunta Si/No de un efecto opcional ("puedes") de una carta.
+static func effect_prompt(duel, cid: int) -> String:
+	var nm: String = card_name(duel, cid)
+	if Assets.lang == "a":
+		return "هل تريد تفعيل تأثير %s؟" % nm
+	if Assets.lang == "s":
+		return "¿Activar el efecto de %s?" % nm
+	return "Activate the effect of %s?" % nm
+
+
 static func ask_optional(duel, p: int, text: String, on_yes: Callable) -> bool:
 	if not (duel is Duel):
 		return false
