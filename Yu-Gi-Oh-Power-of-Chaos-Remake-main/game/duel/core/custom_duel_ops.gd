@@ -1558,6 +1558,21 @@ static func choose_pile_card(duel, p: int, loc: int, filter: Callable, prefer_hi
 	return best_i
 
 
+## Borra la marca de "ya ataco" del motor para (p, z). Con ella el monstruo puede volver a
+## atacar este turno (Gray Wing, Cyber Twin Dragon y demas cartas de dos ataques).
+static func clear_attacked(duel, p: int, z: int) -> void:
+	if z < 0 or z >= 5:
+		return
+	var m = duel.m
+	var bit: int = 1 << (z & 31)
+	if is_joey(duel):
+		var at := JoeyMem.pl(p & 1) + 0x10
+		m.set_u16(at, (m.u16(at) & ~bit) & 0xffff)
+	else:
+		var at2 := DuelMem.pl(p & 1) - 2
+		m.set_u16(at2, (m.u16(at2) & ~bit) & 0xffff)
+
+
 static func matching_pile_indices(duel, p: int, loc: int, filter: Callable) -> Array[int]:
 	var out: Array[int] = []
 	for i in pile_count(duel, p, loc):
