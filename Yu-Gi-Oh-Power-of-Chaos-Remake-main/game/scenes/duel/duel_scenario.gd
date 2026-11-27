@@ -167,6 +167,11 @@ func build_decks(defaults: Array[Dictionary]) -> Array[Dictionary]:
 			if k >= 0:
 				available.remove_at(k)
 			else:
+				# _load_deck solo escribe las 80 primeras cartas del mazo principal: si la carta
+				# que la prueba necesita robar no cabe, se quita la ultima para que siempre llegue
+				# a la mano (antes se anadia al final y el motor la ignoraba en silencio).
+				while main.size() >= 80:
+					main.remove_at(main.size() - 1)
 				main.append(id)
 		deck["main"] = main
 		var fusion_deck: PackedInt32Array = deck.get("fusion", PackedInt32Array())
