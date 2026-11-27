@@ -1410,6 +1410,16 @@ static func get_equip_target(duel, eq_p: int, eq_z: int) -> Dictionary:
 
 # --- Heuristic Target & Pile Selectors ------------------------------------------------------------
 
+## Metalsilver Armor (2924): zona del monstruo equipado con la carta que controla `p`, o -1.
+static func metalsilver_target_zone(duel, p: int) -> int:
+	var links: Dictionary = state(duel).get("equip_links", {})
+	for ek in links.keys():
+		var link: Dictionary = links[ek]
+		if int(link.get("card_id", 0)) == 2924 and int(link.get("target_p", -1)) == (p & 1):
+			return int(link.get("target_z", -1))
+	return -1
+
+
 static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := true, target_opp := true) -> Dictionary:
 	var sides: Array = [1 - (owner_p & 1), owner_p & 1] if target_opp else [owner_p & 1, 1 - (owner_p & 1)]
 	var best_score = -999999
@@ -1423,6 +1433,11 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 			# Mayakashi Metamorphosis (2605): el monstruo elegido no puede ser objetivo ese turno.
 			if pl != (owner_p & 1) and int(zflags(duel, pl, z).get("untargetable_until_turn", -1)) >= tn:
 				continue
+			# Metalsilver Armor (2924): contra su controlador solo se puede elegir el monstruo equipado.
+			if pl != (owner_p & 1) and z < 5:
+				var armor_z := metalsilver_target_zone(duel, pl)
+				if armor_z >= 0 and z != armor_z:
+					continue
 			if filter.call(duel, pl, z, idx):
 				var score = 0
 				if z < 5:
