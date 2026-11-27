@@ -327,10 +327,11 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 	def test_lan_and_online_timer_stability(self) -> None:
 		lan_path = REPO_ROOT / "game" / "autoload" / "lan.gd"
 		normal_duel_path = REPO_ROOT / "game" / "scenes" / "duel" / "normal_duel.gd"
+		timer_path = REPO_ROOT / "game" / "core" / "online_turn_timer.gd"
 		joey_normal_path = REPO_ROOT / "game" / "scenes" / "duel" / "joey_native_normal.gd"
 		joey_adapter_path = REPO_ROOT / "game" / "scenes" / "duel" / "joey_presentation_adapter.gd"
 
-		for path in (lan_path, normal_duel_path, joey_normal_path, joey_adapter_path):
+		for path in (lan_path, normal_duel_path, timer_path, joey_normal_path, joey_adapter_path):
 			text = path.read_text(encoding="utf-8")
 			lines = text.splitlines()
 			for lineno, line in enumerate(lines, start=1):
@@ -368,7 +369,11 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		self.assertIn("msg in [0xe5, 0xdc, 0xdd]", normal_text, "Auto-end must pick End Turn (1) on phase menu dialogs")
 		self.assertIn("msg == 0xe6", normal_text, "Auto-end must answer Yes (1) on End Turn confirmation 0xe6")
 		self.assertIn("_is_action_menu_open()", normal_text, "Auto-end must dismiss open card action menus before ending phase")
-		self.assertIn("_online_auto_elapsed >= 6.0", normal_text, "Auto-end must include a deadlock release watchdog")
+		timer_text = timer_path.read_text(encoding="utf-8")
+		self.assertIn("OnlineTurnTimer.new()", normal_text, "normal_duel must drive the shared online clock")
+		self.assertIn("auto_elapsed >= AUTO_RETRY_SEC", timer_text, "Auto-end must include a deadlock release watchdog")
+		self.assertIn("wait_stuck >= STALL_SEC", timer_text, "A paused wait for the opponent must have a cap")
+		self.assertIn("opponent_turn_left = maxf(0.0, opponent_turn_left - delta)", timer_text, "The opponent turn clock must be counted locally")
 		self.assertIn("_online_resp_auto_decline", normal_text, "Response auto-decline must not mutate engine during presenting")
 
 		step_timer_match = re.search(r"func _step_online_timer\(.*?\n(?=func |\Z)", normal_text, flags=re.S)
