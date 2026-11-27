@@ -1752,8 +1752,8 @@ static func _evolve_optional(duel, p: int, z: int, from_id: int, to_id: int) -> 
 				CustomDuelOps.send_zone_to_gy(duel, p, z)
 				CustomDuelOps.special_summon_from_pile(duel, p, srcloc, si, p, true, false)
 				return
-	var from_name: String = CardDB.name_of(from_id)
-	var to_name: String = CardDB.name_of(to_id)
+	var from_name: String = CustomDuelOps.card_name(duel, from_id)
+	var to_name: String = CustomDuelOps.card_name(duel, to_id)
 	var text: String
 	if Assets.lang == "a":
 		text = "هل تريد تفعيل تأثير %s؟\nسيُرسل إلى المقبرة ويُستدعى %s استدعاءً خاصًا." % [from_name, to_name]
