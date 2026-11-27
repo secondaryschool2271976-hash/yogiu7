@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Selector de mazos para Importar: lista grande con casillas, varias selecciones a la vez.
+## Selector de mazos para Importar: lista grande con casillas, una sola seleccion a la vez.
 ## Filas altas (64 px) con separacion para que un dedo no toque la fila equivocada.
 ## Nada se importa al tocar una fila: solo al pulsar el boton Importar.
 
@@ -81,9 +81,9 @@ func _build_ui() -> void:
 	root.add_child(title)
 
 	var hint := Label.new()
-	hint.text = _tr("اضغط على أي مجموعة لتحديدها (يمكنك تحديد أكثر من واحدة) ثم اضغط استيراد.",
-			"Toca los mazos que quieras (puedes elegir varios) y pulsa Importar.",
-			"Tap every deck you want (you can pick several), then press Import.")
+	hint.text = _tr("اضغط على مجموعة واحدة لتحديدها ثم اضغط استيراد.",
+			"Toca un mazo y pulsa Importar.",
+			"Tap one deck, then press Import.")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_override("font", Assets.ui_font())
@@ -176,6 +176,11 @@ func _make_row(i: int) -> Button:
 	b.icon = DialogTheme.radio_icon(false)
 	b.text = _row_text(i)
 	b.toggled.connect(func(on_state: bool) -> void:
+		if on_state:
+			# Seleccion unica: marcar una fila desmarca las demas.
+			for j in _rows.size():
+				if j != i and _rows[j].button_pressed:
+					_rows[j].button_pressed = false
 		_checked[i] = on_state
 		b.icon = DialogTheme.radio_icon(on_state)
 		_refresh())
