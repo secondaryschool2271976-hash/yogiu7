@@ -776,7 +776,10 @@
     "1751": "ad_6853254.webp",
     "1752": "ad_36262024.webp",
     "1753": "ad_66574418.webp",
-    "1754": "ad_27657173.webp"
+    "1754": "ad_27657173.webp",
+    "1755": "ad_93969023.webp",
+    "1756": "ad_58257569.webp",
+    "1757": "ad_67300516.webp"
   },
   "cards": [
     {
@@ -33538,6 +33541,129 @@
       ],
       "image": "ad_27657173.webp",
       "prop": 1276481736,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1755,
+      "internal_id": 3140,
+      "password": "93969023",
+      "names": {
+        "eng": "Black Metal Dragon",
+        "ara": "التنين المعدني الأسود"
+      },
+      "descriptions": {
+        "eng": "You can target 1 \"Red-Eyes\" monster you control; equip this monster from your hand or field to that target. It gains 600 ATK. If this card is sent from the field to the GY: You can add 1 \"Red-Eyes\" card from your Deck to your hand.",
+        "ara": "يمكنك استهداف وحش 1 \"أحمر العينين\" تتحكم به؛ جهّز هذا الوحش من يدك أو ساحتك لذلك الهدف. يكتسب 600 هجوم. إذا أُرسلت هذه البطاقة من الساحة إلى المقبرة: يمكنك إضافة بطاقة 1 \"أحمر العينين\" من مجموعتك إلى يدك."
+      },
+      "atk": 600,
+      "defense": 600,
+      "level": 1,
+      "attribute": "dark",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_93969023.webp",
+      "prop": 1108637756,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1756,
+      "internal_id": 3141,
+      "password": "58257569",
+      "names": {
+        "eng": "Red-Eyes Baby Dragon",
+        "ara": "تنين أحمر العينين الصغير"
+      },
+      "descriptions": {
+        "eng": "When this card is destroyed by battle and sent to the GY: You can Special Summon 1 Level 7 or lower \"Red-Eyes\" monster from your Deck, and if you do, equip this card from the GY to it. It gains 300 ATK. If this card is sent to the GY while equipped to a monster: You can add 1 Level 1 Dragon monster from your Deck or GY to your hand.",
+        "ara": "عندما تُدمَّر هذه البطاقة في المعركة وتُرسل إلى المقبرة: يمكنك استدعاء وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل من مجموعتك بشكل خاص، وإذا فعلت، جهّز هذه البطاقة من المقبرة له. يكتسب 300 هجوم. إذا أُرسلت هذه البطاقة إلى المقبرة وهي مجهّزة لوحش: يمكنك إضافة وحش تنين 1 من المستوى 1 من مجموعتك أو مقبرتك إلى يدك."
+      },
+      "atk": 1200,
+      "defense": 700,
+      "level": 3,
+      "attribute": "dark",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_58257569.webp",
+      "prop": 1175777350,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1757,
+      "internal_id": 3142,
+      "password": "67300516",
+      "names": {
+        "eng": "Red-Eyes Wyvern",
+        "ara": "وايفرن أحمر العينين"
+      },
+      "descriptions": {
+        "eng": "During your End Phase, if you did not Normal Summon/Set a monster this turn: You can banish this card from your Graveyard; Special Summon 1 \"Red-Eyes\" monster from your Graveyard, except \"Red-Eyes B. Chick\".",
+        "ara": "خلال مرحلتك النهائية، إذا لم تستدعِ/تضع وحشاً بشكل عادي في هذا الدور: يمكنك نفي هذه البطاقة من مقبرتك؛ استدعِ وحش 1 \"أحمر العينين\" من مقبرتك بشكل خاص، ما عدا \"فرخ التنين الأسود\"."
+      },
+      "atk": 1800,
+      "defense": 1600,
+      "level": 4,
+      "attribute": "wind",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_67300516.webp",
+      "prop": 3356846240,
       "monster_kind": "effect",
       "effect_alias": 0,
       "subcategory": "normal",

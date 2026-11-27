@@ -31,7 +31,7 @@ const PHANTASM_IDS := [2513, 2514, 2595, 2624, 2625]
 const EGYPTIAN_GOD_IDS := [2500, 2501, 2502]
 const WICKED_GOD_IDS := [2661, 2662, 2663]
 const BLUE_EYES_IDS := [0, 2000, 379, 2518, 2519, 2620]
-const RED_EYES_IDS := [81, 2081, 2627, 2628, 3131, 3132, 3133, 3134, 3135, 3136, 3139]
+const RED_EYES_IDS := [81, 2081, 2627, 2628, 3131, 3132, 3133, 3134, 3135, 3136, 3138, 3139, 3140, 3141, 3142]
 const DARK_MAGICIAN_IDS := [34, 2034, 759, 2542, 2543, 2544, 2669, 2970]
 const TOON_IDS := [60, 61, 62, 63, 726, 727, 728, 766, 2667, 2668, 2669, 2670, 2671, 2672, 2673]
 const HARPIE_IDS := [61, 62]
@@ -148,6 +148,14 @@ static func turn_number(duel) -> int:
 		var t: int = duel.m.u16(0xa577f8)
 		return t if t > 0 else 1
 	return maxi(1, duel.m.u16(0xa133f0))
+
+
+## True when the player already Normal Summoned or Set a monster this turn (the engine's own flag:
+## Core bit 0x10 of the player byte at +8, Joey bit 20 of the player flags at 0xa56430).
+static func normal_summon_used(duel, p: int) -> bool:
+	if is_joey(duel):
+		return (duel.m.u32(0xa56430 + (p & 1) * JoeyMem.PLAYER_SIZE) & 0x100000) != 0
+	return (duel.m.u8(DuelMem.pl(p & 1) + 8) & 0x10) != 0
 
 
 static func phase(duel) -> int:

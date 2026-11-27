@@ -20,7 +20,7 @@ const IDS: Array[int] = [
 	3064, 3065, 3066, 3069, 3070, 3071, 3074, 3084, 3085, 3086,
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
-	3128, 3129, 3133, 3136, 3138, 3139,
+	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -56,6 +56,38 @@ const GUARDIAN_EQUIP_REQ := {
 
 static func handles(cid: int) -> bool:
 	return cid in IDS
+
+
+## Black Metal Dragon / Red-Eyes Baby Dragon: equip the card in `loc`/`slot` (hand, GY or its own
+## Monster Zone) to the Monster Zone `tz` as an equipped monster, the way Union monsters do.
+static func _equip_monster_to(duel, p: int, loc: int, slot: int, tz: int) -> bool:
+	var eq_z: int = CustomDuelOps.free_st_zone(duel, p)
+	if eq_z < 0 or tz < 0:
+		return false
+	if loc == CustomDuelOps.LOC_FIELD_MONSTER:
+		var tmp: int = duel.m.local(4)
+		duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, slot))
+		if CustomDuelOps.is_joey(duel):
+			duel.f570790(p, slot, 0)
+			duel.f5686e0(p, eq_z, tmp, 1)
+		else:
+			duel.f542c40(p, slot)
+			duel.f5423a0(p, eq_z - 5, tmp, 1)
+	else:
+		eq_z = CustomDuelOps.set_st_from_pile(duel, p, loc, slot, p, true)
+		if eq_z < 5:
+			return false
+	CustomDuelOps.link_equip(duel, p, eq_z, p, tz)
+	CustomDuelOps.zflags(duel, p, eq_z)["union_equipped"] = true
+	return true
+
+
+## Black Metal Dragon: the face-up "Red-Eyes" monster it can be equipped to (other than itself).
+static func _bmd_target(duel, p: int, self_z: int) -> int:
+	var pick: Dictionary = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and zz != self_z and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.name_matches(d, idx, "red-eyes"), true, false)
+	if pick.is_empty():
+		return -1
+	return int(pick["z"])
 
 
 ## The Black Stone of Legend: a Level 7 or lower "Red-Eyes" monster (except "Red-Eyes B. Chick").
@@ -203,6 +235,12 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return CustomDuelOps.can_opt(duel, p, cid, z) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and not bool(CustomDuelOps.zflags(duel, p, z).get("union_stolen", false))
 		return false
 	match cid:
+		3140: # Black Metal Dragon: equip itself from the hand or field to a Red-Eyes monster
+			if loc != CustomDuelOps.LOC_HAND and loc != CustomDuelOps.LOC_FIELD_MONSTER:
+				return false
+			if loc == CustomDuelOps.LOC_FIELD_MONSTER and not CustomDuelOps.is_face_up(duel, p, z):
+				return false
+			return CustomDuelOps.free_st_zone(duel, p) >= 0 and _bmd_target(duel, p, z if loc == CustomDuelOps.LOC_FIELD_MONSTER else -1) >= 0
 		3136: # Black Dragon's Chick: send itself to the GY; SS "Red-Eyes B. Dragon" from the hand
 			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.is_face_up(duel, p, z) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES) >= 0
 		3138: # The Black Stone of Legend: Tribute -> SS from the Deck, or from the GY -> add to hand
@@ -211,7 +249,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			if loc == CustomDuelOps.LOC_FIELD_MONSTER:
 				return CustomDuelOps.is_face_up(duel, p, z) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, _stone_pred()) >= 0
 			if loc == CustomDuelOps.LOC_GRAVE:
-				return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, _stone_pred()) >= 0
+				return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, i): return _stone_pred().call(d, idx, i) and CustomDuelOps.raw_id(d, idx) != 3138) >= 0
 			return false
 		3139: # Red-Eyes Black Meteor Dragon: hand SS by sending a Normal Monster; GY banish -> add Red-Eyes Fusion
 			if loc == CustomDuelOps.LOC_HAND:
@@ -224,7 +262,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 				var mp: int = CustomDuelOps.phase(duel)
 				if CustomDuelOps.turn_player(duel) != p or (mp != CustomDuelOps.PHASE_M1 and mp != CustomDuelOps.PHASE_M2):
 					return false
-				return CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 3140) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3140) >= 0
+				return CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 3143) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3143) >= 0
 			return false
 		2823: # Gravekeeper's Watcher (hand negate opp discard effect)
 			return ev == "chain_negate" and loc == CustomDuelOps.LOC_HAND and bool(ctx.get("opp_discards", false)) and int(ctx.get("chain_p", -1)) == opp
@@ -311,6 +349,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					duel.m.set_u8(DuelMem.zone(p, mz) + 6, duel.m.u8(DuelMem.zone(p, mz) + 6) | 2)
 		return
 	match cid:
+		3140: # Black Metal Dragon
+			var bmd_self: int = z if loc == CustomDuelOps.LOC_FIELD_MONSTER else CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3140)
+			var bmd_t: int = _bmd_target(duel, p, z if loc == CustomDuelOps.LOC_FIELD_MONSTER else -1)
+			if bmd_self >= 0 and bmd_t >= 0:
+				_equip_monster_to(duel, p, loc, bmd_self, bmd_t)
 		3136: # Black Dragon's Chick
 			CustomDuelOps.send_zone_to_gy(duel, p, z)
 			var ch_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES)
@@ -325,7 +368,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, bs_i, p, true, false)
 					CustomDuelOps.shuffle_deck(duel, p)
 			else:
-				var bs_g: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, _stone_pred())
+				var bs_g: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, i): return _stone_pred().call(d, idx, i) and CustomDuelOps.raw_id(d, idx) != 3138)
 				if bs_g >= 0:
 					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, bs_g, p, CustomDuelOps.LOC_DECK)
 					CustomDuelOps.shuffle_deck(duel, p)
@@ -350,7 +393,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				if mt_g >= 0:
 					CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, mt_g)
 				for mt_loc in [CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_GRAVE]:
-					var mt_f: int = CustomDuelOps.find_pile_index_by_id(duel, p, mt_loc, 3140)
+					var mt_f: int = CustomDuelOps.find_pile_index_by_id(duel, p, mt_loc, 3143)
 					if mt_f >= 0:
 						CustomDuelOps.add_from_pile_to_hand(duel, p, mt_loc, mt_f)
 						break
@@ -904,6 +947,18 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 	p &= 1
 	var opp = 1 - p
 	match cid:
+		3141: # Red-Eyes Baby Dragon: destroyed by battle -> SS a Red-Eyes from the Deck, equip itself to it
+			if by_battle and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+				var bb_di: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.monster_level(d, idx) <= 7)
+				if bb_di >= 0:
+					var bb_summon: Callable = func() -> void:
+						var bb_nz: int = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, bb_di, p, true, false)
+						CustomDuelOps.shuffle_deck(duel, p)
+						var bb_gi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3141)
+						if bb_nz >= 0 and bb_gi >= 0:
+							_equip_monster_to(duel, p, CustomDuelOps.LOC_GRAVE, bb_gi, bb_nz)
+					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 3141), bb_summon):
+						bb_summon.call()
 		3133: # Red-Eyes Alternative Black Dragon: SS a Level 7 or lower Red-Eyes from the GY
 			if (by_battle or opp_effect) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				var alt_gi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.monster_level(d, idx) <= 7 and CustomDuelOps.raw_id(d, idx) != 3133 and CustomDuelOps.raw_id(d, idx) != 2627, true)
@@ -1007,6 +1062,21 @@ static func on_sent_to_gy(duel, p: int, cid: int, from_loc: int, opp_effect: boo
 	p &= 1
 	var opp = 1 - p
 	match cid:
+		3140: # Black Metal Dragon: sent from the field to the GY -> add a Red-Eyes card from the Deck
+			if from_loc < 11:
+				var bm_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.name_matches(d, idx, "red-eyes"))
+				if bm_i >= 0:
+					var bm_add: Callable = func() -> void:
+						CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, bm_i)
+					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 3140), bm_add):
+						bm_add.call()
+		3141: # Red-Eyes Baby Dragon: sent to the GY while equipped -> add a Level 1 Dragon
+			if from_loc == CustomDuelOps.LOC_FIELD_ST:
+				for bd_loc in [CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_GRAVE]:
+					var bd_i: int = CustomDuelOps.choose_pile_card(duel, p, bd_loc, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.monster_race(d, idx) == 1 and CustomDuelOps.monster_level(d, idx) == 1 and CustomDuelOps.raw_id(d, idx) != 3141)
+					if bd_i >= 0:
+						CustomDuelOps.add_from_pile_to_hand(duel, p, bd_loc, bd_i)
+						break
 		2908: # Neko Mane King: during opp turn if sent to GY by opp effect -> End Phase
 			if opp_effect and CustomDuelOps.turn_player(duel) == opp:
 				CustomDuelOps.pflags(duel, opp)["force_ep_turn"] = CustomDuelOps.turn_number(duel)
@@ -1114,6 +1184,21 @@ static func on_end_phase(duel, turn_p: int) -> void:
 				elif cid == 3074: # Little-Winguard: toggle to DEF if low ATK
 					if CustomDuelOps.is_atk_pos(duel, pl, z):
 						CustomDuelOps.change_position(duel, pl, z, 1, -1)
+		# Red-Eyes Wyvern (3142): in your End Phase, if you did not Normal Summon/Set, banish it from the
+		# GY to Special Summon a "Red-Eyes" monster from the GY, except "Red-Eyes B. Chick".
+		if pl == turn_p and CustomDuelOps.can_hopt(duel, pl, 3142) and not CustomDuelOps.normal_summon_used(duel, pl) and CustomDuelOps.free_monster_zone(duel, pl) >= 0 and not CustomDuelOps.is_necrovalley_active(duel):
+			var wy_gi: int = CustomDuelOps.find_pile_index_by_id(duel, pl, CustomDuelOps.LOC_GRAVE, 3142)
+			if wy_gi >= 0 and CustomDuelOps.choose_pile_card(duel, pl, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.raw_id(d, idx) != 3142 and CustomDuelOps.raw_id(d, idx) != 3136) >= 0:
+				var wy_run: Callable = func() -> void:
+					CustomDuelOps.mark_hopt(duel, pl, 3142)
+					var wy_self: int = CustomDuelOps.find_pile_index_by_id(duel, pl, CustomDuelOps.LOC_GRAVE, 3142)
+					if wy_self >= 0:
+						CustomDuelOps.banish_from_pile(duel, pl, CustomDuelOps.LOC_GRAVE, wy_self)
+					var wy_t: int = CustomDuelOps.choose_pile_card(duel, pl, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.raw_id(d, idx) != 3136)
+					if wy_t >= 0:
+						CustomDuelOps.special_summon_from_pile(duel, pl, CustomDuelOps.LOC_GRAVE, wy_t, pl, true, false)
+				if not CustomDuelOps.ask_optional(duel, pl, CustomDuelOps.effect_prompt(duel, 3142), wy_run):
+					wy_run.call()
 		# D.D. Scout Plane in Banished -> SS Attack Position
 		if CustomDuelOps.free_monster_zone(duel, pl) >= 0 and CustomDuelOps.can_hopt(duel, pl, 3090):
 			var bi = CustomDuelOps.find_pile_index_by_id(duel, pl, CustomDuelOps.LOC_BANISH, 3090)

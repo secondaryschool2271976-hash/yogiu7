@@ -586,6 +586,10 @@ static func apply_post_modifiers_core(duel, p: int, z: int, out: int, zone: int)
 			def_delta += 900
 		if _union_equipped_to(duel, owner, z, 3082): # Shooting Star Bow - Ceal: -1000 ATK, ataca directo
 			atk_delta -= 1000
+		if _union_equipped_to(duel, owner, z, 3140): # Black Metal Dragon: +600 ATK
+			atk_delta += 600
+		if _union_equipped_to(duel, owner, z, 3141): # Red-Eyes Baby Dragon: +300 ATK
+			atk_delta += 300
 		if m_type == 3 and _core_has_active_raw_id(duel, owner, 2778, owner, z):
 			atk_delta += 700
 			def_delta += 700
@@ -949,6 +953,10 @@ static func apply_post_modifiers_joey(duel, p: int, z: int, out: int, zo: int) -
 			def_delta += 900
 		if _union_equipped_to(duel, owner, z, 3082): # Shooting Star Bow - Ceal: -1000 ATK, ataca directo
 			atk_delta -= 1000
+		if _union_equipped_to(duel, owner, z, 3140): # Black Metal Dragon: +600 ATK
+			atk_delta += 600
+		if _union_equipped_to(duel, owner, z, 3141): # Red-Eyes Baby Dragon: +300 ATK
+			atk_delta += 300
 		if m_type == 3 and _joey_has_active_raw_id(duel, owner, 2778, owner, z):
 			atk_delta += 700
 			def_delta += 700
