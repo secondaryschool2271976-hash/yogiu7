@@ -967,6 +967,10 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
+	# D. D. Dragon (3036): a Spell/Trap effect that does not target it cannot destroy it.
+	if not by_battle and str(state(duel).get("effect_source", "")) in ["spell", "trap"] \
+			and not bool(state(duel).get("effect_targeted", false)) and bool(zf.get("nontarget_st_immune", false)):
+		return false
 	# Frontier Wiseman (2731): a Warrior protected from Spell effects is not destroyed by them.
 	if not by_battle and str(state(duel).get("effect_source", "")) == "spell" and bool(zf.get("spell_immune", false)):
 		return false
@@ -1413,6 +1417,9 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 				if score > best_score:
 					best_score = score
 					best = {"p": pl, "z": z, "idx": idx}
+	# Elegir zona es la primitiva de "seleccionar objetivo": marca el efecto como dirigido.
+	if not best.is_empty() and str(state(duel).get("effect_source", "")) != "":
+		state(duel)["effect_targeted"] = true
 	return best
 
 
