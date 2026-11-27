@@ -252,6 +252,8 @@ func f56bd80(p: int, z: int, q: int, w: int) -> int:
 	var target := m.u32(_JC_ZONES + target_off) & 0xfff
 	if target == 0:
 		return 0
+	if not CustomCardEffects.can_attack_target(self, p, z, q, w):
+		return 0
 	if (effect_card_id(target) & 0xffff) == 0x52e and f56b220(0x14d) != 0 \
 			and (m.u8(0xa55d7a + target_off) & 2) != 0 \
 			and f56b440(target, JoeyMem.ident(m.u32(_JC_ZONES + target_off))) == 0:
