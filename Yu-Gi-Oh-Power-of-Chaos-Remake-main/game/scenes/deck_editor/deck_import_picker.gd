@@ -20,6 +20,8 @@ var _import_btn: Button = null
 var _all_btn: Button = null
 var _count_lbl: Label = null
 var _done := false
+var _btns: Array[Button] = []
+var _drag_last := Vector2.ZERO
 
 
 func setup(decks_dir: String, files: PackedStringArray) -> void:
@@ -128,6 +130,7 @@ func _build_ui() -> void:
 	var ext := _make_button(_tr("استيراد ملف YDC من الجهاز", "Archivo YDC del dispositivo", "Import a .YDC file from device"), false)
 	ext.pressed.connect(func() -> void: browse_external.emit())
 	root.add_child(ext)
+	_btns.append(ext)
 
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 10)
@@ -136,14 +139,17 @@ func _build_ui() -> void:
 	cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cancel.pressed.connect(_cancel)
 	bar.add_child(cancel)
+	_btns.append(cancel)
 	_all_btn = _make_button(_tr("تحديد الكل", "Todos", "Select all"), false)
 	_all_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_all_btn.pressed.connect(_toggle_all)
 	bar.add_child(_all_btn)
+	_btns.append(_all_btn)
 	_import_btn = _make_button("", true)
 	_import_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_import_btn.pressed.connect(_confirm)
 	bar.add_child(_import_btn)
+	_btns.append(_import_btn)
 	_refresh()
 
 
@@ -276,3 +282,49 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		get_viewport().set_input_as_handled()
 		_cancel()
+
+
+## mobile_pointer consume todo el toque y solo reinyecta raton en coordenadas de escena: los
+## Control de este CanvasLayer viven en pixeles del viewport, asi que el dialogo no recibia
+## ningun toque (ni filas ni botones). El deck_editor nos pasa el toque por
+## handle_mobile_search_touch/handle_mobile_search_drag; aqui lo convertimos y actuamos.
+func _viewport_point(scene_pos: Vector2) -> Vector2:
+	return get_viewport().get_canvas_transform() * scene_pos
+
+
+func _button_at(point: Vector2) -> Button:
+	for i in _rows.size():
+		var row: Button = _rows[i]
+		if is_instance_valid(row) and row.get_global_rect().grow(4.0).has_point(point):
+			return row
+	for btn in _btns:
+		if is_instance_valid(btn) and btn.visible and btn.get_global_rect().grow(4.0).has_point(point):
+			return btn
+	return null
+
+
+func handle_mobile_touch(event: InputEventScreenTouch, scene_pos: Vector2) -> bool:
+	if _done:
+		return true
+	var point: Vector2 = _viewport_point(scene_pos)
+	_drag_last = point
+	if not event.pressed:
+		return true
+	var btn: Button = _button_at(point)
+	if btn == null or btn.disabled:
+		return true
+	if btn in _rows:
+		btn.button_pressed = not btn.button_pressed
+	else:
+		btn.pressed.emit()
+	return true
+
+
+func handle_mobile_drag(event: InputEventScreenDrag, scene_pos: Vector2) -> bool:
+	if _done:
+		return true
+	var point: Vector2 = _viewport_point(scene_pos)
+	if _scroll != null and _scroll.get_global_rect().grow(8.0).has_point(point):
+		_scroll.scroll_vertical -= int(round(point.y - _drag_last.y))
+	_drag_last = point
+	return true
