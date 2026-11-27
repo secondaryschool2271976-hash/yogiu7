@@ -51,6 +51,21 @@ static func list() -> PackedStringArray:
 	return out
 
 
+## Construye un escenario en memoria (herramienta de prueba de efectos de carta).
+static func from_dict(data: Dictionary) -> DuelScenario:
+	var s := DuelScenario.new()
+	s.description = str(data.get("description", ""))
+	s.first = int(data.get("first", 1))
+	s.seed = int(data.get("seed", -1))
+	s.decks = data.get("decks", [null, null])
+	s.hands = data.get("hands", [[], []])
+	s.field = data.get("field", [[], []])
+	s.grave = data.get("grave", [[], []])
+	s.lp = data.get("lp", [])
+	s.fusion = data.get("fusion", [[], []])
+	return s
+
+
 ## Carga `name_or_path` (nombre de res://scenarios o ruta a un .json). null si no existe.
 static func load_named(name_or_path: String) -> DuelScenario:
 	var path := name_or_path
