@@ -415,6 +415,9 @@ static func monster_level(duel, idx: int) -> int:
 			var zf: Dictionary = zf_all[key]
 			if bool(zf.get("set_level_5", false)):
 				return 5
+			# Cyber Dragon Herz (2534): su Nivel pasa a 5 hasta el final de ese turno.
+			if int(zf.get("set_level_5_turn", -1)) == turn_number(duel):
+				return 5
 	return lvl
 
 
