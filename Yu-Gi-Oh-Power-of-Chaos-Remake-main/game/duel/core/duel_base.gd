@@ -199,6 +199,14 @@ func list_gone() -> void:
 func answer_dialog(value: int) -> void:
 	if dialog_open.is_empty():
 		return
+	if dialog_open.has("custom_yes"):
+		# Pregunta Si/No de un efecto opcional personalizado: no pasa por el motor original.
+		var yes_cb: Callable = dialog_open["custom_yes"]
+		dialog_open = {}
+		if value == 1 and yes_cb.is_valid():
+			yes_cb.call()
+		CustomDuelOps.next_optional_prompt(self)
+		return
 	dialog_open = {}
 	call("f540d80", value)
 ## Respuesta al iniciar el cierre: la ranura sigue ocupada hasta +0x14 < -255.
@@ -207,11 +215,21 @@ func dialog_close(value: int) -> void:
 	if dialog_open.is_empty() or dialog_open.get("closing", false):
 		return
 	dialog_open["closing"] = true
+	if dialog_open.has("custom_yes"):
+		var yes_cb: Callable = dialog_open["custom_yes"]
+		dialog_open.erase("custom_yes")
+		dialog_open["custom_done"] = true
+		if value == 1 and yes_cb.is_valid():
+			yes_cb.call()
+		return
 	call("f540d80", value)
 
 
 func dialog_gone() -> void:
+	var was_custom: bool = dialog_open.has("custom_done")
 	dialog_open = {}
+	if was_custom:
+		CustomDuelOps.next_optional_prompt(self)
 
 
 ## Funciones del original que se llamaron sin estar portadas: direccion -> veces.
