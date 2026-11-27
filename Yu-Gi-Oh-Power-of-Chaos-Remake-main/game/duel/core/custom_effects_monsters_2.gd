@@ -688,9 +688,9 @@ static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int)
 		CustomDuelOps.damage(duel, atk_p, CustomDuelOps.eff_atk(duel, atk_p, atk_z), false)
 		CustomDuelOps.zflags(duel, def_p, def_z)["reflect_bounder_pop"] = true
 	if acid == 3036 and def_z >= 0: # Different Dimension Dragon: cannot be destroyed by battle with <=1900 ATK monster
-		CustomDuelOps.zflags(duel, atk_p, atk_z)["indestructible_battle"] = CustomDuelOps.eff_atk(duel, def_p, def_z) <= 1900
+		CustomDuelOps.zflags(duel, atk_p, atk_z)["indest_battle"] = CustomDuelOps.eff_atk(duel, def_p, def_z) <= 1900
 	if dcid == 3036:
-		CustomDuelOps.zflags(duel, def_p, def_z)["indestructible_battle"] = CustomDuelOps.eff_atk(duel, atk_p, atk_z) <= 1900
+		CustomDuelOps.zflags(duel, def_p, def_z)["indest_battle"] = CustomDuelOps.eff_atk(duel, atk_p, atk_z) <= 1900
 
 
 static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct: bool) -> void:
