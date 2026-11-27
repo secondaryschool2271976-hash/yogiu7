@@ -1740,6 +1740,31 @@ static func on_draw(duel, draw_p: int, count: int) -> void:
 				zf["lv_bonus"] = int(zf.get("lv_bonus", 0)) + count
 
 
+## Evolucion de Armed Dragon (LV3 -> LV5, LV5 -> LV7): efecto opcional. Al jugador local se le
+## pregunta Si/No; en los demas casos (CPU, online, repeticion, Joey) se activa solo, como antes.
+static func _evolve_optional(duel, p: int, z: int, from_id: int, to_id: int) -> void:
+	var do_evolve := func() -> void:
+		if CustomDuelOps.zone_idx(duel, p, z) == 0 or CustomDuelOps.zone_id(duel, p, z) != from_id:
+			return
+		for srcloc in [CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_HAND]:
+			var si = CustomDuelOps.find_pile_index_by_id(duel, p, srcloc, to_id)
+			if si >= 0:
+				CustomDuelOps.send_zone_to_gy(duel, p, z)
+				CustomDuelOps.special_summon_from_pile(duel, p, srcloc, si, p, true, false)
+				return
+	var from_name: String = CardDB.name_of(from_id)
+	var to_name: String = CardDB.name_of(to_id)
+	var text: String
+	if Assets.lang == "a":
+		text = "هل تريد تفعيل تأثير %s؟\nسيُرسل إلى المقبرة ويُستدعى %s استدعاءً خاصًا." % [from_name, to_name]
+	elif Assets.lang == "s":
+		text = "¿Activar el efecto de %s?\nSe enviará al Cementerio y se invocará por Invocación Especial a %s." % [from_name, to_name]
+	else:
+		text = "Activate the effect of %s?\nIt will be sent to the Graveyard and %s will be Special Summoned." % [from_name, to_name]
+	if not CustomDuelOps.ask_optional(duel, p, text, do_evolve):
+		do_evolve.call()
+
+
 static func on_standby_tick(duel, turn_p: int) -> void:
 	turn_p &= 1
 	var t = CustomDuelOps.turn_number(duel)
@@ -1757,8 +1782,7 @@ static func on_standby_tick(duel, turn_p: int) -> void:
 					si = CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_HAND, 2511)
 					sl = CustomDuelOps.LOC_HAND
 				if si >= 0:
-					CustomDuelOps.send_zone_to_gy(duel, turn_p, z)
-					CustomDuelOps.special_summon_from_pile(duel, turn_p, sl, si, turn_p, true, false)
+					_evolve_optional(duel, turn_p, z, 2510, 2511)
 			2573: # Exodia Necross +500 ATK
 				CustomDuelOps.add_stat_mod(duel, turn_p, z, 500, 0, false)
 			2636: # Silent Magician LV4 with 5 counters -> LV8
@@ -1847,12 +1871,16 @@ static func on_end_phase(duel, turn_p: int) -> void:
 					2511, 2591, 2592: # Armed Dragon LV5 -> LV7 / Horus LV4 -> LV6 / Horus LV6 -> LV8
 						if int(zf.get("evolve_ready_turn", -1)) == t:
 							var target_id = 2512 if cid == 2511 else (2592 if cid == 2591 else 2593)
-							for srcloc in [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK]:
-								var si = CustomDuelOps.find_pile_index_by_id(duel, pl, srcloc, target_id)
-								if si >= 0:
-									CustomDuelOps.send_zone_to_gy(duel, pl, z)
-									CustomDuelOps.special_summon_from_pile(duel, pl, srcloc, si, pl, true, false)
-									break
+							if cid == 2511:
+								# Armed Dragon LV5: el efecto es opcional ("puedes"), se pregunta al jugador.
+								_evolve_optional(duel, pl, z, 2511, target_id)
+							else:
+								for srcloc in [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK]:
+									var si = CustomDuelOps.find_pile_index_by_id(duel, pl, srcloc, target_id)
+									if si >= 0:
+										CustomDuelOps.send_zone_to_gy(duel, pl, z)
+										CustomDuelOps.special_summon_from_pile(duel, pl, srcloc, si, pl, true, false)
+										break
 					2544: # DM of Chaos: add 1 Spell from GY
 						if CustomDuelOps.can_hopt(duel, pl, 2544) and not CustomDuelOps.is_necrovalley_active(duel):
 							var si = CustomDuelOps.choose_pile_card(duel, pl, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_spell(d, idx), true)
