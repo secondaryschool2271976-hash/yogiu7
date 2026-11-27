@@ -6,6 +6,7 @@ extends Control
 const MAX_RESULTS := 200
 
 var _list: ItemList
+var _grid: GridContainer
 var _status: Label
 var _field_o: LineEdit
 var _grave_o: LineEdit
@@ -17,6 +18,15 @@ var _lp_p: LineEdit
 func _ready() -> void:
 	_build()
 	_refresh("")
+	get_viewport().size_changed.connect(_relayout)
+	_relayout()
+
+
+## En pantallas estrechas (telefono en vertical) las opciones van en una sola columna.
+func _relayout() -> void:
+	if _grid == null:
+		return
+	_grid.columns = 1 if get_viewport_rect().size.x < 640.0 else 2
 
 
 func _txt(eng: String, ara: String, spa: String) -> String:
@@ -58,10 +68,12 @@ func _build() -> void:
 	_list.custom_minimum_size = Vector2(0, 220)
 	col.add_child(_list)
 
-	var extra := GridContainer.new()
-	extra.columns = 2
-	extra.add_theme_constant_override("h_separation", 12)
-	col.add_child(extra)
+	_grid = GridContainer.new()
+	_grid.columns = 2
+	_grid.add_theme_constant_override("h_separation", 12)
+	_grid.add_theme_constant_override("v_separation", 6)
+	col.add_child(_grid)
+	var extra: GridContainer = _grid
 
 	_field_o = _add_row(extra, _txt("Opponent field (names/ids, comma separated)", "ملعب الخصم (أسماء أو أرقام مفصولة بفاصلة)", "Campo rival (nombres/ids separados por coma)"))
 	_grave_o = _add_row(extra, _txt("Opponent graveyard", "مقبرة الخصم", "Cementerio rival"))
@@ -92,9 +104,12 @@ func _build() -> void:
 func _add_row(grid: GridContainer, label_text: String) -> LineEdit:
 	var l := Label.new()
 	l.text = label_text
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_child(l)
 	var e := LineEdit.new()
-	e.custom_minimum_size = Vector2(0, 40)
+	e.custom_minimum_size = Vector2(0, 48)
+	e.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_child(e)
 	return e
 
