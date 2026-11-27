@@ -601,6 +601,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			return true
 		2717: # Super Rejuvenation
 			CustomDuelOps.pflags(duel, p)["super_rejuv_turn"] = t
+			CustomDuelOps.pflags(duel, p)["dragons_discarded_turn"] = 0
 			return true
 		2719: # A Wingbeat of Giant Dragon
 			var drg = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.monster_race(d, idx) == 1 and CustomDuelOps.monster_level(d, idx) >= 5, false, false)
