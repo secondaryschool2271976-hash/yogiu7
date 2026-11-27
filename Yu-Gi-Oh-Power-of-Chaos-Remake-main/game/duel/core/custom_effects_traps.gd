@@ -606,8 +606,6 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			return true
 		2919: # Formation Union
 			var un_z = _find_unequipped_union_zone(duel, p)
-			if un_z >= 0:
-				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, 0, p) # fallback
 			for zz in range(5, 10):
 				if CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.zone_id(duel, p, zz) in CustomDuelOps.UNION_IDS and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 					var mz = CustomDuelOps.activate_trap_as_monster(duel, p, zz, CustomDuelOps.base_atk(duel, CustomDuelOps.zone_idx(duel, p, zz)), CustomDuelOps.base_def(duel, CustomDuelOps.zone_idx(duel, p, zz)))
