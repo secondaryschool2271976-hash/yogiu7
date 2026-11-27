@@ -982,6 +982,18 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	if bool(zf.get("indest_once", false)):
 		zf["indest_once"] = false
 		return false
+	# Different Dimension Gate (3043): al ser destruida devuelve al campo los monstruos que desterro.
+	var ddg: Array = zf.get("ddg_ids", [])
+	if not ddg.is_empty():
+		zf.erase("ddg_ids")
+		for entry in ddg:
+			var dp := int(entry[0]) & 1
+			var bid := int(entry[1])
+			if bid <= 0 or free_monster_zone(duel, dp) < 0:
+				continue
+			var gi := find_pile_index_by_id(duel, dp, LOC_BANISH, bid)
+			if gi >= 0:
+				special_summon_from_pile(duel, dp, LOC_BANISH, gi, dp)
 	var cid = raw_id(duel, idx)
 	if is_joey(duel):
 		var info: int = duel.m.local(0x14)
