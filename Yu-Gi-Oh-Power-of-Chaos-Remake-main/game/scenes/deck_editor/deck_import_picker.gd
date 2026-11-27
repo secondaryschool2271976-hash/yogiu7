@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Selector de mazos para Importar: lista grande con casillas, una sola seleccion a la vez.
+## Selector de mazos para Importar: lista grande con casillas, seleccion multiple con circulo.
 ## Filas altas (64 px) con separacion para que un dedo no toque la fila equivocada.
 ## Nada se importa al tocar una fila: solo al pulsar el boton Importar.
 
@@ -14,7 +14,10 @@ const ROW_GAP := 10
 var _decks_dir := ""
 var _files: PackedStringArray = []
 var _checked := {}
-var _rows: Array[Button] = []
+var _rows: Array[Control] = []
+var _circles: Array[Button] = []
+var _press_point := Vector2.ZERO
+var _moved := false
 var _scroll: ScrollContainer = null
 var _import_btn: Button = null
 var _count_lbl: Label = null
@@ -81,9 +84,9 @@ func _build_ui() -> void:
 	root.add_child(title)
 
 	var hint := Label.new()
-	hint.text = _tr("اضغط على مجموعة واحدة لتحديدها ثم اضغط استيراد.",
-			"Toca un mazo y pulsa Importar.",
-			"Tap one deck, then press Import.")
+	hint.text = _tr("اضغط على الدائرة لتحديد المجموعات ثم اضغط استيراد.",
+			"Toca el círculo para elegir mazos y pulsa Importar.",
+			"Tap the circle to select decks, then press Import.")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_override("font", Assets.ui_font())
@@ -151,40 +154,50 @@ func _build_ui() -> void:
 	_refresh()
 
 
-func _make_row(i: int) -> Button:
-	var b := Button.new()
-	b.toggle_mode = true
-	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(0, ROW_H)
-	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.alignment = HORIZONTAL_ALIGNMENT_RIGHT if (is_instance_valid(Assets) and Assets.lang == "a") else HORIZONTAL_ALIGNMENT_LEFT
-	b.clip_text = true
-	b.expand_icon = false
-	b.add_theme_constant_override("h_separation", 14)
-	b.add_theme_font_override("font", Assets.ui_font(700))
-	b.add_theme_font_size_override("font_size", 19)
-	b.add_theme_color_override("font_color", Color(0.95, 0.97, 1.0))
-	b.add_theme_color_override("font_pressed_color", Color.WHITE)
-	b.add_theme_color_override("font_hover_pressed_color", Color.WHITE)
-	var off := _row_style(Color(0.082, 0.098, 0.205, 0.96), Color(0.30, 0.45, 0.62, 0.9), 1)
-	var on := _row_style(Color(0.07, 0.30, 0.34, 0.98), DialogTheme.GOLD, 3)
-	b.add_theme_stylebox_override("normal", off)
-	b.add_theme_stylebox_override("hover", off)
-	b.add_theme_stylebox_override("pressed", on)
-	b.add_theme_stylebox_override("hover_pressed", on)
-	b.add_theme_stylebox_override("focus", off)
-	b.icon = DialogTheme.radio_icon(false)
-	b.text = _row_text(i)
-	b.toggled.connect(func(on_state: bool) -> void:
-		if on_state:
-			# Seleccion unica: marcar una fila desmarca las demas.
-			for j in _rows.size():
-				if j != i and _rows[j].button_pressed:
-					_rows[j].button_pressed = false
+func _make_row(i: int) -> Control:
+	# La fila es solo informativa: se marca unicamente tocando el circulo, para poder desplazar
+	# la lista con el dedo sin marcar nada por accidente.
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, ROW_H)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel.add_theme_stylebox_override("panel", _row_style(Color(0.082, 0.098, 0.205, 0.96), Color(0.30, 0.45, 0.62, 0.9), 1))
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	box.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel.add_child(box)
+	var circle := Button.new()
+	circle.toggle_mode = true
+	circle.focus_mode = Control.FOCUS_NONE
+	circle.flat = true
+	circle.custom_minimum_size = Vector2(52, 48)
+	circle.icon = DialogTheme.radio_icon(false)
+	circle.expand_icon = false
+	circle.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	circle.toggled.connect(func(on_state: bool) -> void:
 		_checked[i] = on_state
-		b.icon = DialogTheme.radio_icon(on_state)
+		circle.icon = DialogTheme.radio_icon(on_state)
+		panel.add_theme_stylebox_override("panel", _row_style(
+				Color(0.07, 0.30, 0.34, 0.98) if on_state else Color(0.082, 0.098, 0.205, 0.96),
+				DialogTheme.GOLD if on_state else Color(0.30, 0.45, 0.62, 0.9),
+				3 if on_state else 1))
 		_refresh())
-	return b
+	box.add_child(circle)
+	var lbl := Label.new()
+	lbl.text = _row_text(i)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.clip_text = true
+	lbl.mouse_filter = Control.MOUSE_FILTER_PASS
+	lbl.add_theme_font_override("font", Assets.ui_font(700))
+	lbl.add_theme_font_size_override("font_size", 19)
+	lbl.add_theme_color_override("font_color", Color(0.95, 0.97, 1.0))
+	if is_instance_valid(Assets) and Assets.lang == "a":
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		box.move_child(circle, 0)
+	box.add_child(lbl)
+	_circles.append(circle)
+	return panel
 
 
 func _row_style(bg: Color, border: Color, width: int) -> StyleBoxFlat:
@@ -286,25 +299,21 @@ func _viewport_point(scene_pos: Vector2) -> Vector2:
 
 
 func _button_at(point: Vector2) -> Button:
-	# Los botones van primero: estan dibujados encima de la lista. Las filas que quedan fuera de
-	# la ventana con scroll siguen teniendo rectangulo global, y antes se comian los toques de
-	# "Cancelar" y del boton de archivo.
+	# Los botones van primero: estan dibujados encima de la lista.
 	for btn in _btns:
 		if is_instance_valid(btn) and btn.visible and not btn.disabled and btn.get_global_rect().grow(4.0).has_point(point):
 			return btn
 	var area := Rect2()
 	if _scroll != null:
 		area = _scroll.get_global_rect().grow(4.0)
-	for i in _rows.size():
-		var row: Button = _rows[i]
-		if not is_instance_valid(row):
+	for c in _circles:
+		if not is_instance_valid(c):
 			continue
-		var rect := row.get_global_rect().grow(4.0)
-		if not rect.has_point(point):
+		if not c.get_global_rect().grow(6.0).has_point(point):
 			continue
 		if _scroll != null and not area.has_point(point):
 			continue
-		return row
+		return c
 	return null
 
 
@@ -313,12 +322,17 @@ func handle_mobile_touch(event: InputEventScreenTouch, scene_pos: Vector2) -> bo
 		return true
 	var point: Vector2 = _viewport_point(scene_pos)
 	_drag_last = point
-	if not event.pressed:
+	if event.pressed:
+		_press_point = point
+		_moved = false
+		return true
+	# Se actua al soltar y solo si el dedo no se desplazo: arrastrar desplaza la lista.
+	if _moved:
 		return true
 	var btn: Button = _button_at(point)
 	if btn == null or btn.disabled:
 		return true
-	if btn in _rows:
+	if btn in _circles:
 		btn.button_pressed = not btn.button_pressed
 	else:
 		btn.pressed.emit()
@@ -329,7 +343,9 @@ func handle_mobile_drag(event: InputEventScreenDrag, scene_pos: Vector2) -> bool
 	if _done:
 		return true
 	var point: Vector2 = _viewport_point(scene_pos)
-	if _scroll != null and _scroll.get_global_rect().grow(8.0).has_point(point):
+	if point.distance_to(_press_point) > 12.0:
+		_moved = true
+	if _moved and _scroll != null and _scroll.get_global_rect().grow(8.0).has_point(point):
 		_scroll.scroll_vertical -= int(round(point.y - _drag_last.y))
 	_drag_last = point
 	return true
