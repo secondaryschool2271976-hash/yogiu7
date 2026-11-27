@@ -2777,25 +2777,41 @@ func _open_file_dialog(mode: String) -> void:
 
 func _open_external_ydc_picker() -> void:
 	var picker := FileDialog.new()
-	picker.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	picker.file_mode = FileDialog.FILE_MODE_OPEN_FILES
 	picker.access = FileDialog.ACCESS_FILESYSTEM
 	picker.use_native_dialog = true
-	picker.filters = PackedStringArray(["*.ydc,*.YDC;YDC Deck File;application/octet-stream", "*.*;All files;*/*"])
+	picker.filters = PackedStringArray([
+		"*.ydc,*.ydk,*.YDC,*.YDK;Deck files (YDC/YDK);application/octet-stream",
+		"*.ydc,*.YDC;YDC Deck File;application/octet-stream",
+		"*.ydk,*.YDK;YDK Deck File;text/plain",
+		"*.*;All files;*/*"])
 	add_child(picker)
-	picker.file_selected.connect(func(selected_path: String) -> void:
+	picker.files_selected.connect(func(selected_paths: PackedStringArray) -> void:
 		picker.queue_free()
-		var res := SaveData.import_ydc_to_all_games(selected_path)
-		if not bool(res.get("ok", false)):
-			_import_error(0x1029, "dlg_ok_ok_derr")
-			return
-		if is_instance_valid(_file_dialog):
-			_file_dialog.queue_free()
-		_file_dialog = null
-		_modal = null
-		_accept_import(res["deck"]))
+		_import_external_many(selected_paths))
 	picker.canceled.connect(func() -> void:
 		picker.queue_free())
 	picker.popup_file_dialog()
+
+
+## Varios archivos a la vez: se importan todos y el editor abre el primero.
+func _import_external_many(paths: PackedStringArray) -> void:
+	if paths.is_empty():
+		return
+	var decks: Array = []
+	for path: String in paths:
+		var res := SaveData.import_ydc_to_all_games(path)
+		if not bool(res.get("ok", false)):
+			_import_error(0x1029, "dlg_ok_ok_derr")
+			return
+		decks.append(res["deck"])
+	if decks.is_empty():
+		return
+	if is_instance_valid(_file_dialog):
+		_file_dialog.queue_free()
+	_file_dialog = null
+	_modal = null
+	_accept_import(decks[0])
 
 
 func _open_external_ydc_exporter() -> void:

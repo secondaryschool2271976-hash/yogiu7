@@ -17,7 +17,6 @@ var _checked := {}
 var _rows: Array[Button] = []
 var _scroll: ScrollContainer = null
 var _import_btn: Button = null
-var _all_btn: Button = null
 var _count_lbl: Label = null
 var _done := false
 var _btns: Array[Button] = []
@@ -127,8 +126,12 @@ func _build_ui() -> void:
 	_count_lbl.add_theme_color_override("font_color", DialogTheme.GOLD_LIGHT)
 	root.add_child(_count_lbl)
 
-	var ext := _make_button(_tr("استيراد ملف YDC من الجهاز", "Archivo YDC del dispositivo", "Import a .YDC file from device"), false)
-	ext.pressed.connect(func() -> void: browse_external.emit())
+	var ext := _make_button(_tr("استيراد ملفات YDC/YDK من الجهاز", "Archivos YDC/YDK del dispositivo", "Import .YDC/.YDK files from device"), false)
+	ext.pressed.connect(func() -> void:
+		if _done:
+			return
+		_done = true
+		browse_external.emit())
 	root.add_child(ext)
 	_btns.append(ext)
 
@@ -140,11 +143,6 @@ func _build_ui() -> void:
 	cancel.pressed.connect(_cancel)
 	bar.add_child(cancel)
 	_btns.append(cancel)
-	_all_btn = _make_button(_tr("تحديد الكل", "Todos", "Select all"), false)
-	_all_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_all_btn.pressed.connect(_toggle_all)
-	bar.add_child(_all_btn)
-	_btns.append(_all_btn)
 	_import_btn = _make_button("", true)
 	_import_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_import_btn.pressed.connect(_confirm)
@@ -247,16 +245,6 @@ func _refresh() -> void:
 		_import_btn.text = _tr("استيراد (%d)", "Importar (%d)", "Import (%d)") % n
 	if _count_lbl != null:
 		_count_lbl.text = _tr("المحدد: %d من %d", "Seleccionados: %d de %d", "Selected: %d of %d") % [n, _files.size()]
-	if _all_btn != null:
-		_all_btn.visible = not _files.is_empty()
-		_all_btn.text = _tr("إلغاء التحديد", "Quitar todo", "Clear") if n == _files.size() and n > 0 else _tr("تحديد الكل", "Todos", "Select all")
-
-
-func _toggle_all() -> void:
-	var want := _selected().size() != _files.size()
-	for i in _rows.size():
-		_rows[i].button_pressed = want
-	_refresh()
 
 
 func _cancel() -> void:
@@ -293,13 +281,25 @@ func _viewport_point(scene_pos: Vector2) -> Vector2:
 
 
 func _button_at(point: Vector2) -> Button:
+	# Los botones van primero: estan dibujados encima de la lista. Las filas que quedan fuera de
+	# la ventana con scroll siguen teniendo rectangulo global, y antes se comian los toques de
+	# "Cancelar" y del boton de archivo.
+	for btn in _btns:
+		if is_instance_valid(btn) and btn.visible and not btn.disabled and btn.get_global_rect().grow(4.0).has_point(point):
+			return btn
+	var area := Rect2()
+	if _scroll != null:
+		area = _scroll.get_global_rect().grow(4.0)
 	for i in _rows.size():
 		var row: Button = _rows[i]
-		if is_instance_valid(row) and row.get_global_rect().grow(4.0).has_point(point):
-			return row
-	for btn in _btns:
-		if is_instance_valid(btn) and btn.visible and btn.get_global_rect().grow(4.0).has_point(point):
-			return btn
+		if not is_instance_valid(row):
+			continue
+		var rect := row.get_global_rect().grow(4.0)
+		if not rect.has_point(point):
+			continue
+		if _scroll != null and not area.has_point(point):
+			continue
+		return row
 	return null
 
 
