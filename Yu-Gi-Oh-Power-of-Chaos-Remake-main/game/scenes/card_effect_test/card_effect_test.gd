@@ -103,6 +103,23 @@ func _build() -> void:
 	search.text_direction = Control.TEXT_DIRECTION_RTL if _rtl else Control.TEXT_DIRECTION_AUTO
 	col.add_child(search)
 
+	var add_row := HBoxContainer.new()
+	add_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_row.add_theme_constant_override("separation", 8)
+	col.add_child(add_row)
+	for spec in [
+			[_txt("+ Opp field", "+ ملعب الخصم", "+ campo rival"), "field_o"],
+			[_txt("+ Opp GY", "+ مقبرة الخصم", "+ cem. rival"), "grave_o"],
+			[_txt("+ My GY", "+ مقبرتي", "+ mi cem."), "grave_p"],
+		]:
+		var ab := Button.new()
+		ab.text = str(spec[0])
+		ab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ab.custom_minimum_size = Vector2(0, 44)
+		ab.add_theme_font_size_override("font_size", 14)
+		ab.pressed.connect(_on_add_pressed.bind(str(spec[1])))
+		add_row.add_child(ab)
+
 	var list_scroll := ScrollContainer.new()
 	list_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list_scroll.custom_minimum_size = Vector2(0, 190)
@@ -216,6 +233,23 @@ func _on_row_pressed(button: Button, id: int) -> void:
 	_status.text = _txt("Selected: %s" % button.text, "المحددة: %s" % button.text, "Elegida: %s" % button.text)
 
 
+func _on_add_pressed(target: String) -> void:
+	if _picked_id <= 0:
+		_status.text = _txt("Pick a card in the list first.", "اختر بطاقة من القائمة أولًا.", "Elige una carta de la lista primero.")
+		return
+	var edit: LineEdit = _field_o
+	if target == "grave_o":
+		edit = _grave_o
+	elif target == "grave_p":
+		edit = _grave_p
+	var cur := edit.text.strip_edges()
+	if cur == "":
+		edit.text = str(_picked_id)
+	elif not cur.contains(str(_picked_id)):
+		edit.text = cur + ", " + str(_picked_id)
+	_status.text = _txt("Added #%d" % _picked_id, "أُضيفت #%d" % _picked_id, "Añadida #%d" % _picked_id)
+
+
 func _list_selected() -> Array:
 	return [_picked_id] if _picked_id > 0 else []
 
@@ -275,15 +309,23 @@ func _on_start() -> void:
 
 
 ## "Blue-Eyes White Dragon, 0x1f2" -> ids internos.
+## Separadores: coma inglesa, coma arabe (،), punto y coma, salto de linea y, si el trozo no
+## resuelve entero, espacios ("2500 2501"). Asi los nombres con espacios siguen funcionando.
 func _ids(text: String) -> Array:
 	var out: Array = []
-	for raw in text.split(",", false):
+	var normalizado := text.replace("،", ",").replace(";", ",").replace("\n", ",").replace("\r", ",")
+	for raw in normalizado.split(",", false):
 		var token := raw.strip_edges()
 		if token == "":
 			continue
 		var id := _resolve(token)
 		if id > 0:
 			out.append(id)
+			continue
+		for part in token.split(" ", false):
+			var pid := _resolve(part.strip_edges())
+			if pid > 0:
+				out.append(pid)
 	return out
 
 
