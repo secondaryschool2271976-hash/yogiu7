@@ -97,6 +97,17 @@ func _build() -> void:
 		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	col.add_child(note)
 
+	var steps := Label.new()
+	steps.text = _txt("1. Search the card by name or number. 2. Tap it in the list to select it. 3. Optional: add copies to a field or a graveyard. 4. Press Start practice duel.",
+			"١. ابحث عن البطاقة بالاسم أو الرقم. ٢. اضغط عليها في القائمة لتحديدها. ٣. اختياري: أضف نسخًا إلى الملعب أو المقبرة. ٤. اضغط «ابدأ مباراة تجريبية».",
+			"1. Busca la carta por nombre o número. 2. Púlsala en la lista para elegirla. 3. Opcional: añade copias al campo o cementerio. 4. Pulsa Empezar duelo de prueba.")
+	steps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	steps.add_theme_font_size_override("font_size", 15)
+	steps.modulate = Color(1, 1, 1, 0.92)
+	if _rtl:
+		steps.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	col.add_child(steps)
+
 	var search := LineEdit.new()
 	search.placeholder_text = _txt("Search a card by name", "ابحث عن بطاقة بالاسم", "Busca una carta por nombre")
 	search.text_changed.connect(_refresh)
