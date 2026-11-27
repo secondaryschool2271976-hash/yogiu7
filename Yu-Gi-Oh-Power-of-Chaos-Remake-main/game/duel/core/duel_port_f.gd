@@ -85,7 +85,12 @@ func f53a400() -> int:
 	var z := m.u8(0xa13410)
 	var index := m.u16(0xa13404)
 	match action:
-		0: return invoke_original(0x56e6e0, [1, 0])
+		0:
+			var raw_ns := cards.id_of(index) & 0xffff
+			if loc == 11 and ctype(index) <= 0x14 and CustomCardEffects.handles(raw_ns) and not CustomCardEffects.can_normal_summon(self, p, raw_ns, false):
+				_f_card_action_finish()
+				return 0
+			return invoke_original(0x56e6e0, [1, 0])
 		1:
 			if loc == 0:
 				return f56ffe0()
@@ -159,6 +164,10 @@ func f53a400() -> int:
 			return result
 		4:
 			if loc == 11:
+				var raw_set := cards.id_of(index) & 0xffff
+				if ctype(index) <= 0x14 and CustomCardEffects.handles(raw_set) and not CustomCardEffects.can_normal_summon(self, p, raw_set, true):
+					_f_card_action_finish()
+					return 0
 				if ctype(index) > 0x14:
 					return f570040(0, 0, 0)
 				return invoke_original(0x56e6e0, [0, 0])
@@ -186,6 +195,11 @@ func f53a400() -> int:
 				var raw_ss := cards.id_of(index) & 0xffff
 				if CustomCardEffects.handles(raw_ss) and CustomCardEffects.can_special_summon(self, p, raw_ss, CustomDuelOps.LOC_HAND, z):
 					CustomCardEffects.special_summon(self, p, raw_ss, CustomDuelOps.LOC_HAND, z)
+					_f_card_action_finish()
+					return 0
+				if CustomCardEffects.handles(raw_ss) and not CustomCardEffects.can_normal_summon(self, p, raw_ss, false):
+					# Special-Summon-only custom card whose condition is not met: never fall back
+					# to the generic Tribute Summon flow.
 					_f_card_action_finish()
 					return 0
 			return invoke_original(0x56e6e0, [1 if action == 10 else 0, 1])
