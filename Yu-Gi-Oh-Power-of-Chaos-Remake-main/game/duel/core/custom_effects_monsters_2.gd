@@ -793,11 +793,14 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
 				if not pick.is_empty():
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
-		2844: # Birdface
+		2844: # Birdface: efecto opcional ("puedes")
 			if by_battle:
 				var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, CustomDuelOps.NATIVE_HARPIE_LADY)
 				if hi >= 0:
-					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, hi)
+					var birdface_take: Callable = func() -> void:
+						CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, hi)
+					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 2844), birdface_take):
+						birdface_take.call()
 		2850: # Yomi Ship
 			if by_battle:
 				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
@@ -806,11 +809,14 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 		2866: # Helpoemer: at end of opp BP discard 1 random
 			if by_battle:
 				CustomDuelOps.schedule_delayed(duel, CustomDuelOps.turn_number(duel), CustomDuelOps.PHASE_M2, p, 2866, "helpoemer_discard", {})
-		2870: # Pyramid Turtle: SS Zombie <= 2000 DEF from Deck
+		2870: # Pyramid Turtle: SS Zombie <= 2000 DEF from Deck; efecto opcional ("puedes")
 			if by_battle and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				var zi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 2 and CustomDuelOps.base_def(d, idx) <= 2000, true)
-				if zi >= 0:
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, zi, p, true, false)
+				var turtle_summon: Callable = func() -> void:
+					var zi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 2 and CustomDuelOps.base_def(d, idx) <= 2000, true)
+					if zi >= 0:
+						CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, zi, p, true, false)
+				if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 2870), turtle_summon):
+					turtle_summon.call()
 		2877: # Kryuel: coin toss destroy 1 opp monster
 			if by_battle and CustomDuelOps.coin_toss(duel, p) == 1:
 				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
