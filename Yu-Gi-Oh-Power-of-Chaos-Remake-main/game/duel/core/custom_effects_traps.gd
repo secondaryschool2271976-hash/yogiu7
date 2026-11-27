@@ -945,6 +945,15 @@ static func on_continuous_enforce(duel) -> void:
 			for zz in 5:
 				if CustomDuelOps.zone_idx(duel, pl, zz) != 0 and CustomDuelOps.is_face_up(duel, pl, zz) and not CustomDuelOps.is_atk_pos(duel, pl, zz):
 					CustomDuelOps.change_position(duel, pl, zz, 0, 1)
+	# Doom Virus Dragon (2551): el Crush Card Virus sigue destruyendo los monstruos del rival con
+	# 1500 o mas ATK mientras dura.
+	var cv_t: int = CustomDuelOps.turn_number(duel)
+	for cp in 2:
+		if int(CustomDuelOps.pflags(duel, cp).get("crush_virus_until_turn", -1)) < cv_t:
+			continue
+		for cz in 5:
+			if CustomDuelOps.zone_idx(duel, cp, cz) != 0 and CustomDuelOps.is_face_up(duel, cp, cz) and CustomDuelOps.eff_atk(duel, cp, cz) >= 1500:
+				CustomDuelOps.destroy_zone(duel, cp, cz)
 
 
 static func on_monster_sent_to_gy(duel, owner_p: int, _cid: int, from_field: bool) -> void:
@@ -1080,4 +1089,3 @@ static func _has_equipped_union(duel, p: int) -> bool:
 		if CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.zone_id(duel, p, zz) in CustomDuelOps.UNION_IDS:
 			return true
 	return false
-
