@@ -1074,7 +1074,7 @@ static func on_standby_tick(duel, tp: int) -> void:
 		if CustomDuelOps.has_faceup_id(duel, pl, 2948) and pl == tp: # Senri Eye
 			if CustomDuelOps.can_pay_lp(duel, pl, 100):
 				CustomDuelOps.pay_lp(duel, pl, 100)
-		if CustomDuelOps.has_faceup_id(duel, pl, 3017) and pl != tp: # Falling Down
+		if CustomDuelOps.has_faceup_id(duel, pl, 3017) and pl == tp: # Falling Down: its controller takes 800 in their own Standby Phase
 			CustomDuelOps.damage(duel, pl, 800)
 
 
