@@ -593,6 +593,11 @@ static func check_and_apply_win(duel) -> int:
 	return w
 
 
+## Exodius, Inferno Uria, Legendary Exodia Incarnate, Winged Kuriboh LV9, Maju Garzett, Great Maju
+## Garzett, Chaos Necromancer y Gren Maju Da Eiza: ATK/DEF impresos 0 y valor fijado por una cuenta.
+const STAT_SET_KEEPS_BONUS := [2575, 2594, 2657, 2684, 2991, 3030, 3086, 3121]
+
+
 static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) -> Vector2i:
 	p &= 1
 	var cid = CustomDuelOps.zone_id(duel, p, z)
@@ -613,10 +618,14 @@ static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) 
 	if CustomEffectsMonsters2.handles(cid):
 		CustomEffectsMonsters2.modify_continuous(duel, p, z, cid, mod)
 
+	# Monstruos con ATK/DEF impresos 0 cuyo valor sale de una cuenta: el equipo y demas bonos del
+	# motor (cur_atk/cur_def, sin base) se suman encima en vez de perderse (Axe of Despair...).
+	var keep_atk: int = cur_atk if cid in STAT_SET_KEEPS_BONUS else 0
+	var keep_def: int = cur_def if cid in STAT_SET_KEEPS_BONUS else 0
 	if mod.has("atk_set"):
-		atk = int(mod["atk_set"])
+		atk = int(mod["atk_set"]) + keep_atk
 	if mod.has("def_set"):
-		df = int(mod["def_set"])
+		df = int(mod["def_set"]) + keep_def
 	atk += int(mod.get("atk_delta", 0))
 	df += int(mod.get("def_delta", 0))
 	if bool(mod.get("half", false)):
@@ -651,7 +660,7 @@ static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) 
 		if fixed_g.has(key_g):
 			var rec_g: Dictionary = fixed_g[key_g]
 			if int(rec_g.get("cid", 0)) == cid:
-				atk = int(rec_g.get("atk", atk))
+				atk = int(rec_g.get("atk", atk)) + keep_atk
 
 	if st["set_atk"].has(k):
 		var sa: Array = st["set_atk"][k]
