@@ -249,7 +249,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.discard_hand_slot(duel, p, hi, 1)
 				for zz in 5:
 					if CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.zone_id(duel, p, zz) in CustomDuelOps.GRAVEKEEPER_IDS:
-						CustomDuelOps.zflags(duel, p, zz)["indest_battle"] = true
+						CustomDuelOps.zflags(duel, p, zz)["indest_battle"] = CustomDuelOps.turn_number(duel)
 		2884: # Great Dezard -> Tribute -> SS Fushioh Richie
 			CustomDuelOps.tribute_zone(duel, p, z)
 			for srcloc in [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK]:
@@ -982,6 +982,8 @@ static func on_end_phase(duel, turn_p: int) -> void:
 				continue
 			var cid = CustomDuelOps.zone_id(duel, pl, z)
 			var zf = CustomDuelOps.zflags(duel, pl, z)
+			if zf.has("indest_battle") and not (zf["indest_battle"] is bool):
+				zf.erase("indest_battle")
 			if cid == 3034 and int(zf.get("mirage_banish_turn", -1)) == t:
 				CustomDuelOps.banish_zone(duel, pl, z)
 				continue
