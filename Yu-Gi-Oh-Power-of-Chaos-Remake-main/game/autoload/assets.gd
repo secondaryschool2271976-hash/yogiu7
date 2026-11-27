@@ -286,7 +286,9 @@ func _lookup(rel: String) -> String:
 func exists(rel_path: String) -> bool:
 	if _has_card_pack_entry(rel_path):
 		return true
-	return resolve(rel_path) != ""
+	if resolve(rel_path) != "":
+		return true
+	return _has_embedded_card_art(rel_path)
 
 
 func card_pack_count() -> int:
@@ -723,6 +725,90 @@ func _load_card_pack_texture(info: Dictionary) -> Texture2D:
 	return tex
 
 
+## Arte de carta guardada como base64 dentro del proyecto (assets/cards/card_art_b64.json).
+## Sirve para cartas cuya imagen todavia no esta en arabic_cards.zip: se decodifica en memoria
+## con el mismo tamano que la del pack, asi que el resto del juego no nota la diferencia.
+const EMBEDDED_CARD_ART_JSON := "assets/cards/card_art_b64.json"
+
+var _embedded_card_art: Dictionary = {}
+var _embedded_card_art_loaded := false
+
+
+func _embedded_card_art_data() -> Dictionary:
+	if _embedded_card_art_loaded:
+		return _embedded_card_art
+	_embedded_card_art_loaded = true
+	var path := resolve(EMBEDDED_CARD_ART_JSON)
+	if path == "" or not FileAccess.file_exists(path):
+		path = "res://" + EMBEDDED_CARD_ART_JSON
+	if not FileAccess.file_exists(path):
+		return _embedded_card_art
+	var text := FileAccess.get_file_as_string(path)
+	if text.strip_edges() == "":
+		return _embedded_card_art
+	var parsed: Variant = JSON.parse_string(text)
+	if not (parsed is Dictionary):
+		return _embedded_card_art
+	var art: Variant = (parsed as Dictionary).get("art", null)
+	if not (art is Dictionary):
+		return _embedded_card_art
+	var table: Dictionary = art
+	for stem: Variant in table.keys():
+		var entry: Variant = table.get(stem, null)
+		var b64 := ""
+		if entry is String:
+			b64 = (entry as String).strip_edges()
+		elif entry is Array:
+			for part: Variant in (entry as Array):
+				b64 += str(part).strip_edges()
+		if b64 != "":
+			_embedded_card_art[str(stem).to_lower()] = b64
+	return _embedded_card_art
+
+
+func _has_embedded_card_art(rel_path: String) -> bool:
+	var norm := rel_path.replace("\\", "/").to_lower()
+	if not (norm.begins_with("common/card/") or norm.begins_with("common/mini/")):
+		return false
+	var stem := norm.get_file().get_basename()
+	if stem == "" or stem == "card_ura":
+		return false
+	return _embedded_card_art_data().has(stem)
+
+
+func _embedded_card_art_texture(rel_path: String) -> Texture2D:
+	var norm := rel_path.replace("\\", "/").to_lower()
+	var is_mini := norm.begins_with("common/mini/")
+	if not is_mini and not norm.begins_with("common/card/"):
+		return null
+	var stem := norm.get_file().get_basename()
+	if stem == "" or stem == "card_ura":
+		return null
+	var data := _embedded_card_art_data()
+	if not data.has(stem):
+		return null
+	var key := "card_b64:%s:%s" % ["mini" if is_mini else "card", stem]
+	if _textures.has(key):
+		return _textures[key]
+	var raw := Marshalls.base64_to_raw(str(data[stem]))
+	if raw.is_empty():
+		return null
+	var image := Image.new()
+	var err := ERR_INVALID_DATA
+	if raw.size() >= 4 and raw[0] == 0x52 and raw[1] == 0x49 and raw[2] == 0x46 and raw[3] == 0x46:
+		err = image.load_webp_from_buffer(raw)
+	elif raw.size() >= 4 and raw[0] == 0x89 and raw[1] == 0x50 and raw[2] == 0x4E and raw[3] == 0x47:
+		err = image.load_png_from_buffer(raw)
+	if err != OK or image.is_empty():
+		return null
+	var target := CARD_MINI_SIZE if is_mini else CARD_FULL_SIZE
+	if image.get_width() != target.x or image.get_height() != target.y:
+		image.resize(target.x, target.y, Image.INTERPOLATE_BILINEAR)
+	var tex := ImageTexture.create_from_image(image)
+	_textures[key] = tex
+	return tex
+
+
 func invalidate_card_face_cache() -> void:
 	_card_budget_frame = -1
 	_card_budget_loaded = 0
@@ -730,7 +816,7 @@ func invalidate_card_face_cache() -> void:
 	for k: Variant in _textures.keys():
 		var ks := str(k)
 		var kn := ks.replace("\\", "/").to_lower()
-		if kn.begins_with("card_pack:") or kn.find("common/card/") != -1 or kn.find("common/mini/") != -1:
+		if kn.begins_with("card_pack:") or kn.begins_with("card_b64:") or kn.find("common/card/") != -1 or kn.find("common/mini/") != -1:
 			if not kn.ends_with("card_ura") and not kn.ends_with("card_ura.png") and not kn.ends_with("card_ura.bmp") and not kn.ends_with("card_ura.webp"):
 				to_erase.append(ks)
 	for ks: String in to_erase:
@@ -823,6 +909,9 @@ func texture(rel_path: String) -> Texture2D:
 			return pack_tex
 	var path := resolve(rel_path)
 	if path == "":
+		var embedded := _embedded_card_art_texture(rel_path)
+		if embedded != null:
+			return embedded
 		if not _missing.has(rel_path):
 			_missing[rel_path] = true
 			push_warning("Recurso no encontrado: %s" % rel_path)
