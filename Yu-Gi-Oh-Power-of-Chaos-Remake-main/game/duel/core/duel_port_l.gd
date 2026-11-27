@@ -1315,6 +1315,14 @@ func f56e6e0(mode: int, alternate: int) -> int:
 	match state:
 		0:
 			var id := effect_card_id(index)
+			# Nomi y semi-nomi (p. ej. Armed Dragon LV10 White): el motor no tiene invocacion
+			# normal para la carta, asi que no se abre la pregunta de sacrificios.
+			var raw_card: int = cards.id_of(index) & 0xffff
+			if alternate == 0 and CustomCardEffects.handles(raw_card) \
+					and not CustomCardEffects.can_normal_summon(self, p, raw_card, false) \
+					and not CustomCardEffects.can_normal_summon(self, p, raw_card, true):
+				_l_action_end()
+				return 0
 			var special := {0x4e9: 0x50, 0x175: 0x1e, 0x34d: 0x28, 0x5ea: 0x32, 0x5eb: 0x3c,
 					0x5ec: 0x46, 0x5ed: 0x46, 0x5ee: 0x46, 0x5ef: 0x46}
 			if special.has(id):
@@ -1709,4 +1717,3 @@ func f570350(action: int) -> int:
 	m.set_u8(DuelMem.zone(p, z) + 7, m.u8(DuelMem.zone(p, z) + 7) | 2)
 	m.set_u8(0xa13408, m.u8(0xa13408) & 0xfd)
 	return DuelMem.zone(p, z) + 6
-
