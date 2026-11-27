@@ -659,4 +659,18 @@ static func _execute_delayed(duel, task: Dictionary) -> void:
 					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_BANISH, bi, p, CustomDuelOps.LOC_HAND)
 		"final_countdown_win":
 			CustomDuelOps.declare_win(duel, p)
+		"banish_zone":
+			var bz := int(data.get("z", -1))
+			if bz >= 0 and CustomDuelOps.zone_idx(duel, p, bz) != 0:
+				CustomDuelOps.banish_zone(duel, p, bz)
+		"destroy_zone":
+			var dz := int(data.get("z", -1))
+			if dz >= 0 and CustomDuelOps.zone_idx(duel, p, dz) != 0:
+				CustomDuelOps.destroy_zone(duel, p, dz)
+		"return_banished_id":
+			var rid := int(data.get("card_id", 0))
+			if rid > 0:
+				var ri := CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_BANISH, rid)
+				if ri >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_BANISH, ri, p)
 	CustomDuelOps.sync_visuals(duel)
