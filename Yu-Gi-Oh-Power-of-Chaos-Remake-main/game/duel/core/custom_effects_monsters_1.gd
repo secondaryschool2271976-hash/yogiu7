@@ -179,19 +179,14 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 				on_summon_or_flip(duel, p, z, cid, "special")
 			return z
 		2509: # Armed Dragon LV10 White
+			# Coste: "Armed Dragon" del campo y/o Cementerio con Niveles que sumen 10. Si hay mas de
+			# una combinacion posible, el jugador local elige carta a carta; si no, se paga solo.
 			var combo = _find_armed_lv10_combo(duel, p)
 			if combo.is_empty():
 				return -1
-			CustomDuelOps.mark_hopt(duel, p, 2509)
-			for step in combo:
-				if str(step["where"]) == "field":
-					CustomDuelOps.banish_zone(duel, p, int(step["idx"]))
-				else:
-					CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, int(step["idx"]))
-			var z = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
-			if z >= 0:
-				on_summon_or_flip(duel, p, z, cid, "special")
-			return z
+			if _armed_white_ask(duel, p, cid, loc, slot, _armed_cands(duel, p), 0, 0, []):
+				return -1
+			return _armed_white_finish(duel, p, cid, loc, slot, combo)
 		2513, 2514: # Armityle
 			var uria = CustomDuelOps.find_zone_of_id(duel, p, 2677, true)
 			if uria < 0: uria = CustomDuelOps.find_zone_of_id(duel, p, 2594, true)
@@ -241,27 +236,41 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 				on_summon_or_flip(duel, p, z, cid, "special")
 			return z
 		2535: # Nachster
-			var di = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, s): return s != slot and CustomDuelOps.is_monster(d, idx), false)
+			var n_pred := func(d, idx, s): return s != slot and CustomDuelOps.is_monster(d, idx)
+			var di: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, n_pred, false)
 			if di < 0:
 				return -1
-			var new_slot = slot - 1 if di < slot else slot
-			CustomDuelOps.discard_hand_slot(duel, p, di, 1)
-			var z = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, new_slot, p, true, false)
-			if z >= 0:
-				on_summon_or_flip(duel, p, z, cid, "special")
-			return z
+			var n_done := func(pick: int) -> void:
+				if pick < 0 or not can_special_summon(duel, p, cid, loc, slot):
+					return
+				var new_slot: int = slot - 1 if pick < slot else slot
+				CustomDuelOps.discard_hand_slot(duel, p, pick, 1)
+				var nz: int = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, new_slot, p, true, false)
+				if nz >= 0:
+					on_summon_or_flip(duel, p, nz, cid, "special")
+			if CustomDuelOps.ask_hand_pick(duel, p, CustomDuelOps.lang_text("اختر الوحش الذي ستتخلص منه", "Elige el monstruo que descartar", "Choose the monster to discard"), n_pred, n_done):
+				return -1
+			n_done.call(di)
+			return -1
 		2543: # DMG Apprentice
-			CustomDuelOps.mark_hopt(duel, p, 2543)
-			var di = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(_d, _idx, s): return s != slot, false)
-			if di < 0:
+			var a_pred := func(_d, _idx, s): return s != slot
+			var ai: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, a_pred, false)
+			if ai < 0:
 				return -1
-			var new_slot = slot - 1 if di < slot else slot
-			CustomDuelOps.discard_hand_slot(duel, p, di, 1)
-			var z = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, new_slot, p, true, false)
-			if z >= 0:
-				CustomDuelOps.zflags(duel, p, z)["name_is_dmg"] = true
-				on_summon_or_flip(duel, p, z, cid, "special")
-			return z
+			CustomDuelOps.mark_hopt(duel, p, 2543)
+			var a_done := func(pick: int) -> void:
+				if pick < 0:
+					return
+				var a_slot: int = slot - 1 if pick < slot else slot
+				CustomDuelOps.discard_hand_slot(duel, p, pick, 1)
+				var az: int = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, a_slot, p, true, false)
+				if az >= 0:
+					CustomDuelOps.zflags(duel, p, az)["name_is_dmg"] = true
+					on_summon_or_flip(duel, p, az, cid, "special")
+			if CustomDuelOps.ask_hand_pick(duel, p, CustomDuelOps.lang_text("اختر البطاقة التي ستتخلص منها", "Elige la carta que descartar", "Choose the card to discard"), a_pred, a_done):
+				return -1
+			a_done.call(ai)
+			return -1
 		2554: # Egyptian God Slime
 			var tz = _find_god_slime_tribute(duel, p)
 			if tz < 0:
@@ -2305,6 +2314,92 @@ static func _count_other_monsters_hand_field(duel, p: int, skip_hand_slot: int) 
 		if i != skip_hand_slot and CustomDuelOps.is_monster(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, i)):
 			n += 1
 	return n
+
+
+static func _armed_cands(duel, p: int) -> Array:
+	var lv_of := {2510: 3, 2511: 5, 2512: 7, 2508: 10, 2509: 10}
+	var cands: Array = []
+	for z in 5:
+		var idx = CustomDuelOps.zone_idx(duel, p, z)
+		if idx != 0:
+			var rid = CustomDuelOps.raw_id(duel, idx)
+			if lv_of.has(rid):
+				cands.append({"where": "field", "idx": z, "lv": int(lv_of[rid]), "id": int(rid)})
+	for i in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE):
+		var rid2 = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i))
+		if lv_of.has(rid2):
+			cands.append({"where": "gy", "idx": i, "lv": int(lv_of[rid2]), "id": int(rid2)})
+	return cands
+
+
+static func _armed_feasible(cands: Array, k: int, need: int) -> bool:
+	if need == 0:
+		return true
+	if need < 0 or k >= cands.size():
+		return false
+	return _armed_feasible(cands, k + 1, need - int(cands[k]["lv"])) or _armed_feasible(cands, k + 1, need)
+
+
+## Recorre los candidatos: lo forzado se decide solo y solo se pregunta cuando incluir u omitir
+## la carta siguen dando una suma de 10. Devuelve true si dejo el coste pagado o una pregunta abierta.
+static func _armed_white_ask(duel, p: int, cid: int, loc: int, slot: int, cands: Array, k0: int, total: int, chosen: Array) -> bool:
+	var k := k0
+	var tot := total
+	var sel: Array = chosen.duplicate()
+	while k < cands.size():
+		var need: int = 10 - tot
+		if need == 0:
+			break
+		var lv: int = int(cands[k]["lv"])
+		var can_inc: bool = lv <= need and _armed_feasible(cands, k + 1, need - lv)
+		var can_exc: bool = _armed_feasible(cands, k + 1, need)
+		if can_inc and not can_exc:
+			sel.append(cands[k])
+			tot += lv
+		elif can_inc and can_exc:
+			var c: Dictionary = cands[k]
+			var kk: int = k
+			var tt: int = tot
+			var base_sel: Array = sel.duplicate()
+			var nm: String = CustomDuelOps.card_name(duel, int(c["id"]))
+			var wh_ar: String = "من الملعب" if str(c["where"]) == "field" else "من المقبرة"
+			var wh_es: String = "del campo" if str(c["where"]) == "field" else "del Cementerio"
+			var wh_en: String = "from the field" if str(c["where"]) == "field" else "from the Graveyard"
+			var text: String = CustomDuelOps.lang_text(
+				"انفِ %s (%s، المستوى %d) كجزء من التكلفة؟\nنعم = أنفيها، لا = أتركها." % [nm, wh_ar, lv],
+				"¿Desterrar a %s (%s, Nivel %d) como parte del coste?\nSí = desterrarla, No = dejarla." % [nm, wh_es, lv],
+				"Banish %s (%s, Level %d) as part of the cost?\nYes = banish it, No = keep it." % [nm, wh_en, lv])
+			var yes := func() -> void:
+				var s2: Array = base_sel.duplicate()
+				s2.append(c)
+				if not _armed_white_ask(duel, p, cid, loc, slot, cands, kk + 1, tt + lv, s2):
+					_armed_white_finish(duel, p, cid, loc, slot, _find_armed_lv10_combo(duel, p))
+			var no := func() -> void:
+				if not _armed_white_ask(duel, p, cid, loc, slot, cands, kk + 1, tt, base_sel):
+					_armed_white_finish(duel, p, cid, loc, slot, _find_armed_lv10_combo(duel, p))
+			return CustomDuelOps.ask_optional(duel, p, text, yes, no)
+		k += 1
+	if 10 - tot != 0:
+		return false
+	_armed_white_finish(duel, p, cid, loc, slot, sel)
+	return true
+
+
+static func _armed_white_finish(duel, p: int, cid: int, loc: int, slot: int, combo: Array) -> int:
+	if combo.is_empty() or not can_special_summon(duel, p, cid, loc, slot):
+		return -1
+	var steps: Array = combo.duplicate()
+	steps.sort_custom(func(a, b): return (str(a["where"]) == "field" and str(b["where"]) != "field") or (str(a["where"]) == str(b["where"]) and int(a["idx"]) > int(b["idx"])))
+	CustomDuelOps.mark_hopt(duel, p, 2509)
+	for step in steps:
+		if str(step["where"]) == "field":
+			CustomDuelOps.banish_zone(duel, p, int(step["idx"]))
+		else:
+			CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, int(step["idx"]))
+	var z: int = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
+	if z >= 0:
+		on_summon_or_flip(duel, p, z, cid, "special")
+	return z
 
 
 static func _find_armed_lv10_combo(duel, p: int) -> Array:

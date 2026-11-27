@@ -1629,6 +1629,38 @@ static func optional_text(duel, p: int, text: String, body: Callable) -> void:
 		body.call()
 
 
+## El jugador local elige UNA entre varias cartas (Si = esta, No = la siguiente; la ultima se toma
+## sola). `tokens` es lo que recibe on_pick (indice de pila, zona...); `labels`, el texto de cada una.
+## Devuelve false si no se puede preguntar (menos de 2 opciones, CPU, red, repeticion, Joey de demo
+## o sin pantalla): quien llama aplica entonces la eleccion automatica de siempre.
+static func ask_pick(duel, p: int, title: String, labels: Array, tokens: Array, on_pick: Callable, k := 0) -> bool:
+	if labels.size() < 2 or labels.size() != tokens.size():
+		return false
+	var text: String = lang_text(
+		"%s\n%s\nنعم = هذه البطاقة، لا = البطاقة التالية." % [title, str(labels[k])],
+		"%s\n%s\nSí = esta carta, No = la siguiente." % [title, str(labels[k])],
+		"%s\n%s\nYes = this card, No = the next one." % [title, str(labels[k])])
+	var pick := func() -> void:
+		on_pick.call(tokens[k])
+	var nxt := func() -> void:
+		if k + 2 >= labels.size():
+			on_pick.call(tokens[labels.size() - 1])
+		elif not ask_pick(duel, p, title, labels, tokens, on_pick, k + 1):
+			on_pick.call(tokens[k + 1])
+	return ask_optional(duel, p, text, pick, nxt)
+
+
+## Igual que ask_pick sobre las cartas de la mano que cumplen el filtro.
+static func ask_hand_pick(duel, p: int, title: String, filter: Callable, on_pick: Callable) -> bool:
+	var idxs: Array[int] = matching_pile_indices(duel, p, LOC_HAND, filter)
+	var labels: Array = []
+	var tokens: Array = []
+	for i in idxs:
+		labels.append(card_name(duel, raw_id(duel, pile_idx(duel, p, LOC_HAND, i))))
+		tokens.append(i)
+	return ask_pick(duel, p, title, labels, tokens, on_pick)
+
+
 ## Texto en el idioma activo (arabe, espanol, ingles).
 static func lang_text(ar: String, es: String, en: String) -> String:
 	if Assets.lang == "a":
