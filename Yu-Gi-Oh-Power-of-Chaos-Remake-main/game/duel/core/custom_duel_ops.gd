@@ -534,9 +534,26 @@ static func pile_idx(duel, p: int, loc: int, i: int) -> int:
 static func free_monster_zone(duel, p: int) -> int:
 	p &= 1
 	for z in 5:
-		if zone_idx(duel, p, z) == 0:
+		if monster_zone_usable(duel, p, z):
 			return z
 	return -1
+
+
+## 1 si la zona de monstruo se puede usar: vacia y sin inutilizar. Algunas cartas dejan zonas
+## destruidas (ahi no se puede colocar nada); el motor guarda esa marca en los cinco bits bajos
+## de la ficha de jugador (Yugi) o en las marcas de su lista de bloqueos (Joey), asi que la
+## comprobacion se delega en la rutina del motor que ya mira las dos cosas.
+static func monster_zone_usable(duel, p: int, z: int) -> bool:
+	p &= 1
+	if z < 0 or z > 4 or zone_idx(duel, p, z) != 0:
+		return false
+	if is_joey(duel):
+		if duel.has_method("f569f70"):
+			return int(duel.f569f70(p, z)) != 0
+		return true
+	if duel.has_method("f543260"):
+		return int(duel.f543260(p, z)) != 0
+	return true
 
 
 static func free_st_zone(duel, p: int) -> int:
