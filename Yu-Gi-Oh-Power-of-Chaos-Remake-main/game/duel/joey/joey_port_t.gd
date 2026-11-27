@@ -866,6 +866,11 @@ func f5b8210(announce: int) -> int:
 		if m.u32(0xa56430 + attacker * 0xd44) & 0x400000:
 			m.set_u16(a, m.u16(a) & 0xffef)
 			m.set_u32(a + 12, 0)
+	# Dimension Fusion Destruction (2548): no battle damage to the summoner of the marked monster.
+	if CustomCardEffects.battle_damage_blocked(self, attacker, _jt_atk()):
+		m.set_u32(a + 12, 0)
+	if (m.u32(_JT_B) & 4) == 0 and CustomCardEffects.battle_damage_blocked(self, defender, _jt_def()):
+		m.set_u32(b + 12, 0)
 	if f56b220(0x14d) != 0:
 		if m.u32(b + 12) != 0 and _s32(f5699a0(m.u8(b) >> 6 & 1 ^ defender, 0x58f)) > 0:
 			m.set_u32(b + 12, 0)
