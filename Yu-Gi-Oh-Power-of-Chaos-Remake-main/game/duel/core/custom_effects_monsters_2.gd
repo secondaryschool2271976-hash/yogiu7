@@ -1019,7 +1019,7 @@ static func on_continuous_enforce(duel) -> void:
 			elif cid == 3063 and not sd: # Pandemonium Watchbear
 				has_watchbear = true
 		if CustomDuelOps.zone_idx(duel, pl, 10) != 0 and CustomDuelOps.is_face_up(duel, pl, 10) and CustomDuelOps.zone_id(duel, pl, 10) == 3078:
-			CustomDuelOps.zflags(duel, pl, 10)["effect_indestructible"] = has_watchbear
+			CustomDuelOps.zflags(duel, pl, 10)["indest_effect"] = has_watchbear
 
 
 static func modify_continuous(duel, p: int, z: int, cid: int, out: Dictionary) -> void:
