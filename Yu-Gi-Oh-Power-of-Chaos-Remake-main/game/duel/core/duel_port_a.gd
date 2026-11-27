@@ -516,7 +516,8 @@ func f404890() -> int:
 		if b >= 0xa9 and b <= 0xcb:
 			_dialog_subs.append({"append": 0xcc})
 		elif b == 0x8c:
-			_dialog_subs.append({"card": f401a70(f401ad0(c))})
+			# La escena convierte el indice a id (dialog_subs_for_scene); aqui va el indice.
+			_dialog_subs.append({"card": f401ad0(c)})
 		if a == 8:
 			m.set_u16(0xa13418, m.u16(0xa13418) | ((c >> 8) & 1))
 			m.set_u8(0xa16101, c)
