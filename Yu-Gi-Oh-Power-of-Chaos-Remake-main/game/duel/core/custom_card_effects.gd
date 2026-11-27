@@ -271,6 +271,7 @@ static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
 			st["summoned_this_turn"] = {0: [], 1: []}
 			st["destroyed_this_turn"] = {0: [], 1: []}
 			st["sent_gy_this_turn"] = {0: [], 1: []}
+			st["battled_this_turn"] = []
 		if ph == CustomDuelOps.PHASE_DP:
 			_prepare_draw_phase(duel, turn_p, t)
 		elif ph == CustomDuelOps.PHASE_SP:
@@ -286,9 +287,36 @@ static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
 			CustomEffectsMonsters2.on_end_phase(duel, turn_p)
 			_expire_temp_stats(st, t)
 			_clear_turn_level_flags(st)
+			_destroy_battled_monsters(duel, t)
 		_run_delayed_tasks(duel, t, ph)
 	on_continuous_enforce(duel)
 	check_and_apply_win(duel)
+
+
+## After the Struggle (2716): every monster that battled this turn is destroyed at the End Phase.
+static func _destroy_battled_monsters(duel, t: int) -> void:
+	var st = CustomDuelOps.state(duel)
+	var keys: Array = st.get("battled_this_turn", [])
+	if keys.is_empty():
+		return
+	var armed := false
+	for p in 2:
+		var pf: Dictionary = CustomDuelOps.pflags(duel, p)
+		if int(pf.get("destroy_battled_ep", -1)) == t:
+			pf.erase("destroy_battled_ep")
+			armed = true
+	if not armed:
+		return
+	for key in keys:
+		var parts: PackedStringArray = str(key).split(":")
+		if parts.size() != 2:
+			continue
+		var bp: int = int(parts[0])
+		var bz: int = int(parts[1])
+		if bz < 0 or bz >= 5:
+			continue
+		if CustomDuelOps.zone_idx(duel, bp, bz) != 0:
+			CustomDuelOps.destroy_zone(duel, bp, bz)
 
 
 ## Cyber Dragon Drei makes Cyber Dragons Level 5 only until the end of the turn.
@@ -331,6 +359,12 @@ static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: i
 
 
 static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, atk_destroyed: bool, def_destroyed: bool) -> void:
+	var st_battle = CustomDuelOps.state(duel)
+	var battled: Array = st_battle.get("battled_this_turn", [])
+	battled.append("%d:%d" % [atk_p & 1, atk_z])
+	if def_z >= 0 and def_z < 5:
+		battled.append("%d:%d" % [def_p & 1, def_z])
+	st_battle["battled_this_turn"] = battled
 	CustomEffectsMonsters1.on_battle_end(duel, atk_p, atk_z, def_p, def_z, atk_destroyed, def_destroyed)
 	CustomEffectsMonsters2.on_battle_end(duel, atk_p, atk_z, def_p, def_z, atk_destroyed, def_destroyed)
 	check_and_apply_win(duel)
