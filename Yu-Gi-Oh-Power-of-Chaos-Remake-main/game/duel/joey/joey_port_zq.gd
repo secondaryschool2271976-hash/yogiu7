@@ -436,9 +436,36 @@ func f595ce0(e: int) -> int:
 		f5bcfa0(_zq_owner(e), m.u16(e))
 	elif step == 1:
 		f5b9170(((m.u16(e + 2) << 15) | 0x88) & 0xffffffff, (m.u8(e + 2) >> 1) & 31, m.u16(0xa57822) + 1, 0)
-	else: return 1
+	else:
+		_dna_debug(e)
+		return 1
 	m.set_u8(0xa55c8e, m.u8(0xa55c8e) + 1)
 	return 0
+
+
+## TEMPORAL: muestra en pantalla la respuesta, el contador de la carta y el tipo efectivo.
+func _dna_debug(e: int) -> void:
+	if (effect_card_id(m.u16(e)) & 0xffff) != 0x479:
+		return
+	var text: String = "DNA answer=%d counter=%d" % [m.u16(0xa57822), m.u16(_zq_zone(e) + JoeyMem.Z_COUNTER)]
+	for q in 2:
+		for z in 5:
+			if (m.u32(JoeyMem.zone(q, z)) & 0xfff) != 0:
+				text += " | p%d z%d type=%d" % [q, z, f56f6d0(q, z)]
+	var loop: MainLoop = Engine.get_main_loop()
+	if loop is SceneTree:
+		var layer := CanvasLayer.new()
+		layer.layer = 200
+		var label := Label.new()
+		label.text = text
+		label.position = Vector2(8, 8)
+		label.add_theme_font_size_override("font_size", 20)
+		label.add_theme_color_override("font_color", Color(1, 1, 0))
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		label.add_theme_constant_override("outline_size", 6)
+		layer.add_child(label)
+		(loop as SceneTree).root.add_child(layer)
+		(loop as SceneTree).create_timer(12.0).timeout.connect(layer.queue_free)
 
 
 func f593bf0(e: int) -> int:
