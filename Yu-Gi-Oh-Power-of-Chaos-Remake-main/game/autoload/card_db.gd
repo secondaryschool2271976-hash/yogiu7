@@ -656,12 +656,17 @@ static func card_attribute_key(card: Dictionary) -> String:
 	return ""
 
 
-func matches_filters(card: Dictionary, normalized_query: String, attr_filter := "all", type_filter := "all") -> bool:
+func matches_filters(card: Dictionary, normalized_query: String, attr_filter := "all", type_filter := "all", sub_filter := "all") -> bool:
 	if not matches_search(card, normalized_query):
 		return false
 	if attr_filter != "" and attr_filter != "all":
 		if card_attribute_key(card) != attr_filter:
 			return false
+	if sub_filter != "" and sub_filter != "all":
+		var parts: PackedStringArray = sub_filter.split(":")
+		if parts.size() == 2:
+			if str(card.get("category", "")) != parts[0] or card_subcategory(card) != parts[1]:
+				return false
 	if type_filter != "" and type_filter != "all":
 		match type_filter:
 			"monster":
@@ -720,6 +725,47 @@ static func attribute_filter_options(lang: String) -> Array[Dictionary]:
 		{"id": "earth", "label": "EARTH"},
 		{"id": "wind", "label": "WIND"},
 		{"id": "divine", "label": "DIVINE"},
+	]
+
+
+static func subtype_filter_options(lang: String) -> Array[Dictionary]:
+	if lang == "a":
+		return [
+			{"id": "all", "label": "كل أنواع السحر والفخ"},
+			{"id": "spell:normal", "label": "سحر عادي"},
+			{"id": "spell:continuous", "label": "سحر مستمر"},
+			{"id": "spell:equip", "label": "سحر تجهيز"},
+			{"id": "spell:ritual", "label": "سحر طقوس"},
+			{"id": "spell:quickplay", "label": "سحر لعب سريع"},
+			{"id": "spell:field", "label": "سحر ملعب"},
+			{"id": "trap:normal", "label": "فخ عادي"},
+			{"id": "trap:continuous", "label": "فخ مستمر"},
+			{"id": "trap:counter", "label": "فخ مضاد (سهم)"},
+		]
+	if lang == "s":
+		return [
+			{"id": "all", "label": "Todas las Mágicas/Trampas"},
+			{"id": "spell:normal", "label": "Mágica Normal"},
+			{"id": "spell:continuous", "label": "Mágica Continua"},
+			{"id": "spell:equip", "label": "Mágica de Equipo"},
+			{"id": "spell:ritual", "label": "Mágica de Ritual"},
+			{"id": "spell:quickplay", "label": "Mágica de Juego Rápido"},
+			{"id": "spell:field", "label": "Mágica de Campo"},
+			{"id": "trap:normal", "label": "Trampa Normal"},
+			{"id": "trap:continuous", "label": "Trampa Continua"},
+			{"id": "trap:counter", "label": "Trampa de Contraefecto"},
+		]
+	return [
+		{"id": "all", "label": "All Spell / Trap Types"},
+		{"id": "spell:normal", "label": "Normal Spell"},
+		{"id": "spell:continuous", "label": "Continuous Spell"},
+		{"id": "spell:equip", "label": "Equip Spell"},
+		{"id": "spell:ritual", "label": "Ritual Spell"},
+		{"id": "spell:quickplay", "label": "Quick-Play Spell"},
+		{"id": "spell:field", "label": "Field Spell"},
+		{"id": "trap:normal", "label": "Normal Trap"},
+		{"id": "trap:continuous", "label": "Continuous Trap"},
+		{"id": "trap:counter", "label": "Counter Trap"},
 	]
 
 

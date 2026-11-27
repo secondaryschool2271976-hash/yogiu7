@@ -267,6 +267,7 @@ var _new_badge_tex: Texture2D = null
 var _search_query := ""
 var _filter_attr := "all"
 var _filter_type := "all"
+var _filter_sub := "all"
 var _search_btn: Button
 var _search_box: HBoxContainer
 var _search_edit: LineEdit
@@ -279,6 +280,7 @@ var _popup_clear: Button
 var _popup_cancel: Button
 var _filter_attr_btn: Button
 var _filter_type_btn: Button
+var _filter_sub_btn: Button
 var _filter_dropdown_panel: PanelContainer
 var _filter_dropdown_title: Label
 var _filter_dropdown_grid: GridContainer
@@ -407,7 +409,7 @@ func _apply_view() -> void:
 	var current := _trunk_card()
 	_view.clear()
 	for card in _trunk:
-		if (_filter == "all" or CardDB.group_of(card) == _filter_group(_filter)) and CardDB.matches_filters(card, _search_query, _filter_attr, _filter_type):
+		if (_filter == "all" or CardDB.group_of(card) == _filter_group(_filter)) and CardDB.matches_filters(card, _search_query, _filter_attr, _filter_type, _filter_sub):
 			_view.append(card)
 	if _sort != "default":
 		_sort_records(_view, func(card): return _native_sort_key(card, _sort))
@@ -1007,8 +1009,8 @@ func _build_search_bar() -> void:
 
 	_search_popup = PanelContainer.new()
 	_search_popup.position = Vector2(226, 42)
-	_search_popup.custom_minimum_size = Vector2(436, 128)
-	_search_popup.size = Vector2(436, 128)
+	_search_popup.custom_minimum_size = Vector2(436, 166)
+	_search_popup.size = Vector2(436, 166)
 	_search_popup.z_index = 2600
 	_search_popup.visible = false
 	_search_popup.add_theme_stylebox_override("panel", popup_box)
@@ -1132,6 +1134,20 @@ func _build_search_bar() -> void:
 	_filter_type_btn.add_theme_stylebox_override("pressed", _filter_opt_active_style)
 	_filter_type_btn.pressed.connect(func() -> void: _toggle_filter_dropdown("type"))
 
+	_filter_sub_btn = Button.new()
+	_filter_sub_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_filter_sub_btn.custom_minimum_size = Vector2(146, 32)
+	_filter_sub_btn.clip_text = true
+	_filter_sub_btn.focus_mode = Control.FOCUS_NONE
+	_filter_sub_btn.add_theme_font_override("font", _text_font)
+	_filter_sub_btn.add_theme_font_size_override("font_size", 12)
+	_filter_sub_btn.add_theme_color_override("font_color", Color(0.98, 0.95, 0.86, 1.0))
+	_filter_sub_btn.add_theme_stylebox_override("normal", _filter_opt_normal_style)
+	_filter_sub_btn.add_theme_stylebox_override("hover", _filter_opt_hover_style)
+	_filter_sub_btn.add_theme_stylebox_override("pressed", _filter_opt_active_style)
+	_filter_sub_btn.pressed.connect(func() -> void: _toggle_filter_dropdown("sub"))
+	popup_col.add_child(_filter_sub_btn)
+
 	_popup_reset = Button.new()
 	_popup_reset.text = "إعادة" if is_arabic else ("Reset" if Assets.lang != "s" else "Limpiar")
 	_popup_reset.custom_minimum_size = Vector2(68, 32)
@@ -1214,7 +1230,7 @@ func _update_search_button_label() -> void:
 		return
 	var is_arabic := Assets.lang == "a"
 	var base := "بحث وفلترة" if is_arabic else ("Buscar y filtrar" if Assets.lang == "s" else "Search & Filter")
-	var active := not _search_query.is_empty() or _filter_attr != "all" or _filter_type != "all"
+	var active := not _search_query.is_empty() or _filter_attr != "all" or _filter_type != "all" or _filter_sub != "all"
 	_search_btn.text = ("%s (%d)" % [base, _view.size()]) if active else base
 
 
@@ -1244,6 +1260,13 @@ func _update_filter_button_labels() -> void:
 		_filter_type_btn.text = ("%s  %s" % [type_arrow, type_label]) if is_arabic else ("%s  %s" % [type_label, type_arrow])
 		var type_style: StyleBoxFlat = _filter_opt_active_style if (_filter_type != "all" or type_open) else _filter_opt_normal_style
 		_filter_type_btn.add_theme_stylebox_override("normal", type_style)
+	if _filter_sub_btn != null:
+		var sub_open: bool = dropdown_open and _filter_dropdown_mode == "sub"
+		var sub_arrow: String = "▴" if sub_open else "▾"
+		var sub_label: String = _filter_option_label(CardDB.subtype_filter_options(Assets.lang), _filter_sub)
+		_filter_sub_btn.text = ("%s  %s" % [sub_arrow, sub_label]) if is_arabic else ("%s  %s" % [sub_label, sub_arrow])
+		var sub_style: StyleBoxFlat = _filter_opt_active_style if (_filter_sub != "all" or sub_open) else _filter_opt_normal_style
+		_filter_sub_btn.add_theme_stylebox_override("normal", sub_style)
 
 
 func _has_open_filter_dropdown() -> bool:
@@ -1258,11 +1281,19 @@ func _open_filter_dropdown(mode: String) -> void:
 	DisplayServer.virtual_keyboard_hide()
 	_filter_dropdown_mode = mode
 	var is_arabic: bool = Assets.lang == "a"
-	var options: Array[Dictionary] = CardDB.attribute_filter_options(Assets.lang) if mode == "attr" else CardDB.type_filter_options(Assets.lang)
-	var current_id: String = _filter_attr if mode == "attr" else _filter_type
+	var options: Array[Dictionary] = CardDB.type_filter_options(Assets.lang)
+	var current_id: String = _filter_type
+	if mode == "attr":
+		options = CardDB.attribute_filter_options(Assets.lang)
+		current_id = _filter_attr
+	elif mode == "sub":
+		options = CardDB.subtype_filter_options(Assets.lang)
+		current_id = _filter_sub
 	if _filter_dropdown_title != null:
 		if mode == "attr":
 			_filter_dropdown_title.text = "اختر السمة" if is_arabic else ("Seleccionar atributo" if Assets.lang == "s" else "Select Attribute")
+		elif mode == "sub":
+			_filter_dropdown_title.text = "اختر نوع السحر / الفخ" if is_arabic else ("Seleccionar tipo de Mágica/Trampa" if Assets.lang == "s" else "Select Spell / Trap Type")
 		else:
 			_filter_dropdown_title.text = "اختر النوع" if is_arabic else ("Seleccionar tipo" if Assets.lang == "s" else "Select Card Type")
 	while _filter_option_buttons.size() < options.size():
@@ -1321,11 +1352,23 @@ func _select_filter_option(opt_id: String) -> void:
 		_filter_type = opt_id
 		if _filter_type != "all" and _filter != "all":
 			_filter = "all"
+		if _filter_type != "all" and _filter_sub != "all" and not _sub_fits_type(_filter_sub, _filter_type):
+			_filter_sub = "all"
+	elif mode == "sub":
+		_filter_sub = opt_id
+		if _filter_sub != "all":
+			_filter_type = "all"
+			if _filter != "all":
+				_filter = "all"
 	else:
 		return
 	_close_filter_dropdown()
 	_refresh_filtered_view()
 	Audio.play_sfx("%s/voice/internal/decide.wav" % game)
+
+
+func _sub_fits_type(sub_id: String, type_id: String) -> bool:
+	return type_id in ["spell", "trap"] and sub_id.begins_with(type_id + ":")
 
 
 func _toggle_search_popup() -> void:
@@ -1351,6 +1394,7 @@ func _refresh_filtered_view() -> void:
 func _reset_search_and_filters() -> void:
 	_filter_attr = "all"
 	_filter_type = "all"
+	_filter_sub = "all"
 	_close_filter_dropdown()
 	_clear_search(true)
 	_update_filter_button_labels()
@@ -1388,9 +1432,9 @@ func _on_search_submitted(text: String) -> void:
 
 func _confirm_search(raw_text: String) -> void:
 	_sync_search_text(raw_text, _search_popup != null and _search_popup.visible)
-	if _view.is_empty() and _filter != "all" and (not _search_query.is_empty() or _filter_attr != "all" or _filter_type != "all"):
+	if _view.is_empty() and _filter != "all" and (not _search_query.is_empty() or _filter_attr != "all" or _filter_type != "all" or _filter_sub != "all"):
 		for card in _trunk:
-			if CardDB.matches_filters(card, _search_query, _filter_attr, _filter_type):
+			if CardDB.matches_filters(card, _search_query, _filter_attr, _filter_type, _filter_sub):
 				_filter = "all"
 				_apply_view()
 				break
@@ -1511,6 +1555,10 @@ func handle_mobile_search_touch(event: InputEventScreenTouch, scene_pos: Vector2
 		if _filter_attr_btn != null and _popup_control_rect(_filter_attr_btn).grow(4.0).has_point(scene_pos):
 			if event.pressed:
 				_toggle_filter_dropdown("attr")
+			return true
+		if _filter_sub_btn != null and _popup_control_rect(_filter_sub_btn).grow(4.0).has_point(scene_pos):
+			if event.pressed:
+				_toggle_filter_dropdown("sub")
 			return true
 		if _filter_type_btn != null and _popup_control_rect(_filter_type_btn).grow(4.0).has_point(scene_pos):
 			if event.pressed:
