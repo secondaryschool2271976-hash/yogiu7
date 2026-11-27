@@ -769,7 +769,8 @@
     "2034": "ad_46986414.webp",
     "2000": "ad_89631139.webp",
     "1746": "ad_44397496.webp",
-    "1747": "ad_92353449.webp"
+    "1747": "ad_92353449.webp",
+    "1748": "ad_18491580.webp"
   },
   "cards": [
     {
@@ -33265,6 +33266,47 @@
       "series": [],
       "frame_type": "spell",
       "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1748,
+      "internal_id": 3133,
+      "password": "18491580",
+      "names": {
+        "eng": "Red-Eyes Alternative Black Dragon",
+        "ara": "تنين أحمر العينين الأسود البديل"
+      },
+      "descriptions": {
+        "eng": "Cannot be Normal Summoned/Set. Must first be Special Summoned (from your hand) by Tributing 1 \"Red-Eyes\" monster from your hand or field. You can only Special Summon \"Red-Eyes Alternative Black Dragon\" once per turn this way. If this card is destroyed by battle, or if this card in its owner's possession is destroyed by an opponent's card effect: You can target 1 Level 7 or lower \"Red-Eyes\" monster in your GY, except \"Red-Eyes Alternative Black Dragon\"; Special Summon it, and if it was a \"Red-Eyes B. Dragon\" that was Special Summoned, its original ATK becomes doubled.",
+        "ara": "لا يمكن استدعاؤه بشكل عادي/محجوب. يجب أولاً استدعاؤه بشكل خاص (من يدك) عبر التضحية بوحش 1 \"أحمر العينين\" من يدك أو ساحتك. يمكنك استدعاء \"تنين أحمر العينين الأسود البديل\" بشكل خاص بهذه الطريقة مرة واحدة فقط في كل دور. إذا دُمّرت هذه البطاقة في المعركة، أو إذا دُمّرت هذه البطاقة وهي في حوزة مالكها بتأثير بطاقة الخصم: يمكنك استهداف وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل في مقبرتك، ما عدا \"تنين أحمر العينين الأسود البديل\"؛ استدعِه بشكل خاص، وإذا كان \"التنين الأسود أحمر العينين\" الذي استُدعي بشكل خاص، يصبح هجومه الأصلي مضاعفاً."
+      },
+      "atk": 2400,
+      "defense": 2000,
+      "level": 7,
+      "attribute": "dark",
+      "type_id": 1,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_18491580.webp",
+      "prop": 1310056648,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
       "custom_effect": true
     }
   ],

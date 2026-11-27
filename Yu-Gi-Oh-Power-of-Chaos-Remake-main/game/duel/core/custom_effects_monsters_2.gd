@@ -20,7 +20,7 @@ const IDS: Array[int] = [
 	3064, 3065, 3066, 3069, 3070, 3071, 3074, 3084, 3085, 3086,
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
-	3128, 3129,
+	3128, 3129, 3133,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -58,13 +58,25 @@ static func handles(cid: int) -> bool:
 	return cid in IDS
 
 
+## Red-Eyes Alternative Black Dragon: the "Red-Eyes" card to Tribute, as (location, zone or hand
+## index). The field is preferred, then the hand (never the card being summoned). (-1, -1) if none.
+static func _alt_black_tribute(duel, p: int, self_slot: int) -> Vector2i:
+	var pick: Dictionary = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.name_matches(d, idx, "red-eyes"), false, false)
+	if not pick.is_empty():
+		return Vector2i(CustomDuelOps.LOC_FIELD_MONSTER, int(pick["z"]))
+	var hi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, i): return i != self_slot and CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes"), false)
+	if hi >= 0:
+		return Vector2i(CustomDuelOps.LOC_HAND, hi)
+	return Vector2i(-1, -1)
+
+
 static func is_spirit(_cid: int) -> bool:
 	return false
 
 
 static func can_normal_summon(duel, p: int, cid: int, is_set := false) -> bool:
 	p &= 1
-	if cid in [2833, 3034, 3070]:
+	if cid in [2833, 3034, 3070, 3133]:
 		return false
 	if cid == 2885 and not is_set: # Dark Dust Spirit cannot be SS, can NS
 		return true
@@ -80,13 +92,20 @@ static func can_special_summon(duel, p: int, cid: int, loc: int, _slot: int) -> 
 	p &= 1
 	if cid == 2885:
 		return false
-	if CustomDuelOps.free_monster_zone(duel, p) < 0 and cid != 2833:
+	if CustomDuelOps.free_monster_zone(duel, p) < 0 and cid != 2833 and cid != 3133:
 		return false
 	if GUARDIAN_EQUIP_REQ.has(cid):
 		var eq_id := int(GUARDIAN_EQUIP_REQ[cid])
 		if not CustomDuelOps.has_faceup_id(duel, p, eq_id):
 			return false
 	match cid:
+		3133: # Red-Eyes Alternative Black Dragon: Tribute 1 "Red-Eyes" from hand or field
+			if loc != CustomDuelOps.LOC_HAND or not CustomDuelOps.can_hopt(duel, p, 3133):
+				return false
+			var alt_cost: Vector2i = _alt_black_tribute(duel, p, _slot)
+			if alt_cost.x < 0:
+				return false
+			return CustomDuelOps.free_monster_zone(duel, p) >= 0 or alt_cost.x == CustomDuelOps.LOC_FIELD_MONSTER
 		2833: # Fushioh Richie: Tribute Great Dezard w/ 2 kills
 			if loc != CustomDuelOps.LOC_HAND and loc != CustomDuelOps.LOC_DECK:
 				return false
@@ -104,6 +123,20 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 	if not can_special_summon(duel, p, cid, loc, slot):
 		return -1
 	match cid:
+		3133:
+			var alt_tr: Vector2i = _alt_black_tribute(duel, p, slot)
+			CustomDuelOps.mark_hopt(duel, p, 3133)
+			var alt_slot: int = slot
+			if alt_tr.x == CustomDuelOps.LOC_FIELD_MONSTER:
+				CustomDuelOps.tribute_zone(duel, p, alt_tr.y)
+			else:
+				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, alt_tr.y, p, CustomDuelOps.LOC_GRAVE)
+				if alt_tr.y < slot:
+					alt_slot -= 1
+			var alt_z: int = CustomDuelOps.special_summon_from_pile(duel, p, loc, alt_slot, p, true, false)
+			if alt_z >= 0:
+				on_summon_or_flip(duel, p, alt_z, cid, "special")
+			return alt_z
 		2833:
 			var dz = CustomDuelOps.find_zone_of_id(duel, p, 2884, true)
 			CustomDuelOps.tribute_zone(duel, p, dz)
@@ -784,10 +817,23 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 			CustomDuelOps.add_stat_mod(duel, atk_p, atk_z, 500, 0, false)
 
 
-static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: bool, _was_tributed_for_p: int) -> void:
+static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bool, _was_tributed_for_p: int) -> void:
 	p &= 1
 	var opp = 1 - p
 	match cid:
+		3133: # Red-Eyes Alternative Black Dragon: SS a Level 7 or lower Red-Eyes from the GY
+			if (by_battle or opp_effect) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+				var alt_gi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.name_matches(d, idx, "red-eyes") and CustomDuelOps.monster_level(d, idx) <= 7 and CustomDuelOps.raw_id(d, idx) != 3133 and CustomDuelOps.raw_id(d, idx) != 2627, true)
+				if alt_gi >= 0:
+					var alt_summon: Callable = func() -> void:
+						var alt_rid: int = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, alt_gi))
+						var alt_nz: int = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, alt_gi, p, true, false)
+						if alt_nz >= 0 and alt_rid in CustomDuelOps.NATIVE_RED_EYES:
+							# Its original ATK becomes doubled.
+							var alt_atk: int = CustomDuelOps.base_atk(duel, CustomDuelOps.zone_idx(duel, p, alt_nz))
+							CustomDuelOps.add_stat_mod(duel, p, alt_nz, alt_atk, 0, false)
+					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 3133), alt_summon):
+						alt_summon.call()
 		2803: # Newdoria
 			if by_battle:
 				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
