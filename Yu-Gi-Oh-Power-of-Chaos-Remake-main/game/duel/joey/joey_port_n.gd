@@ -147,9 +147,37 @@ func f575570(a: int, b: int) -> int:
 
 ## Joey FUN_00575750: mueve la carta de la zona a a la zona b vacia (0x83) y avisa 575570.
 func f575750(_unused: int, a: int, b: int) -> int:
-	if (m.u32(JoeyMem.zone(a & 1, (a >> 8) & 0xff)) & 0xfff) != 0 \
-			and (m.u32(JoeyMem.zone(b & 1, (b >> 8) & 0xff)) & 0xfff) == 0:
-		f5b9170(_jn_side(a & 0xff) | 0x83, a, b, 0)
+	var sp: int = a & 1
+	var sz: int = (a >> 8) & 0xff
+	var dp: int = b & 1
+	var dz: int = (b >> 8) & 0xff
+	var src: int = JoeyMem.zone(sp, sz)
+	var dst: int = JoeyMem.zone(dp, dz)
+	if (m.u32(src) & 0xfff) != 0 and (m.u32(dst) & 0xfff) == 0:
+		# El manejador 0x83 de Joey (_c5b9470_83) manda una carta por id al fondo del Mazo y nunca
+		# cambia de lado, asi que la zona se mueve aqui como hace 548730 en el motor Core: copia
+		# entera, zona origen vacia y referencias de vinculos al nuevo sitio (56b360).
+		var card: int = m.u32(src) & 0xfff
+		var flags: int = m.u8(src + 6)
+		var owner: int = (m.u32(src) >> 12) & 1
+		m.copy(dst, src, JoeyMem.ZONE_SIZE)
+		f5bddf0(src, JoeyMem.ZONE_SIZE)
+		m.set_u8(dst + 7, m.u8(dst + 7) & 0xfd)
+		f570710(dp, dz, 0, int(dp != owner))
+		var bit: int = ((sp << 4) + sz) & 0x1f
+		m.set_u32(_JM_ZMASK, m.u32(_JM_ZMASK) & ~(1 << bit))
+		f56b360(((sz & 0xff) << 8) | sp, ((dz & 0xff) << 8) | dp)
+		var def_pos: int = flags & 1
+		var face_up: int = (flags >> 1) & 1
+		CustomDuelOps._present(self, "move", {
+			"p": sp,
+			"card": f4022e0(card) & 0xffff,
+			"index": card,
+			"from": sp | ((sz & 0xf) << 1),
+			"to": dp | ((dz & 0xf) << 1) | (def_pos << 14) | (face_up << 15),
+			"reason": 0,
+		})
+		CustomDuelOps.sync_visuals(self)
 		f575570(a, b)
 	return 0
 
