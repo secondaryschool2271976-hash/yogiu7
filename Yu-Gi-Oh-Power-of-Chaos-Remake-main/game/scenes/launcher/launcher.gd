@@ -100,7 +100,7 @@ func _exit_tree() -> void:
 func _ready() -> void:
 	# Recurso propio del remake, incluido expresamente en la copia publica.
 	var music_path := "res://assets/music/launcher_theme.mp3"
-	if ResourceLoader.exists(music_path):
+	if not Audio.AUDIO_DISABLED and ResourceLoader.exists(music_path):
 		MUSIC = load(music_path)
 	_halo = Sprite2D.new()
 	# Halo a doble resolucion, dibujado a la mitad: caida suave sin escalones.
@@ -247,7 +247,7 @@ func _setup_online_controls() -> void:
 	_online_mode_button.focus_mode = Control.FOCUS_NONE
 	_online_mode_button.visible = show_ui
 	_online_mode_button.pressed.connect(_open_online_mode)
-	_style_feature_button(_online_mode_button, Color(0.08, 0.36, 0.38, 0.96), Color(0.12, 0.48, 0.50, 0.98), GOLD)
+	_style_online_hero()
 	add_child(_online_mode_button)
 
 	if is_instance_valid(Online) and not Online.session_changed.is_connected(_refresh_online_button):
@@ -416,11 +416,11 @@ func _refresh_online_button() -> void:
 		_online_button.reset_size()
 	if is_instance_valid(_online_mode_button):
 		if Assets.lang == "a":
-			_online_mode_button.text = "⚔ الوضع الأونلاين"
+			_online_mode_button.text = "أونلاين"
 		elif Assets.lang == "s":
-			_online_mode_button.text = "⚔ Modo Online"
+			_online_mode_button.text = "ONLINE"
 		else:
-			_online_mode_button.text = "⚔ Online Mode"
+			_online_mode_button.text = "ONLINE"
 		_online_mode_button.reset_size()
 
 
@@ -646,12 +646,45 @@ func _layout() -> void:
 	queue_redraw()
 
 
+## Boton Online grande y bien visible, con la palabra escrita (no va dentro del dock de botones pequenos).
+func _style_online_hero() -> void:
+	_online_mode_button.add_theme_font_override("font", Assets.ui_font(700))
+	_online_mode_button.add_theme_font_size_override("font_size", 24)
+	_online_mode_button.add_theme_color_override("font_color", Color.WHITE)
+	_online_mode_button.add_theme_color_override("font_hover_color", Color.WHITE)
+	_online_mode_button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	for state: String in ["normal", "hover", "pressed"]:
+		var hbox := StyleBoxFlat.new()
+		hbox.bg_color = Color(0.06, 0.56, 0.36, 1.0) if state == "normal" else (Color(0.10, 0.68, 0.44, 1.0) if state == "hover" else Color(0.04, 0.40, 0.26, 1.0))
+		hbox.border_color = GOLD
+		hbox.set_border_width_all(3)
+		hbox.set_corner_radius_all(12)
+		hbox.shadow_color = Color(0, 0, 0, 0.6)
+		hbox.shadow_size = 7
+		hbox.content_margin_left = 18
+		hbox.content_margin_right = 18
+		hbox.content_margin_top = 8
+		hbox.content_margin_bottom = 8
+		_online_mode_button.add_theme_stylebox_override(state, hbox)
+
+
+func _layout_online_hero(below_y: float) -> void:
+	if not _online_mode_button.visible:
+		return
+	var w: float = clampf(_screen.x - 60.0, 240.0, 340.0)
+	var h := 50.0
+	_online_mode_button.clip_text = false
+	_online_mode_button.size = Vector2(w, h)
+	_online_mode_button.position = Vector2((_screen.x - w) * 0.5, minf(below_y, _screen.y - 104.0))
+
+
 func _layout_feature_dock(dock_y: float) -> void:
 	var dock_buttons: Array[Button] = []
-	for btn: Button in [_online_mode_button, _wheel_button, _special_wheel_button, _code_button, _card_back_button, _ydc_button, _ydc_export_button, _admin_code_button]:
+	for btn: Button in [_wheel_button, _special_wheel_button, _code_button, _card_back_button, _ydc_button, _ydc_export_button, _admin_code_button]:
 		if btn.visible:
 			dock_buttons.append(btn)
 	if dock_buttons.is_empty():
+		_layout_online_hero(dock_y)
 		return
 	var gap := 12.0
 	var max_total := clampf(_screen.x - 44.0, 560.0, 820.0)
@@ -688,6 +721,7 @@ func _layout_feature_dock(dock_y: float) -> void:
 			btn.position = Vector2(bx, y_cursor)
 			bx += widths[i] + gap
 		y_cursor += row_h + 10.0
+	_layout_online_hero(y_cursor)
 
 
 func _start_music() -> void:
