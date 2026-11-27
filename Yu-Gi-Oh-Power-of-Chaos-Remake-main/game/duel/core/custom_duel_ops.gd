@@ -1236,7 +1236,7 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 		var src: int = duel.f5700f0(src_p, loc, i)
 		duel.f5675c0(tmp, src)
 		duel.f570790(src_p, loc, i)
-		duel.f568610(target_p, z, tmp, 1 if face_up else 0, 1 if def_pos else 0)
+		duel.f568610(target_p, z, tmp, 1 if def_pos else 0, 1 if face_up else 0)
 	else:
 		if not _core_take_pile_entry(duel, src_p, loc, i, tmp):
 			return -1
@@ -1276,7 +1276,7 @@ static func special_summon_by_id(duel, p: int, cid: int, atk := -1, def_val := -
 	var entry = ((p & 1) << 12) | (idx & 0xfff)
 	duel.m.set_u32(tmp, entry)
 	if is_joey(duel):
-		duel.f568610(p, z, tmp, 1 if face_up else 0, 1 if def_pos else 0)
+		duel.f568610(p, z, tmp, 1 if def_pos else 0, 1 if face_up else 0)
 	else:
 		duel.f5422b0(p, z, tmp, 1 if def_pos else 0, 1 if face_up else 0)
 		var zn = DuelMem.zone(p, z)
@@ -1324,7 +1324,7 @@ static func activate_trap_as_monster(duel, p: int, st_z: int, atk := 0, def_val 
 	duel.m.set_u32(tmp, duel.m.u32(zone_addr(duel, p, st_z)))
 	if is_joey(duel):
 		duel.f570790(p, st_z, 0)
-		duel.f568610(p, mz, tmp, 1, 0)
+		duel.f568610(p, mz, tmp, 0, 1)
 	else:
 		duel.f542c40(p, st_z)
 		duel.f5422b0(p, mz, tmp, 0, 1)
@@ -1441,7 +1441,7 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 	duel.m.set_u32(tmp, zone_entry(duel, from_p, from_z))
 	if is_joey(duel):
 		duel.f570790(from_p, from_z, 0)
-		duel.f568610(to_p, to_z, tmp, 1 if was_face else 0, 1 if was_def else 0)
+		duel.f568610(to_p, to_z, tmp, 1 if was_def else 0, 1 if was_face else 0)
 		_present(duel, "move", {
 			"p": from_p,
 			"card": cid,
@@ -1477,8 +1477,8 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 		duel.m.set_u32(t1, e1)
 		duel.f570790(0, z0, 0)
 		duel.f570790(1, z1, 0)
-		duel.f568610(1, z1, t0, 1 if f0 else 0, 1 if d0 else 0)
-		duel.f568610(0, z0, t1, 1 if f1 else 0, 1 if d1 else 0)
+		duel.f568610(1, z1, t0, 1 if d0 else 0, 1 if f0 else 0)
+		duel.f568610(0, z0, t1, 1 if d1 else 0, 1 if f1 else 0)
 		_present(duel, "zone_swap", {"p": 0, "a": (z0 << 8) | 0, "b": (z1 << 8) | 1})
 		sync_visuals(duel)
 	else:

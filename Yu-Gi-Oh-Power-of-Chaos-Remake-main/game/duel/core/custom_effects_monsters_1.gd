@@ -872,7 +872,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 						duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 						if CustomDuelOps.is_joey(duel):
 							duel.f570790(p, z, 0)
-							duel.f568610(p, mz, tmp, 1, 0)
+							duel.f568610(p, mz, tmp, 0, 1)
 						else:
 							duel.f542c40(p, z)
 							duel.f5422b0(p, mz, tmp, 0, 1)
@@ -1130,7 +1130,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					duel.m.set_u32(tmp, CustomDuelOps.zone_entry(duel, p, z))
 					if CustomDuelOps.is_joey(duel):
 						duel.f570790(p, z, 0)
-						duel.f568610(p, mz, tmp, 1, 0)
+						duel.f568610(p, mz, tmp, 0, 1)
 					else:
 						duel.f542c40(p, z)
 						duel.f5422b0(p, mz, tmp, 0, 1)
