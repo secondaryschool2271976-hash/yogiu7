@@ -1238,7 +1238,12 @@ static func set_st_from_pile(duel, src_p: int, loc: int, i: int, target_p: int, 
 
 static func change_position(duel, p: int, z: int, def_pos: int, face_up := -1) -> void:
 	p &= 1
-	if int(zflags(duel, p, z).get("lock_pos_until_turn", -1)) > turn_number(duel):
+	var zf_pos: Dictionary = zflags(duel, p, z)
+	if int(zf_pos.get("lock_pos_until_turn", -1)) > turn_number(duel):
+		return
+	if bool(zf_pos.get("cannot_pos", false)):
+		return
+	if int(zf_pos.get("cannot_pos_turn", -1)) == turn_number(duel):
 		return
 	var addr = zone_addr(duel, p, z)
 	if (duel.m.u32(addr) & 0xfff) == 0 or z >= 5:
