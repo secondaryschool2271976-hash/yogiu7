@@ -847,7 +847,10 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, _opp_effect: b
 					return CustomDuelOps.monster_race(d, idx) == 17 and (lv == droll or (droll == 6 and lv >= 6))
 				var fi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, pred_agido, true)
 				if fi >= 0:
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, fi, p, true, false)
+					var agido_summon: Callable = func() -> void:
+						CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, fi, p, true, false)
+					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 3001), agido_summon):
+						agido_summon.call()
 		3038: # Kaiser Glider: bounce 1 monster
 			var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
 			if not pick.is_empty():
