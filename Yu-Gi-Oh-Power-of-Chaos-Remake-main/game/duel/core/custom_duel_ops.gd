@@ -391,6 +391,16 @@ static func monster_level(duel, idx: int) -> int:
 	if t >= 0x15:
 		return 0
 	var lvl: int = (prop_of(duel, idx) >> 25) & 0xf
+	# Cost Down (3010): los monstruos en la mano bajan 2 niveles durante ese turno.
+	var cd_t := turn_number(duel)
+	for cdp in 2:
+		if int(pflags(duel, cdp).get("cost_down_turn", -1)) != cd_t:
+			continue
+		var cd_hand: int = (JoeyMem.pl(cdp) + JoeyMem.P_HAND) if is_joey(duel) else (DuelMem.pl(cdp) + DuelMem.P_HAND)
+		var cd_n: int = duel.m.u8((JoeyMem.pl(cdp) + JoeyMem.P_HAND_N) if is_joey(duel) else (DuelMem.pl(cdp) + DuelMem.P_HAND_N))
+		for cdi in cd_n:
+			if (duel.m.u16(cd_hand + cdi * 4) & 0xfff) == idx:
+				return maxi(1, lvl - 2)
 	# Cyber Dragon Drei (2533): Cyber Dragons become Level 5 for the rest of that turn.
 	var zf_all: Dictionary = state(duel).get("zone_flags", {})
 	if zf_all.is_empty():
