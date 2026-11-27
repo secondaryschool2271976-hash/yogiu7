@@ -16,6 +16,11 @@ var _music_loop := true
 var _bg_paused := false
 var _bg_prev_master_mute := false
 
+## INTERRUPTOR GENERAL DE AUDIO. true = todo el audio (musica, efectos y voces) esta apagado y
+## aislado del juego: no se carga ningun archivo de sonido, y el motor sigue sin esperar a los
+## sonidos (sfx_finished devuelve true, igual que con el volumen en 0). Los archivos de audio NO
+## se borran. Para reactivar el audio: cambiar a false (una sola linea).
+const AUDIO_DISABLED := true
 const SFX_CHANNELS := 6
 const LAUNCHER_MUSIC_BUS := &"Launcher Music"
 ## Niveles del volumen de opciones (0..15) a 0..127: DAT_005adb40.
@@ -79,6 +84,7 @@ func set_launcher_music_muted(muted: bool) -> void:
 
 
 func preload_music(rel_path: String) -> void:
+	if AUDIO_DISABLED: return
 	var path := Assets.resolve(rel_path)
 	if not path.is_empty():
 		_load(path)
@@ -86,6 +92,7 @@ func preload_music(rel_path: String) -> void:
 
 func play_music(rel_path: String, loop := true) -> void:
 	if log_played: played_log.append(rel_path.get_file().to_lower())
+	if AUDIO_DISABLED: return
 	var path := Assets.resolve(rel_path)
 	if path == "" or path == _music_path:
 		return
@@ -161,6 +168,7 @@ func voice_disabled(rel_path: String) -> bool:
 
 func play_sfx(rel_path: String) -> void:
 	if log_played: played_log.append(rel_path.get_file().to_lower())
+	if AUDIO_DISABLED: return
 	if voice_disabled(rel_path): return
 	if level == 0: return # 583d40/583e10: sonido deshabilitado.
 	var path := Assets.resolve(rel_path)
@@ -216,6 +224,7 @@ func _advance_speech() -> void:
 
 ## 583ed0/584290: terminado cuando el buffer ya no reproduce; sin sonido devuelve1.
 func sfx_finished(rel_path: String) -> bool:
+	if AUDIO_DISABLED: return true
 	if voice_disabled(rel_path): return true
 	if level == 0: return true
 	var path := Assets.resolve(rel_path)
