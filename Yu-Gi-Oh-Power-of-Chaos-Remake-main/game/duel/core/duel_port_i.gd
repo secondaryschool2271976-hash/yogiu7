@@ -1499,6 +1499,11 @@ func f55a550(a: int, b: int) -> int:
 			if f57a060(1) != 0:
 				var i := m.u32(0xa161ac)
 				var card := m.u16(0xa11fb8 + p * PS + i * 4) & 0xfff
+				var raw_ns: int = cards.id_of(card) & 0xffff
+				if CustomCardEffects.handles(raw_ns) and not CustomCardEffects.can_normal_summon(self, p, raw_ns, false):
+					# Carta que solo se Invoca de Modo Especial (Armed Dragon LV10 White): el
+					# flujo de Ofrendas por Nivel no aplica; se Invoca con su propio efecto.
+					return 0x7f
 				if call("f57a490", p, card) != 0 and f5421c0(card) == 0 and f579890() != 0:
 					m.set_u16(a + 12, i)
 					var prop := f401a20(card)
@@ -1533,5 +1538,4 @@ func _i_tribute_select(a: int, state: int) -> int:
 		m.set_u16(a + 16, ((z & 0xff) << 8) | 0x8000 if state == 0x76 else ((z & 0xff) | 0x80))
 		return 0x75 if state == 0x76 else 100
 	return 0x74 if state in [0x74, 0x75] else state
-
 
