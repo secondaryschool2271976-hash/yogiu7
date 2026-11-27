@@ -171,7 +171,7 @@ func _start_deferred_boot_tasks() -> void:
 
 
 func _load_and_start_music() -> void:
-	if _leaving or _music_stream != null or Audio.AUDIO_DISABLED:
+	if _leaving or _music_stream != null or Audio.AUDIO_DISABLED or not Audio.MENU_SOUND:
 		return
 	var loaded: Variant = load(MUSIC_PATH)
 	if loaded is AudioStream:
