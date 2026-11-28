@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAJyYCmsC/61V4W7bNhD+bT/FDQEGabYcyXZc12iCFkFa9E9bpC2woSgEmjo6XCRSJSXH6WvtEfZiu6PkxEkzYMAKwzDJO95938e7c6GVgiTZ6AbE8R9t8kYn76+SD/YGXWJVcn4lrE8usRLXmFRCm+ONqPC4aLE8ltZ1q7y2rsmvJ5sC1v8/xlCbAnegsvVits4mk6lCfC6XkKXpYj4fJknyM5AOR6PRT0H78iUki+xkvIAR/yyBDlRrJOTXuWq9tiavtbyOcAXaNDEkZ/y7GsJAK9DFDk5PIeXtwGHTOgPp7llB261wsBWlLmB1CupkMU9VGpF/DL/QheGIrxvb9D7CFOBQFLfBuiLzoDOcHuDwN6LOK9Gg06KM6jGnH0NppWjIHIDEfWbfrn2jm7bBPv1sPU8jVAplk0vhilwXAU0Pp8fLztWknU2jdCeyRZbO447ofbxVp9g8Gz8nxeaz8Wzx3yUbDA7YICFpnbcuopTLfcZFDL/CLA7OvaJUObx98moUbeHsDLJldw0SyGJSD0sC/UjQI/hkv7VIqnei2xV4hC2VwxZBQGV940gELKFC48WfCAWSR4lSsrxoYIvf+UxvjCXP0vKZ1yUacph0b+bAmF7FR5TYrk7m2TNMyXAigQsgvNqUchISOiyY94M6os/o6AheB+LoQRIShxIbAbWztRYQXfz+6fJV/vrzx7fv3+WXF+dvP1x8jFcgJNbkJVtRfms1OqBnpz0rINuqLgUzdUg2rxvLvFoTcl21KC2IlrkZTujbSrsxn/TyeRRQdqFYLdtYlk1vNJlsacdwy+aaALNCtCy1p9SUYl+96EmvRzXzsLzzOlRPKPJ+RT5KY1msYG1tGeqKF6uumfa9CDZQLTzvTFsG+15UJUhp2vNDdWlDbAgPli3uy55eLN0ppXpfguVX8Mo5cfuF/L/ShYsdlcs5JboIXeUnPY09Ax8FFBNd5FZFnfEurIr7wIf5fywYosWZJ15/xyi0qmF6Bl7A9N9oOXGzj3kIgOXpk9+j2CuhnaeOanZPirGEEUQmdBb8BlNGrgiEJl9KZjYYmTiAYbSPL+pwpR+S5DOgemq0aXHfLr5GeZeWuH4Jmeirv965VHuHHzTn26y4vOrU7mciH9/Xy/ieIDed7nTkLF3fxT14XzHOjBWOaP2CainMZXHD5xyz4zmoJjyBnmIa8t/pHJz7J2pc4PzwwegD3N2f3+VpSv8ROE1XULXIk4goF1qKgtBQ4xixxY2Q+u+/DNSCrO2ajLIbCgV1oRRVbY8rYWgSddNYdQGjwwHMct79YdCYyv1sKqPDkS+WcTz8B4WbQTBWCAAA"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/duel_port_k.gd"
+          git commit -m "Fusion pick accepts any valid material for custom recipes; invalid taps re-show the prompt"
+          git push
