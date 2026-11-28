@@ -830,6 +830,19 @@ static func dice_roll(duel, p := 0) -> int:
 	else:
 		r = (randi() % 6) + 1
 	state(duel)["last_die"] = r
+	# Dice Re-Roll (3068): una vez por turno, el lanzamiento se puede repetir.
+	var dr_t: int = turn_number(duel)
+	for dr_pl in 2:
+		var dr_pf: Dictionary = pflags(duel, dr_pl)
+		if int(dr_pf.get("dice_reroll_turn", -1)) != dr_t or int(dr_pf.get("dice_reroll_used_turn", -1)) == dr_t:
+			continue
+		dr_pf["dice_reroll_used_turn"] = dr_t
+		if duel.rng != null:
+			r = (duel.rng.rand() % 6) + 1
+		else:
+			r = (randi() % 6) + 1
+		state(duel)["last_die"] = r
+		break
 	return r
 
 

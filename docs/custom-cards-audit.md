@@ -120,6 +120,13 @@ field. The maximum number of cards each player can control is 5."
 Done: nothing. Why: the game cannot refuse a card being placed on the field, so a five-card ceiling
 cannot be enforced from the custom layer.
 
+### 2832 Ordeal of a Traveler
+Text: "Once per battle, when an opponent's monster declares an attack: You can activate this effect; Your
+opponent chooses 1 random card in your hand and calls the card type (Monster, Spell, or Trap), and if
+they call it wrong, return the attacking monster to the hand."
+Done: nothing. Why: the effect has to run when an attack is declared, and attack declaration belongs to
+the original engine with no hook, the same reason Raregold Armor and Marshmallon Glasses are listed.
+
 ## Fixed during this audit
 
 | Card | What was wrong |
@@ -156,6 +163,7 @@ cannot be enforced from the custom layer.
 | 2964 Demotion | the equipped monster's Level was not lowered |
 | 2993 Guardian Kay'est | was not unaffected by Spell effects |
 | 3004 Non-Spellcasting Area | Normal Monsters were still destroyed by Spell effects |
+| 3068 Dice Re-Roll | the flag it set was never read, so no re-roll ever happened |
 | 3076 Morale Boost | no LP gain on equipping and no damage when the Equip Spell left |
 | 3079 Rod of the Mind's Eye | battle damage from the equipped monster was not set to 1000 |
 | 3103 Begone, Knave! | was a no-op; the monster that dealt battle damage is now returned to the hand |
