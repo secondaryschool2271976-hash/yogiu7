@@ -413,6 +413,15 @@ static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int,
 		CustomDuelOps.set_stat_val(duel, atk_p & 1, atk_z, int(fbd[1]), -1, true)
 	CustomEffectsMonsters1.on_damage_calc(duel, atk_p, atk_z, def_p, def_z)
 	CustomEffectsMonsters2.on_damage_calc(duel, atk_p, atk_z, def_p, def_z)
+	# Kishido Spirit (2949): a monster you control is not destroyed in battle against a monster with the
+	# same ATK. Both stats are only in scope here, so the protection is decided now.
+	if atk_z >= 0 and atk_z < 5 and def_z >= 0 and def_z < 5 \
+			and (CustomDuelOps.has_faceup_id(duel, 0, 2949) or CustomDuelOps.has_faceup_id(duel, 1, 2949)):
+		if CustomDuelOps.eff_atk(duel, atk_p & 1, atk_z) == CustomDuelOps.eff_atk(duel, def_p & 1, def_z):
+			if CustomDuelOps.has_faceup_id(duel, atk_p & 1, 2949):
+				CustomDuelOps.zflags(duel, atk_p & 1, atk_z)["indest_battle"] = true
+			if CustomDuelOps.has_faceup_id(duel, def_p & 1, 2949):
+				CustomDuelOps.zflags(duel, def_p & 1, def_z)["indest_battle"] = true
 
 
 static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct := false) -> void:
@@ -486,6 +495,15 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 				if not pick_dn.is_empty():
 					CustomDuelOps.destroy_zone(duel, int(pick_dn["p"]), int(pick_dn["z"]))
 		CustomDuelOps.state(duel).erase("union_battle_dmg")
+	# Continuous Destruction Punch (2956): the attacking monster is destroyed if it attacked a Defense
+	# Position monster you control whose DEF is higher than its ATK.
+	if def_z >= 0 and def_z < 5 and not def_destroyed and atk_z >= 0 and atk_z < 5 \
+			and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0 \
+			and CustomDuelOps.zone_idx(duel, def_p & 1, def_z) != 0 \
+			and CustomDuelOps.has_faceup_id(duel, def_p & 1, 2956) \
+			and not CustomDuelOps.is_atk_pos(duel, def_p & 1, def_z) \
+			and CustomDuelOps.eff_def(duel, def_p & 1, def_z) > CustomDuelOps.eff_atk(duel, atk_p & 1, atk_z):
+		CustomDuelOps.destroy_zone(duel, atk_p & 1, atk_z, true)
 	# Blaze Cannon (2517): despues del calculo de dano, si ese Ra ataco, puede mandar al Cementerio
 	# todos los monstruos que controla el rival.
 	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
