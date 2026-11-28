@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAA2FCmsC/62UUY/bNgzHn5NPQWS4IUZiJ2lzlzTYDR3aYcDQrcP6tBUHg5HonBpb8iQ57aXYdx8pO8Otxd7uybZE/kn9+ZO1qSrI84OJgIs/uvwnk7+9z39zH8nnrspf3aML+e/U4JHyBo1dHLChhe6oXijnaaG6EF1TykLp2lAcNOyfRmdsrKZPcLPZoF5ui6LaLjfbFxpWy+XNej3O8/ypOh7PZrMn6/rlS8hXyxfX8xuYpedqBbwWIkajoOqsgkBWl2dnqYyuPDxMJX0O7Q6MjXM4p2cG+fewd67ejWF0Qg/KaLgFjx9Lo4cMoz9lvGsqMKH84KhXyiRjJG9Fdb3Z7J8vpy2rZuPZaPQN/MxhEFzt4MdfX7198wNQDdFjqFG7HdQI3BdCMIeOwKmuRY1AFhpqnDcI98gHgb94k/MaF52H1jtFgaPqvoJyDVrtCnhHgG1nOZ6XHExaDq7Nnjz6CbToe52Oyxl7cgqVcZZfG9IGOYl76QLB9ES+Fw4tKYN1GbqmcbasPDvfmpoyafBEZ9AEFda1mMVK3KDCpnVQ12QdOP4iL6GOz5uOWYiueNvyQHbw2qjILaB/YKNlXtT7WRwols6XqPV0IjaXEm/sgVsgmszh89/JXFl9P7nS5ZWewBW8F9fv7liL58QjoTpQGo1UjE0/bt5Nk2qKmh2op+vs0fDWK7VfTjl0Dq955RdqCqGmH2fWk7Z+9jyRtn62na+2X5H2P5YNAAWvygt2XH94M8MzopeTc0MpDr69hRV/DMv/fstxznwOMaPkKiGST3QPRS7x4tHXqKbJ/inMCQyocI8yR899743/8qrAw3/Zw84Cz/Ye4cT4JISjIUsMpWFeNeq+wJSC8CS5mj44wdAPMtyv71zaYtoCX2gTuweGKhhqWo5KO+YgFNtIluW1AwFeoY9PzVAlF+rM/sN18qaXPu7gXfQczaKPALs4y/+O812KZn9Ft+BrOm2Pvb29hur8BbhkJzP5xXxEJesTWIbj4fZWMqaJ6/Z4l4Hzl/XlID2Sybfn/iOV5usdSIr3a+wzHvuf1Bm+kzzm21PsvGV6B3y4GZFhMB/1laBLXDKS2fgf62v5AqkGAAA="
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_duel_ops.gd"
+          git commit -m "Joey: summon into the zone just sent to the GY (Armed Dragon / Silent level-ups)"
+          git push
