@@ -162,14 +162,16 @@ defect to miss. Every flag below was checked against the whole repository, not j
 | maharaghi_scry_turn | 2735 Maharaghi | look at the top card before the next draw | fixed |
 | blaze_cannon_turn | 2517 Blaze Cannon | the extra effects granted to Ra for the turn | fixed |
 | reborn_ra_turn | 2610 Millennium Revelation | Special Summon Ra with Monster Reborn that turn | open |
-| capsule_card_id | 2809 Different Dimension Capsule | the banished card returns later | redundant: the card id is already passed in the scheduled effect |
+| capsule_card_id | 2809 Different Dimension Capsule | the banished card returns later | verified redundant: the card id travels in the scheduled effect |
 | pharaoh_treasure_armed | 2856 Pharaoh's Treasure | recognise the drawn copy | fixed |
-| name_is_dmg | 2543 Dark Magician Girl the Magician's Apprentice | the name becomes "Dark Magician Girl" | redundant: 2543 is already in the Dark Magician id list |
-| last_turn_active | 2718 Last Turn | resolve the end-of-turn judgement | redundant: a scheduled effect does the work |
+| name_is_dmg | 2543 Dark Magician Girl the Magician's Apprentice | the name becomes "Dark Magician Girl" | verified redundant: 2543 is already in the Dark Magician id list (see the note below) |
+| last_turn_active | 2718 Last Turn | resolve the end-of-turn judgement | verified redundant: a scheduled end-phase effect does the work |
 
 The "needs an engine hook" rows share one cause: the original engine decides whether a Summon, a phase
 or an attack may happen, and the custom layer is only consulted for cards it owns. Locks that apply to
 every card in a hand, or that change the turn structure, cannot be enforced from GDScript alone.
+
+Note on 2543: because its id sits in the Dark Magician list unconditionally, the card counts as "Dark Magician Girl" even when it was not Special Summoned by its own effect. That is an approximation; making it exact would need a per-card name check everywhere the list is used.
 
 ## Fixed during this audit
 
@@ -202,6 +204,7 @@ every card in a hand, or that change the turn structure, cannot be enforced from
 | 2517 Blaze Cannon | the Ra it buffed got no ATK gain from Tributing non-attackers, and no board wipe after damage |
 | 2735 Maharaghi | the scry flag was set and never read, so the top card was never shown |
 | 2856 Pharaoh's Treasure | the drawn copy was never recognised, so the card never came back from the GY |
+| 3038 Kaiser Glider | no protection at all against a monster with the same ATK |
 | 2750 Ominous Fortunetelling | a stray block biased every die roll to 5 or 6 while it was face-up |
 | 2756 Heart of Clear Water | no protection for the equipped monster, and no self-destruct at 1300 ATK |
 | 2784 Spring of Rebirth | no LP gain when a monster returned to the hand |
