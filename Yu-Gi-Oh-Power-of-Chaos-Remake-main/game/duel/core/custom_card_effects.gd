@@ -156,7 +156,11 @@ static func build_joey_ctx(duel, effect: int, target: int, flag: int) -> Diction
 	var p: int = ((bits >> 14) & 1) ^ (bits & 1)
 	var ev_code: int = (bits >> 6) & 0x3f
 	var ev: String = map_joey_event(ev_code, target)
-	var ctx: Dictionary = {"event": ev, "other": target, "hand": flag, "target_link": -1, "target_card_id": 0,
+	var jb_st: Dictionary = CustomDuelOps.state(duel)
+	# Joey never raises code 28 on a battle kill. Event 0x15 (21) fires when the killed card reaches the GY
+	# (after on_destroyed(by_battle=true)), so treat it as "destroyed by battle" while that flag is still set.
+	var jb_now: bool = ev_code == 21 and target == 0 and bool(jb_st.get("last_destroyed_battle", false)) and int(jb_st.get("last_destroyed_turn", -1)) == CustomDuelOps.turn_number(duel) and int(jb_st.get("last_destroyed_p", -1)) == p
+	var ctx: Dictionary = {"event": ev, "other": target, "hand": flag, "target_link": -1, "target_card_id": 0, "battle_destroyed_now": jb_now, "owner_p": p if jb_now else -1,
 			"destroyed_id": int(CustomDuelOps.state(duel).get("last_destroyed_id", 0)), "destroyed_p": int(CustomDuelOps.state(duel).get("last_destroyed_p", -1)), "destroyed_battle": bool(CustomDuelOps.state(duel).get("last_destroyed_battle", false))}
 	if target != 0:
 		var tidx: int = duel.m.u16(target) & 0xfff

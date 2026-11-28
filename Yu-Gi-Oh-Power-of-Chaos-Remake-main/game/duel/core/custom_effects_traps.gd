@@ -255,7 +255,7 @@ static func _hero_fusion_gy_level(duel, p: int, cid: int) -> int:
 
 
 static func _destroyed_ev(ev: String, ctx: Dictionary) -> bool:
-	return ev == "destroyed_battle_gy" or (ev == "damage_calc" and bool(ctx.get("battle_destroyed_now", false)))
+	return ev == "destroyed_battle_gy" or bool(ctx.get("battle_destroyed_now", false))
 
 
 static func _hero_faceup_count(duel, p: int) -> int:
@@ -272,6 +272,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
 		3172: # Hero Counterattack: random card from your hand; if an Elemental HERO, destroy 1 opposing monster and SS it
+			CustomDuelOps.state(duel)["last_destroyed_battle"] = false
 			var hc_n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
 			if hc_n > 0:
 				var hc_i: int = (duel.rng.rand() % hc_n) if duel.rng != null else (randi() % hc_n)
@@ -285,6 +286,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 							CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hc_i, p))
 			return true
 		3173: # Change of Hero - Reflector Ray: damage = original Level x 300
+			CustomDuelOps.state(duel)["last_destroyed_battle"] = false
 			var rr_lv: int = _hero_fusion_gy_level(duel, p, int(ctx.get("destroyed_id", 0)))
 			if rr_lv > 0:
 				CustomDuelOps.damage(duel, opp, rr_lv * 300)
@@ -327,6 +329,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.negate_attack(duel, p, opp, hb_az)
 			return true
 		3164: # Hero Signal: Special Summon a Level 4 or lower Elemental HERO from hand or Deck
+			CustomDuelOps.state(duel)["last_destroyed_battle"] = false
 			var hs_hand_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx)
 			var hs_deck_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4
 			var hs_hand: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, hs_hand_pred, true)
@@ -713,6 +716,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			CustomDuelOps.pflags(duel, p)["reflect_effect_damage_once"] = true
 			return true
 		2887: # Rope of Life
+			CustomDuelOps.state(duel)["last_destroyed_battle"] = false
 			CustomDuelOps.discard_hand_n(duel, p)
 			var lost_id := int(ctx.get("destroyed_id", 0))
 			var gi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, lost_id)
