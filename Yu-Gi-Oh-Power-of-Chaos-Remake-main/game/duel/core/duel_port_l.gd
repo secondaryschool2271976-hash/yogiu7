@@ -1355,6 +1355,9 @@ func f56e6e0(mode: int, alternate: int) -> int:
 			# 0x56e92f: el nivel se calcula con el u32 de 0xa13404 en ESI.
 			var custom_tribs: int = CustomCardEffects.normal_tribute_requirement(cards.id_of(index) & 0xffff)
 			var level := f4457d0(m.u32(0xa13404))
+			if custom_tribs < 0 and mode == 1 and alternate == 0 and CustomCardEffects.necroshade_free(self, p, index):
+				custom_tribs = 0  # Elemental HERO Necroshade: Normal Summon without Tributing (once)
+				CustomCardEffects.necroshade_consume(self, p)
 			if custom_tribs == 0 or (custom_tribs < 0 and level <= 4):
 				_l_summon_done(mode, alternate != 0, f543360(p), 0)
 				if effect_card_id(index) == 0x5f0 and ((m.u32(0xa13408) >> 2) & 15) in [10, 11]:

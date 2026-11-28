@@ -100,12 +100,12 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		cls.by_id = {int(c["internal_id"]): c for c in cls.cards}
 
 	def test_extra_cards_counts_and_schema(self) -> None:
-		self.assertEqual(len(self.cards), 675)
-		self.assertEqual(set(self.by_id.keys()), set(range(2500, 3175)))
+		self.assertEqual(len(self.cards), 676)
+		self.assertEqual(set(self.by_id.keys()), set(range(2500, 3176)))
 
 		custom = [c for c in self.cards if c.get("custom_effect")]
 		normal = [c for c in self.cards if not c.get("custom_effect")]
-		self.assertEqual(len(custom), 634)
+		self.assertEqual(len(custom), 635)
 		self.assertEqual(len(normal), 41)
 
 		traps = [c for c in custom if c["category"] == "trap"]
@@ -115,7 +115,7 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 		self.assertEqual(len(traps), 106)
 		self.assertEqual(len(spells), 160)
 		self.assertEqual(len(m1), 184)
-		self.assertEqual(len(m2), 184)
+		self.assertEqual(len(m2), 185)
 
 		for card in self.cards:
 			self.assertTrue(card.get("names", {}).get("eng"), f"Missing eng name for {card['internal_id']}")
@@ -176,7 +176,7 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 					f"IDs registered in {path.name} but unreferenced in logic: {sorted(truly_missing)}",
 				)
 
-		self.assertEqual(len(union_ids), 634)
+		self.assertEqual(len(union_ids), 635)
 
 	def test_gdscript_static_syntax_and_style(self) -> None:
 		for path in CUSTOM_FILES + MODIFIED_ENGINE_FILES:

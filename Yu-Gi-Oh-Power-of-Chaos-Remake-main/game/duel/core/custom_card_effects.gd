@@ -243,6 +243,34 @@ static func can_normal_summon(duel, p: int, cid: int, is_set := false) -> bool:
 	return true
 
 
+## Elemental HERO Necroshade (3175): index of an unused Necroshade in the player's GY, or -1.
+static func _necroshade_gy(duel, p: int) -> int:
+	var used: Dictionary = CustomDuelOps.state(duel).get_or_add("necroshade_used", {})
+	for i in CustomDuelOps.pile_count(duel, p & 1, CustomDuelOps.LOC_GRAVE):
+		var gidx: int = CustomDuelOps.pile_idx(duel, p & 1, CustomDuelOps.LOC_GRAVE, i)
+		if CustomDuelOps.raw_id(duel, gidx) == 3175 and not used.has(gidx):
+			return gidx
+	return -1
+
+
+## True if a Level 5+ Elemental HERO in hand (card index `idx`) can be Normal Summoned without Tributes
+## thanks to Necroshade in the GY (Core summon menu and summon flow).
+static func necroshade_free(duel, p: int, idx: int) -> bool:
+	if CustomDuelOps.is_skill_drain_active(duel):
+		return false
+	if not CustomDuelOps.is_monster(duel, idx) or CustomDuelOps.is_extra_deck_monster(duel, idx):
+		return false
+	if not CustomDuelOps.raw_id(duel, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS or CustomDuelOps.monster_level(duel, idx) < 5:
+		return false
+	return _necroshade_gy(duel, p) >= 0
+
+
+static func necroshade_consume(duel, p: int) -> void:
+	var gidx: int = _necroshade_gy(duel, p)
+	if gidx >= 0:
+		CustomDuelOps.state(duel).get_or_add("necroshade_used", {})[gidx] = true
+
+
 static func normal_tribute_requirement(cid: int) -> int:
 	if CustomEffectsMonsters1.handles(cid):
 		return CustomEffectsMonsters1.normal_tribute_requirement(cid)

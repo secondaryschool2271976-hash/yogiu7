@@ -809,7 +809,8 @@
     "1786": "ad_76442616.webp",
     "1787": "ad_19024706.webp",
     "1788": "ad_74095602.webp",
-    "1789": "ad_63060238.webp"
+    "1789": "ad_63060238.webp",
+    "1790": "ad_89252153.webp"
   },
   "cards": [
     {
@@ -34959,6 +34960,47 @@
       ],
       "image": "ad_63060238.webp",
       "prop": 2297753780,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1790,
+      "internal_id": 3175,
+      "password": "89252153",
+      "names": {
+        "eng": "Elemental HERO Necroshade",
+        "ara": "نيكروشيد، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "Once, while this card is in the Graveyard, 1 Level 5 or higher \"Elemental HERO\" monster you Normal Summon can be Summoned without Tributing.",
+        "ara": "مرة واحدة، بينما تكون هذه البطاقة في المقبرة، يمكن استدعاء وحش \"بطل العناصر\" واحد من المستوى 5 أو أعلى تستدعيه استدعاءً عاديًا دون تقديم قرابين."
+      },
+      "atk": 1600,
+      "defense": 1800,
+      "level": 5,
+      "attribute": "dark",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_89252153.webp",
+      "prop": 1257586868,
       "monster_kind": "effect",
       "effect_alias": 0,
       "subcategory": "normal",

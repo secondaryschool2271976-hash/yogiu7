@@ -1098,6 +1098,8 @@ func f57a490(p: int, idx: int) -> int:
 			return 0
 		return f57a250(p, idx)
 	var level := (f401a20(idx) >> 25) & 15
+	if level >= 5 and f543330(p) > 0 and CustomCardEffects.necroshade_free(self, p, idx):
+		return 1  # Elemental HERO Necroshade in the GY: no Tributes needed
 	if level <= 4:
 		if f543330(p) > 0:
 			return 1
