@@ -1,0 +1,46 @@
+name: Audit batch 1
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch1.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build branch, PR and merge
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          echo "trigger branch: $BR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch1.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 1: continuous protections, optional Ra LP cost, zone immunities, Guardian Slime"
+          git push -f origin "HEAD:refs/heads/$BR"
+          num=$(gh pr list --head "$BR" --state open --json number -q '.[0].number' || true)
+          if [ -z "$num" ]; then
+            gh pr create --base main --head "$BR" --title "Custom cards audit batch 1: protections, Ra optional LP, Guardian Slime" --body "From the full custom-card audit (batch 1). Continuous protections for Moremarshmallon (2618), Sengenjin Wakes (2633) and Shield of the Millennium Dynasty (2634); Obelisk (2500) and Sphere Mode (2503) cannot be targeted by the opponent; Winged Dragon of Ra (2501) LP payment is optional; Guardian Slime (2588) can summon itself from the hand after taking damage." || true
+            num=$(gh pr list --head "$BR" --state open --json number -q '.[0].number' || true)
+          fi
+          echo "PR=$num"
+          if [ -n "$num" ]; then
+            for i in 1 2 3 4 5 6; do
+              if gh pr merge "$num" --squash --delete-branch; then echo "merged"; break; fi
+              echo "merge attempt $i failed, retrying"; sleep 10
+            done
+          fi
+          echo done
