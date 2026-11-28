@@ -1167,6 +1167,21 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 			var gi := find_pile_index_by_id(duel, dp, LOC_BANISH, bid)
 			if gi >= 0:
 				special_summon_from_pile(duel, dp, LOC_BANISH, gi, dp)
+	# Monstruos Union (2690, 2692, 2914 y compania): si el monstruo equipado fuera a ser destruido,
+	# se destruye la carta Union en su lugar y el monstruo se queda en el campo.
+	if z < 5:
+		for ek in state(duel)["equip_links"].keys():
+			var ulink: Dictionary = state(duel)["equip_links"][ek]
+			if int(ulink.get("target_p", -1)) != p or int(ulink.get("target_z", -1)) != z:
+				continue
+			var uparts: PackedStringArray = str(ek).split(":")
+			if uparts.size() < 2:
+				continue
+			var uep := int(uparts[0]) & 1
+			var uez := int(uparts[1])
+			if bool(zflags(duel, uep, uez).get("union_equipped", false)) and zone_idx(duel, uep, uez) != 0:
+				destroy_zone(duel, uep, uez)
+				return false
 	var cid = raw_id(duel, idx)
 	# Wedju Temple (2680): un monstruo "Millennium" destruido se coloca en la Zona de Magias/Trampas
 	# boca arriba en lugar del Cementerio. Se recoloca desde el Cementerio, asi que el tablero final es
