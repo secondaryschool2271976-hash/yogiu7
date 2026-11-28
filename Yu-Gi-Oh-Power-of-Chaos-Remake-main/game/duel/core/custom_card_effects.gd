@@ -591,9 +591,16 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 
 static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect := false, was_tributed_for_p := -1) -> void:
 	# Ultima carta destruida: la usan las Trampas que reaccionan a una destruccion (Rope of Life).
-	CustomDuelOps.state(duel)["last_destroyed_id"] = cid
-	CustomDuelOps.state(duel)["last_destroyed_p"] = p & 1
-	CustomDuelOps.state(duel)["last_destroyed_battle"] = by_battle
+	var ld_st: Dictionary = CustomDuelOps.state(duel)
+	var ld_turn: int = CustomDuelOps.turn_number(duel)
+	# Joey fires a generic destroy hook (by_battle=false) after the battle hook for the same card:
+	# keep the battle flag when this is the same card, same owner, same turn.
+	var ld_keep: bool = not by_battle and bool(ld_st.get("last_destroyed_battle", false)) and int(ld_st.get("last_destroyed_id", 0)) == cid and int(ld_st.get("last_destroyed_p", -1)) == (p & 1) and int(ld_st.get("last_destroyed_turn", -1)) == ld_turn and int(ld_st.get("last_destroyed_calls", 0)) < 2
+	ld_st["last_destroyed_calls"] = (int(ld_st.get("last_destroyed_calls", 0)) + 1) if ld_keep else 1
+	ld_st["last_destroyed_id"] = cid
+	ld_st["last_destroyed_p"] = p & 1
+	ld_st["last_destroyed_turn"] = ld_turn
+	ld_st["last_destroyed_battle"] = by_battle or ld_keep
 	# Dark Ruler Ha Des (2744): un monstruo destruido en batalla por un Demonio del rival ve su
 	# efecto anulado, asi que no se dispara.
 	if by_battle and CustomDuelOps.ha_des_negates(duel, p, cid):
