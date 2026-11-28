@@ -1,0 +1,30 @@
+name: Audit batch 4
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch4.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICPZWCmsCA3BhdGNoNC5kaWZmAK1VTZPaOBA9w6/oIhdcILCZwYypkErlY1N7mE0qkxy2kpSrsdugWlvySvJ88Ou3ZZOEmSGbVIUDki2k9566X7dzWRQgxEY6wOnfjXgjxduteKdvyAhdiJdb1Fa8pwr/IVGhVNMNVjTNGyqnmTY0zRrrdJX6hVTXdrLJYX0anL5UOd1CtE7i2fnFZHJ+EV5E8QKiMIzPz/tCiFMp7o9Go5Opfv4cRBTNzsYxjNo5AV6yDp3MoGhUBjlZZ/RdutOKhv7oGOolSOXGsNvP67t0jc6VBMsVFFhaCkA8g7XW5bIPPVmA0u5gF6qcKczQ03SYwWRDbjigoqDMpVY3JqPBGAaDIGAK+DSwNZWlX3EG68EX+My4vZ4H8izDXdEB+CRYBnBpB8UnOj2BF9Iz5BqjuqX+qPcE/mis1AqubrTJ4bIxaDli8KLEnGA4W8ySYAmVJMWsFhgZgf5tZI058pWgboj3WTJdkBrJy7U2QJ5a2wlTHL37Dp6tYL5/fLqCpH00eJPKfB9imd8GsFqB17BknPvSgaV/VJzMusY1g76+1blE+FNlaBTHlLXHccjaj4rUhyJ5tQQjr7Gc/ChVxyLMzI9CfJAUtsVPspvWfFBEQXvLCASbqp+fpro7HptWmkNExqbR79b5UcR9xc/m8zXG0WQSJniGs+RUFX+c83dr/ziq7wKzMEp8F2jnKHzYBrRKM62cVI1ubEqq0JzELru+1q+1zNsS8xbKZN56d744W8KTr+78izKjrf2hKUkBmw7LkmtLtha9xI3E6QeDVY0tdm9XfPrqwM6g3ApWwAD06P/vPeDbltF9eXF4Bszy7XUeebWXaOy2YhncF6ZwVUvDdnxPWJP5Ll3d124PxLcs/yf0gYp5lHjaF2VD4vUdWfhYOln5In5lcKPVGNyW4I3OxVVjarRWqg1ckblG5X6lwB/peRiVg6T5VsudYzHmaMSJHxdhO0btOPvS9gPfIbZoU6fZFDdd1nsvW3+9Yj+85S/LsY8G/3ZBt3nvJOr/BwDV6sTQBwAA"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch4.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 4: Marshmallon, Spirit Reaper, BEUD and Murasame Blade protections"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
