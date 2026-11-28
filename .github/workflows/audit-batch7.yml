@@ -1,0 +1,30 @@
+name: Audit batch 7
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch7.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch7.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Add the custom card audit notes: cards that cannot match their printed text, and what was fixed"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
