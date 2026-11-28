@@ -1691,6 +1691,16 @@ func f5732e0() -> int:
 		f56a380(1 - p, 0x11, (((target << 8) | owner) << 16) | (source << 8) | p)
 		m.set_u8(0xa133f4, 3)
 		return 0
+	if state == 3:
+		# Tras la ventana de respuesta 0x11 el atacante puede haber pasado a defensa
+		# (p. ej. Kunai with Chain, 0x28a); sin ataque posible se cancela como en f571d90.
+		if f571810(p, source, 0) != 0:
+			return 1
+		f5715c0(p, source)
+		m.set_u32(0xa114c0, m.u32(0xa114c0) & 0xfffffffb)
+		m.set_u8(0xa133f4, 0)
+		m.set_u16(0xa133f2, (m.u16(0xa133f2) & 0x80ff) | 0x80)
+		return 0
 	return 1
 
 

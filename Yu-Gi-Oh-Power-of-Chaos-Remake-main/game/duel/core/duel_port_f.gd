@@ -1293,7 +1293,7 @@ func f53bb70(entry: int) -> int:
 		return 0
 	var subtype := csub(index) if kind <= 0x16 else 0
 	if subtype < 2 or subtype > 4:
-		if effect_card_id(index) not in [0x4ce, 0x47, 0x15b, 0x291, 0x4ea, 0x609]:
+		if effect_card_id(index) not in [0x4ce, 0x47, 0x15b, 0x28a, 0x291, 0x4ea, 0x609]:
 			return 1
 	return (m.u8(entry + 4) & 8) >> 3
 

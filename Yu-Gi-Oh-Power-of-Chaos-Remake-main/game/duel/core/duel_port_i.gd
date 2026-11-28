@@ -441,11 +441,13 @@ func f557d10(a: int) -> int:
 ## FUN_00557e80: cambia posicion del objetivo de batalla y enlaza el objetivo propio.
 func f557e80(a: int) -> int:
 	var flags := m.u16(a + 2)
-	if (flags & 0xfc00) == 0x4000:
+	# 0x4000: declaracion de ataque; 0x4400: respuesta de la ventana de ataque (f551a40).
+	if (flags & 0xfc00) in [0x4000, 0x4400]:
 		var p := m.u8(a + 6)
 		var z := m.u8(a + 7)
 		var zone := DuelMem.zone(p & 1, z)
-		if (m.u32(zone) & 0xfff) != 0 and (m.u8(zone + 6) & 1) == 0 and (flags & 1) != p: call("f54e660", p, z, 0, 0)
+		if (m.u32(zone) & 0xfff) != 0 and (m.u8(zone + 6) & 1) == 0 and (flags & 1) != p:
+			call("f54e660", p, z, 0, 0)
 	if (m.u8(a + 10) & 7) == 1:
 		var target := m.u16(a + 12)
 		var zone := DuelMem.zone(target & 1, target >> 8)
