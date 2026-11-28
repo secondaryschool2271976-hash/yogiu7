@@ -927,6 +927,12 @@ static func move_pile_card(duel, from_p: int, from_loc: int, i: int, to_p: int, 
 	if to_loc == LOC_GRAVE:
 		var list: Array = state(duel)["sent_gy_this_turn"][to_p]
 		list.append(cid)
+		# Skull Invitation (0x51a): el motor lo avisa en sus envios al Cementerio, pero estos
+		# movimientos (mazo, mano...) no pasan por el, asi que se avisa aqui: 300 por carta.
+		if is_joey(duel):
+			duel.f59d6e0(to_p, 1)
+		else:
+			duel.f56e2e0(to_p, 1)
 	var dst_slot: int = 0 if to_bottom else maxi(0, pile_count(duel, to_p, to_loc) - 1)
 	_present(duel, "move", {
 		"p": from_p,
