@@ -198,6 +198,7 @@ func _ju_error(p: int, code: int, value: int = 0) -> int:
 
 
 func f5aab90(p: int, card: int) -> int:
+	CustomCardEffects.double_summon_refresh(self, p)
 	if card & 0xffff == 0 or f402690(card) == 0:
 		return 0
 	if f56b440(card & 0xffff, 0xffffffff):

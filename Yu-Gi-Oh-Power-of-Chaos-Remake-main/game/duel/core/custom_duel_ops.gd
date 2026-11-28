@@ -158,6 +158,15 @@ static func normal_summon_used(duel, p: int) -> bool:
 	return (duel.m.u8(DuelMem.pl(p & 1) + 8) & 0x10) != 0
 
 
+static func clear_normal_summon_used(duel, p: int) -> void:
+	if is_joey(duel):
+		var at: int = 0xa56430 + (p & 1) * JoeyMem.PLAYER_SIZE
+		duel.m.set_u32(at, duel.m.u32(at) & ~0x100000)
+	else:
+		var b: int = DuelMem.pl(p & 1) + 8
+		duel.m.set_u8(b, duel.m.u8(b) & ~0x10)
+
+
 static func phase(duel) -> int:
 	if is_joey(duel):
 		return (duel.m.u8(JoeyMem.TURN) >> 1) & 7

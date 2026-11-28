@@ -215,6 +215,7 @@ func f567f30(e: int) -> int:
 
 ## FUN_00570450: mascara de acciones de una carta de la mano (indice en EAX).
 func f570450(p: int, hand: int, index: int) -> int:
+	CustomCardEffects.double_summon_refresh(self, p)
 	var phase := (m.u8(0xa133f2) >> 1) & 7
 	var kind := (f401a20(index) >> 20) & 0x1f
 	var id := effect_card_id(index)

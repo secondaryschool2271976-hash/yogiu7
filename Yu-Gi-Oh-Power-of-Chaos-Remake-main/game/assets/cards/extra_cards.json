@@ -33715,6 +33715,44 @@
       "frame_type": "spell",
       "card_shape": "spell_normal",
       "custom_effect": true
+    },
+    {
+      "index": 1759,
+      "internal_id": 3144,
+      "password": "43422537",
+      "names": {
+        "eng": "Double Summon",
+        "ara": "الاستدعاء المزدوج"
+      },
+      "descriptions": {
+        "eng": "You can Normal Summon 1 additional time this turn. You can only gain this effect once per turn.",
+        "ara": "يمكنك الاستدعاء العادي مرة إضافية 1 في هذا الدور. يمكنك اكتساب هذا التأثير مرة واحدة فقط في كل دور."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_43422537.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
     }
   ],
   "ygojson_source": "iconmaster5326/YGOJSON (v1)"

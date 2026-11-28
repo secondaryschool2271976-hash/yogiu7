@@ -248,6 +248,19 @@ static func normal_tribute_requirement(cid: int) -> int:
 	return -1
 
 
+## Double Summon (3144): "1 additional Normal Summon/Set this turn". El motor tiene una sola bandera de
+## "ya Invoque/Coloque este turno" por jugador; la primera vez que esta puesta despues de ganar el efecto se
+## borra y se anota como gastado. Se llama al construir el menu de la mano (los dos motores) y al activar.
+static func double_summon_refresh(duel, p: int) -> void:
+	var pf: Dictionary = CustomDuelOps.pflags(duel, p & 1)
+	var t: int = CustomDuelOps.turn_number(duel)
+	if int(pf.get("double_summon_turn", -1)) != t or int(pf.get("double_summon_used", -1)) == t:
+		return
+	if CustomDuelOps.normal_summon_used(duel, p & 1):
+		CustomDuelOps.clear_normal_summon_used(duel, p & 1)
+		pf["double_summon_used"] = t
+
+
 ## True si el jugador `p` no puede Invocar de Modo Normal ni Colocar monstruos ahora mismo: la propia
 ## Lava Golem (solo el turno que se la Invoca de Modo Especial), Millennium Ankh y Non Aggression Area
 ## (ver custom-cards-unsupported.md). Los menus de mano de los dos motores lo consultan para ocultar la

@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144,
 ]
 
 
@@ -159,6 +159,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return CustomDuelOps.can_hopt(duel, p, 3134) and _red_stone_cost(duel, p) >= 0 and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_DECK) >= 2
 		3135: # Inferno Fire Blast
 			return _inferno_target(duel, p) >= 0
+		3144: # Double Summon: the extra Normal Summon/Set can only be gained once per turn
+			return int(CustomDuelOps.pflags(duel, p).get("double_summon_turn", -1)) != t
 		3143: # Dark Factory of Mass Production
 			return not CustomDuelOps.is_necrovalley_active(duel) and _factory_targets(duel, p).size() == 2
 		3137: # Return of the Dragon Lords
@@ -422,6 +424,12 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				if CustomDuelOps.zone_idx(duel, p, if_zz) != 0 and CustomDuelOps.raw_id(duel, CustomDuelOps.zone_idx(duel, p, if_zz)) in CustomDuelOps.NATIVE_RED_EYES:
 					CustomDuelOps.zflags(duel, p, if_zz)["cannot_atk_turn"] = t
 			CustomDuelOps.pflags(duel, p)["inferno_fire_blast_turn"] = t
+			return true
+		3144: # Double Summon: custom_card_effects.double_summon_refresh clears the engine's "already Normal Summoned/Set" flag once
+			var ds_pf: Dictionary = CustomDuelOps.pflags(duel, p)
+			if int(ds_pf.get("double_summon_turn", -1)) != t:
+				ds_pf["double_summon_turn"] = t
+			CustomCardEffects.double_summon_refresh(duel, p)
 			return true
 		3143: # Dark Factory of Mass Production: add 2 Normal Monsters from the GY to the hand
 			if not CustomDuelOps.is_necrovalley_active(duel):
