@@ -1923,10 +1923,12 @@ static func on_end_phase(duel, turn_p: int) -> void:
 				continue
 			var cid = CustomDuelOps.zone_id(duel, pl, z)
 			var zf = CustomDuelOps.zflags(duel, pl, z)
-			# Spirit monsters return to hand on EP if summoned/flipped this turn
+			# Spirit monsters return to hand on EP if summoned/flipped this turn.
+			# Spiritual Energy Settle Machine (2788) los mantiene en el campo mientras este boca arriba.
 			if cid in SPIRIT_MONSTERS_M1 and int(zf.get("spirit_return_turn", -1)) == t:
-				CustomDuelOps.bounce_zone(duel, pl, z)
-				continue
+				if not CustomDuelOps.has_faceup_id(duel, pl, 2788):
+					CustomDuelOps.bounce_zone(duel, pl, z)
+					continue
 			# Obelisk / Slifer Special Summoned -> send to GY
 			if cid in [2500, 2502] and t in zf.get("ss_turn_hist", []):
 				CustomDuelOps.send_zone_to_gy(duel, pl, z)
@@ -2014,6 +2016,9 @@ static func on_continuous_enforce(duel) -> void:
 				zf["indest_opp_effect"] = true
 			if cid == 2554: # Egyptian God Slime: no puede ser destruido en batalla
 				zf["indest_battle"] = true
+			if cid == 2573: # Exodia Necross: no puede ser destruido en batalla ni por Magia/Trampa
+				zf["indest_battle"] = true
+				zf["indest_st_effect"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
