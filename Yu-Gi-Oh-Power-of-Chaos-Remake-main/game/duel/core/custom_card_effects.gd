@@ -505,6 +505,20 @@ static func on_draw(duel, draw_p: int, count: int) -> void:
 	if _cancel_skipped_draw(duel, draw_p, count):
 		return
 	CustomEffectsMonsters1.on_draw(duel, draw_p, count)
+	# Pharaoh's Treasure (2856): la copia que se barajo boca arriba, al robarla, se manda al
+	# Cementerio y se recupera otra carta de alli.
+	var tpf: Dictionary = CustomDuelOps.pflags(duel, draw_p & 1)
+	if bool(tpf.get("pharaoh_treasure_armed", false)) and count > 0:
+		var hc: int = CustomDuelOps.pile_count(duel, draw_p & 1, CustomDuelOps.LOC_HAND)
+		for i in range(hc - 1, maxi(hc - 1 - count, -1), -1):
+			var tidx: int = CustomDuelOps.pile_idx(duel, draw_p & 1, CustomDuelOps.LOC_HAND, i)
+			if tidx != 0 and CustomDuelOps.raw_id(duel, tidx) == 2856:
+				tpf.erase("pharaoh_treasure_armed")
+				CustomDuelOps.discard_hand_slot(duel, draw_p & 1, i, 1)
+				var tgi: int = CustomDuelOps.choose_pile_card(duel, draw_p & 1, CustomDuelOps.LOC_GRAVE, func(d, ii, _s): return CustomDuelOps.raw_id(d, ii) != 2856)
+				if tgi >= 0:
+					CustomDuelOps.add_from_pile_to_hand(duel, draw_p & 1, CustomDuelOps.LOC_GRAVE, tgi)
+				break
 
 
 ## Yata-Garasu (2703) and Fenrir (3085) skip the opponent's next Draw Phase and Reckless Greed
