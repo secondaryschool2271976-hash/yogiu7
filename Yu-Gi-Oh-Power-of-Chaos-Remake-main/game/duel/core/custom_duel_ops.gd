@@ -2,7 +2,7 @@ class_name CustomDuelOps
 extends RefCounted
 ## Shared duel primitives used by both the shared Core engine (Duel / DuelMem) and the native
 ## Joey engine (JoeyEngine / JoeyMem): per-duel state flags, zone/pile access, stat reads,
-## movement helpers, optional prompts and the ritual table sync for card 0x2d0.
+## movement helpers, optional prompts and ritual monster matching.
 
 const LOC_HAND := 11
 const LOC_FUSION := 12
@@ -654,44 +654,3 @@ static func matches_ritual_monster_joey(duel, card_index: int, ritual_id: int) -
 	if idx == 0 or ritual_id <= 0:
 		return false
 	return duel.cards.id_of(idx) == ritual_id or (duel.effect_card_id(idx) & 0xffff) == ritual_id
-
-
-## Ritual spell 0x2d0 points the native ritual table at its Ritual Monster (0x2cf, level 6).
-static func sync_ritual_table_core(duel, spell_index: int, _player := -1) -> void:
-	var idx = spell_index & 0xfff
-	if idx == 0:
-		return
-	var raw_spell: int = duel.cards.id_of(idx)
-	var m: DuelMem = duel.m
-	var target_row = -1
-	var r = 0
-	while (m.u32(0x5aa9f0 + r * 4) & 0x3ffe000) != 0:
-		if ((m.u32(0x5aa9f0 + r * 4) >> 13) & 0x1fff) == 0x2d0:
-			target_row = r
-			break
-		r += 1
-	if target_row < 0:
-		return
-	if raw_spell == 0x2d0:
-		m.set_u32(0x5aa9f0 + target_row * 4, (6 << 26) | (0x2d0 << 13) | 0x2cf)
-		return
-
-
-static func sync_ritual_table_joey(duel, spell_index: int, _player := -1) -> void:
-	var idx = spell_index & 0xfff
-	if idx == 0:
-		return
-	var raw_spell: int = duel.cards.id_of(idx)
-	var m: JoeyMem = duel.m
-	var target_row = -1
-	var r = 0
-	while (m.u32(0x5ed060 + r * 4) & 0x3ffe000) != 0:
-		if ((m.u32(0x5ed060 + r * 4) >> 13) & 0x1fff) == 0x2d0:
-			target_row = r
-			break
-		r += 1
-	if target_row < 0:
-		return
-	if raw_spell == 0x2d0:
-		m.set_u32(0x5ed060 + target_row * 4, (6 << 26) | (0x2d0 << 13) | 0x2cf)
-		return

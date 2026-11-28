@@ -75,7 +75,6 @@ func f599840() -> int:
 func f599850(context: int) -> int:
 	var owner := m.u8(context + 2) & 1
 	if f570b40(owner) == 0 or f5699c0(0x58a) != 0: return 0
-	CustomDuelOps.sync_ritual_table_joey(self, m.u16(context), owner)
 	var row := 0
 	while (m.u32(0x5ed060 + row * 4) & 0x1fff) != 0:
 		var record := m.u32(0x5ed060 + row * 4)

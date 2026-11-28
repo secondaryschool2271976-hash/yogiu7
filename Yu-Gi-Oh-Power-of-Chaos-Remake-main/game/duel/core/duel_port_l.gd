@@ -611,7 +611,6 @@ func f56aef0() -> int:
 
 ## FUN_0056ac20: fila de ritual por el id del monstruo.
 func f56ac20(index: int) -> int:
-	CustomDuelOps.sync_ritual_table_core(self, index)
 	var row := 0
 	var id := effect_card_id(index)
 	while (m.u32(0x5aa9f0 + row * 4) & 0x3ffe000) != 0:
@@ -677,7 +676,6 @@ func f56b490(e: int) -> int:
 	var p := m.u8(e + 2) & 1
 	if f56e660(p) == 0:
 		return 0
-	CustomDuelOps.sync_ritual_table_core(self, m.u16(e), p)
 	var row := 0
 	while (m.u32(0x5aa9f0 + row * 4) & 0x1fff) != 0:
 		var rule := m.u32(0x5aa9f0 + row * 4)

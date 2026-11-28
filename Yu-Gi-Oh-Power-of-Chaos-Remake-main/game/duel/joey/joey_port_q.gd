@@ -393,7 +393,6 @@ func f598d70() -> int:
 
 ## Joey FUN_00598ed0: posicion del id de la carta idx en la tabla fija 5ed060, o -1.
 func f598ed0(idx: int) -> int:
-	CustomDuelOps.sync_ritual_table_joey(self, idx)
 	if m.u32(_JQ_ID_TABLE) & 0x3ffe000 == 0:
 		return 0xffffffff
 	var at := _JQ_ID_TABLE
