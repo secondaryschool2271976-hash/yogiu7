@@ -30,7 +30,7 @@ func _show_mobile_loading() -> void:
 	box.add_theme_constant_override("separation", 12)
 	center.add_child(box)
 	var title := Label.new()
-	title.text = "Yu-Gi-Oh!"
+	title.text = "Yu-Gi-Oh! 2"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_override("font", Assets.ui_font(700))
 	title.add_theme_font_size_override("font_size", 36)

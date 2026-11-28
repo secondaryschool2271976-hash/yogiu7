@@ -376,7 +376,7 @@ func _read_redirect(peer: StreamPeerTCP) -> Dictionary:
 			await get_tree().process_frame
 	var result := parse_redirect(request.get_string_from_utf8().get_slice("\r\n", 0))
 	var ok := result.has("code")
-	var page := ("<!doctype html><meta charset=utf-8><title>Yu-Gi-Oh!</title>" +
+	var page := ("<!doctype html><meta charset=utf-8><title>Yu-Gi-Oh! 2</title>" +
 		"<body style=\"font-family:sans-serif;background:#070816;color:#f5e6b3;text-align:center;padding-top:15vh\">" +
 		("<h2>Cuenta de Google conectada</h2><p>Ya puedes volver al juego.</p><p>Google account connected. You can return to the game.</p>" if ok
 		else "<h2>No se conectó</h2><p>Vuelve al juego e inténtalo de nuevo.</p><p>Not connected. Return to the game and try again.</p>"))

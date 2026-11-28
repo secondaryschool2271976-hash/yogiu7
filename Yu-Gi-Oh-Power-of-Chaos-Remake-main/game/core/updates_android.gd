@@ -206,7 +206,7 @@ func _install() -> void:
 		_fallback("El APK descargado ya no es válido. / The downloaded APK is no longer valid.")
 		return
 	if not request_install_permission.call():
-		_state("ready", "Permite instalar apps desde Yu-Gi-Oh! y vuelve; después pulsa Actualizar. / Allow installing apps from Yu-Gi-Oh!, return and press Update.")
+		_state("ready", "Permite instalar apps desde Yu-Gi-Oh! 2 y vuelve; después pulsa Actualizar. / Allow installing apps from Yu-Gi-Oh! 2, return and press Update.")
 		return
 	if open_file.call(_ready_apk) != OK:
 		_fallback("No se pudo abrir el instalador. / Could not open the installer.")

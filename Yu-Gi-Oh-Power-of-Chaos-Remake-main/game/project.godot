@@ -10,16 +10,16 @@ config_version=5
 
 [application]
 
-config/name="Yu-Gi-Oh!"
+config/name="Yu-Gi-Oh! 2"
 config/version="0.1.0-alpha.43"
 config/icon="res://assets/icons/launcher.png"
 config/windows_native_icon="res://assets/icons/launcher.ico"
 config/github_repository=""
-config/description="Yu-Gi-Oh! Power of Chaos Custom Edition (Yugi, Kaiba & Joey)."
+config/description="Yu-Gi-Oh! Power of Chaos 2 (Yugi, Kaiba & Joey) - original cards edition."
 run/main_scene="res://scenes/boot/boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/use_custom_user_dir=true
-config/custom_user_dir_name="PoCRemake"
+config/custom_user_dir_name="PoCRemake2"
 boot_splash/show_image=true
 boot_splash/image="res://assets/icons/launcher.png"
 boot_splash/fullsize=false

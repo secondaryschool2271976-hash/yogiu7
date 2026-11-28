@@ -1042,7 +1042,7 @@ func _draw_top_bar() -> void:
 		Vector2(cx - r, cy - r * 0.65), Vector2(cx + r, cy - r * 0.65), Vector2(cx, cy + r * 0.95), Vector2(cx - r, cy - r * 0.65)
 	]), GOLD, 1.8, true)
 	draw_circle(Vector2(cx, cy - 1.5), 3.2, CYAN)
-	draw_string(_font, Vector2(48.0, cy + 5.5), "Yu-Gi-Oh!", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, GOLD)
+	draw_string(_font, Vector2(48.0, cy + 5.5), "Yu-Gi-Oh! 2", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, GOLD)
 
 
 func _draw_edition_pedestals() -> void:
@@ -1071,7 +1071,7 @@ func _draw_edition_pedestals() -> void:
 
 ## Titulo dorado con contorno, sombra, brillo que recorre las letras y filete decorativo.
 func _draw_title() -> void:
-	var title := "Yu-Gi-Oh!"
+	var title := "Yu-Gi-Oh! 2"
 	var width := _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, TITLE_SIZE).x
 	var x := (_screen.x - width) / 2.0
 	var title_y := _origin.y + TITLE_Y

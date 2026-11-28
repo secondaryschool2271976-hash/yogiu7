@@ -624,7 +624,7 @@ func _resume_duel() -> void:
 
 
 func _heading() -> String:
-	return "Yu-Gi-Oh!"
+	return "Yu-Gi-Oh! 2"
 
 
 ## Recoloca los logos y los controles al cambiar el tamano visible.
@@ -900,7 +900,7 @@ func _draw_top_bar() -> void:
 		Vector2(cx - r, cy - r * 0.65), Vector2(cx + r, cy - r * 0.65), Vector2(cx, cy + r * 0.95), Vector2(cx - r, cy - r * 0.65)
 	]), GOLD, 1.8, true)
 	draw_circle(Vector2(cx, cy - 1.5), 3.2, CYAN)
-	draw_string(_font, Vector2(48.0, cy + 5.5), "Yu-Gi-Oh!", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, GOLD)
+	draw_string(_font, Vector2(48.0, cy + 5.5), "Yu-Gi-Oh! 2", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, GOLD)
 
 
 func _draw_edition_pedestals() -> void:
