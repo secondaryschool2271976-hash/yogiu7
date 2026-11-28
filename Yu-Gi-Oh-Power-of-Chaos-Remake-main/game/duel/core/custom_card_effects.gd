@@ -579,6 +579,9 @@ static func has_pierce(duel, p: int, z: int, cid := -1) -> bool:
 	if int(CustomDuelOps.pflags(duel, p & 1).get("piercing_turn", -1)) == CustomDuelOps.turn_number(duel):
 		return true
 	var id = cid if cid >= 0 else CustomDuelOps.zone_id(duel, p, z)
+	# Dragon's Rage (2745): los monstruos Dragon del jugador perforan mientras la trampa siga boca arriba.
+	if CustomDuelOps.monster_race(duel, CustomDuelOps.zone_idx(duel, p, z)) == 1 and CustomDuelOps.has_faceup_id(duel, p, 2745):
+		return true
 	return CustomEffectsMonsters1.has_pierce(duel, p, z, id) or CustomEffectsMonsters2.has_pierce(duel, p, z, id)
 
 
