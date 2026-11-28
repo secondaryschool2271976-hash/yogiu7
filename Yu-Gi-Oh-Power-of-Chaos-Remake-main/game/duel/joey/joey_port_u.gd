@@ -43,6 +43,16 @@ func _ju_pay_tributes() -> void:
 		var a := m.u32(_JU_ACTION)
 		if a & (0x2000000 << i):
 			f5b9170(((a >> (28 + i)) << 15) | 0x57, (a >> (16 + i * 3)) & 7, 0, 0)
+	# Maju Garzett / Great Maju Garzett: el ATK sale del ATK original de los monstruos ofrendados. Se anota ANTES
+	# de enviarlos al Cementerio (el traslado va encolado), no se adivina despues mirando el Cementerio.
+	var trib_atks: Array = []
+	var a0 := m.u32(_JU_ACTION)
+	for i in range(3):
+		if a0 & (0x2000000 << i):
+			var tidx: int = CustomDuelOps.zone_idx(self, (a0 >> (28 + i)) & 1, (a0 >> (16 + i * 3)) & 7)
+			if tidx != 0:
+				trib_atks.append(CustomDuelOps.base_atk(self, tidx))
+	CustomDuelOps.state(self).get_or_add("last_tribute_atks", {})[a0 & 1] = trib_atks
 	for i in range(3):
 		var a := m.u32(_JU_ACTION)
 		if a & (0x2000000 << i):

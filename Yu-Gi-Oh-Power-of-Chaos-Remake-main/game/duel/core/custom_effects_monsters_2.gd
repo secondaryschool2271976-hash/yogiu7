@@ -603,6 +603,24 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 							CustomDuelOps.destroy_zone(duel, pl, zz)
 
 
+## Joey anota el ATK original de los monstruos ofrendados al pagarlos (`last_tribute_atks`). Si esta anotado, el
+## ATK de Maju Garzett (suma de 2) / Great Maju Garzett (el doble de 1) se fija ya, sin leer el Cementerio.
+static func _garzett_fix_from_tributes(duel, p: int, z: int, cid: int) -> bool:
+	var st: Dictionary = CustomDuelOps.state(duel)
+	var rec: Dictionary = st.get("last_tribute_atks", {})
+	var atks: Array = rec.get(p & 1, [])
+	var need: int = 2 if cid == 2991 else 1
+	if atks.size() < need:
+		return false
+	var total: int = 0
+	for k in need:
+		total += int(atks[k])
+	rec.erase(p & 1)
+	var fixed: Dictionary = st.get_or_add("garrzett_fixed", {})
+	fixed["%d" % CustomDuelOps.zone_idx(duel, p, z)] = {"cid": cid, "atk": total * 2 if cid == 3030 else total}
+	return true
+
+
 static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> void:
 	p &= 1
 	var opp = 1 - p
@@ -848,12 +866,14 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.change_position(duel, opp, zz, 0, -1)
 		2991: # Maju Garzett: ATK = combined original ATK of the 2 Tributed monsters
 			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
-				zf["garrzett_pending"] = 2
-				CustomDuelOps.state(duel).get_or_add("garrzett_need", {})[str(CustomDuelOps.zone_idx(duel, p, z))] = 2
+				if not _garzett_fix_from_tributes(duel, p, z, 2991):
+					zf["garrzett_pending"] = 2
+					CustomDuelOps.state(duel).get_or_add("garrzett_need", {})[str(CustomDuelOps.zone_idx(duel, p, z))] = 2
 		3030: # Great Maju Garzett: ATK = 2x original ATK of the 1 Tributed monster
 			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
-				zf["garrzett_pending"] = 1
-				CustomDuelOps.state(duel).get_or_add("garrzett_need", {})[str(CustomDuelOps.zone_idx(duel, p, z))] = 1
+				if not _garzett_fix_from_tributes(duel, p, z, 3030):
+					zf["garrzett_pending"] = 1
+					CustomDuelOps.state(duel).get_or_add("garrzett_need", {})[str(CustomDuelOps.zone_idx(duel, p, z))] = 1
 		3128: # Chopman: Flip Summon -> equip 1 Equip Spell from GY
 			if kind == "flip_summon" and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_st_zone(duel, p) >= 0:
 				var ch_pred := func(d, idx, _s): return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 1
