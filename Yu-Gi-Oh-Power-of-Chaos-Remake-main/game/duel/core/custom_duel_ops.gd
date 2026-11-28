@@ -1112,6 +1112,17 @@ static func discard_hand_slot(duel, p: int, hand_i: int, trigger := 1) -> int:
 	return idx
 
 
+## Discards up to `count` cards (all by default) from the hand, from the last slot down. Core's discard does not
+## remove the card from the pile right away, so never loop on pile_count() here.
+static func discard_hand_n(duel, p: int, count := 99) -> void:
+	var n: int = mini(count, pile_count(duel, p & 1, LOC_HAND))
+	var i: int = pile_count(duel, p & 1, LOC_HAND) - 1
+	while n > 0 and i >= 0:
+		discard_hand_slot(duel, p & 1, i)
+		i -= 1
+		n -= 1
+
+
 static func discard_random(duel, p: int, count := 1) -> int:
 	p &= 1
 	var done = 0

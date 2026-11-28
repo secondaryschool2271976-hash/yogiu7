@@ -1036,8 +1036,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, zi, p)
 			return true
 		2806: # Reversal Quiz
-			while CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0)
+			CustomDuelOps.discard_hand_n(duel, p)
 			for zz in 11:
 				if zz != z and CustomDuelOps.zone_idx(duel, p, zz) != 0:
 					CustomDuelOps.send_zone_to_gy(duel, p, zz)

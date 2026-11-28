@@ -520,8 +520,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 						continue
 					if CustomDuelOps.zone_idx(duel, pl, zz) != 0:
 						CustomDuelOps.send_zone_to_gy(duel, pl, zz)
-				while CustomDuelOps.pile_count(duel, pl, CustomDuelOps.LOC_HAND) > 0:
-					CustomDuelOps.discard_hand_slot(duel, pl, 0)
+				CustomDuelOps.discard_hand_n(duel, pl)
 			CustomDuelOps.after_queue(duel, func() -> void:
 				var opp_mon_i: int = CustomDuelOps.choose_pile_card(duel, opp, CustomDuelOps.LOC_DECK, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx))
 				if opp_mon_i >= 0:
@@ -558,9 +557,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		2751: # Bubble Crash
 			for pl in [p, opp]:
 				var excess = (CustomDuelOps.total_field_cards(duel, pl) + CustomDuelOps.pile_count(duel, pl, CustomDuelOps.LOC_HAND)) - 5
-				while excess > 0 and CustomDuelOps.pile_count(duel, pl, CustomDuelOps.LOC_HAND) > 0:
-					CustomDuelOps.discard_hand_slot(duel, pl, 0)
-					excess -= 1
+				var bc_n: int = mini(excess, CustomDuelOps.pile_count(duel, pl, CustomDuelOps.LOC_HAND))
+				if bc_n > 0:
+					CustomDuelOps.discard_hand_n(duel, pl, bc_n)
+					excess -= bc_n
 				for zz in range(5, 11):
 					if excess > 0 and CustomDuelOps.zone_idx(duel, pl, zz) != 0 and not (pl == p and zz == z):
 						CustomDuelOps.send_zone_to_gy(duel, pl, zz)
@@ -713,8 +713,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			CustomDuelOps.pflags(duel, p)["reflect_effect_damage_once"] = true
 			return true
 		2887: # Rope of Life
-			while CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0)
+			CustomDuelOps.discard_hand_n(duel, p)
 			var lost_id := int(ctx.get("destroyed_id", 0))
 			var gi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, lost_id)
 			if gi < 0:
@@ -797,8 +796,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			CustomDuelOps.pflags(duel, p)["piercing_turn"] = t
 			return true
 		2954: # Huge Revolution
-			while CustomDuelOps.pile_count(duel, opp, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, opp, 0)
+			CustomDuelOps.discard_hand_n(duel, opp)
 			for zz in 11:
 				if CustomDuelOps.zone_idx(duel, opp, zz) != 0:
 					CustomDuelOps.destroy_zone(duel, opp, zz)
@@ -826,11 +824,15 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			return true
 		2978: # Pineapple Blast
 			var keep_n = CustomDuelOps.count_monsters(duel, p, false)
-			while CustomDuelOps.count_monsters(duel, opp, false) > keep_n:
-				var dtgt = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, false)
+			var pb_left: int = CustomDuelOps.count_monsters(duel, opp, false) - keep_n
+			var pb_done: Array = []
+			while pb_left > 0:
+				var dtgt = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5 and not pb_done.has(zz), false)
 				if dtgt.is_empty():
 					break
-				CustomDuelOps.destroy_zone(duel, opp, dtgt["z"])
+				pb_done.append(int(dtgt["z"]))
+				CustomDuelOps.destroy_zone(duel, opp, int(dtgt["z"]))
+				pb_left -= 1
 			return true
 		2979: # Rivalry of Warlords
 			_enforce_rivalry(duel)
