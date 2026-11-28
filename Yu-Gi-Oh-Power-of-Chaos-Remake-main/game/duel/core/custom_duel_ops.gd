@@ -1177,6 +1177,9 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 			and str(state(duel).get("effect_source", "")) == "spell" \
 			and (has_faceup_id(duel, 0, 3004) or has_faceup_id(duel, 1, 3004)):
 		return false
+	# Cobra Jar (2882): si su Token de Serpiente Venenosa muere en batalla, el rival recibe 500.
+	if by_battle and bool(zf.get("poisonous_snake_token", false)):
+		damage(duel, 1 - (p & 1), 500)
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
 	# Sengenjin Wakes (2633): no puede ser destruido por efectos de monstruo.
