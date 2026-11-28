@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAL6VCmsC/61VzW7bRhA+S08xjWFAhEj9OXZsFU6T2EULtI2DGDkUacCsuUNqLWqX2V06tm9FAxToS/RYoIf22GOBPoX9Np1dktaP/4DWFmCK2plvZr75ZpaLNIUoyoQF1v++jL4S0cEkeqU+oo5UGu1NmDLRa5yxKUYzJmQ/YzPs8xLzfqI09pPSWDWLMU0xsSY2Bea56WUcjh4SrS0kx1N4wp6wbZb2enxrMDgabcJwMNh6/LgdRdHDZt/udrsPXMGzZxBtbm+G29B1j+EA6BdjmRUJpKVMQKNR+Ql2HFYIxRiEtCEkgtffcpXU386bM3s6hn2RWKEk02cBRG1ouT+Rwp7PY5+wDgrTO1cSY8FPa3BVFIRyHsBnuzAAJvmKuTBxyhKMy2LFYVwHaC3bczRWq7PYhVnx8A4abaklWF1iO2q1Rps7OyFsDIejMazBdywTCcvpmedooQ+vMVeMqj5imh0zSEqWfygFapDlDLUCjpAwbZlx33IGMyYVnIFWRwzQkAOTVnDGodMgWcVZYxn0XAqtNTgUEgzm1CalK8zazWATugFHaVGzED6USBGglBSIHBPiHXLMWN5rd6uyrhc0JlM4LjPGKQz1kA4wFxl6FOb/O9h5RYdvqqB1Dp1D0X+pgs/BUL4F5UiolMpiST56K575eDEz00ZDIQxCePsu8OeLTaD3hv6bOOr5rp0wohx2V7RRiBzjRJXSzqMsW3x7sBd//fzlfnCFYiZlSkAD/0NKPMRTUjDIsZ+K4dZwK9yALj23w42d1bmI68GItbAkhWqkbpkSGoGncKLorRLqcmJWi6PS4qJM5yKlmanPOTzdBYnI4/ykwlmGoQQS4RIpZzMl41TTvDtW7uMjBC3omLrhPmvXhVJozIhXBgVRlDDOKlUsypyTmBgN/ImXkxFzsfbgfTJRBuV7yEqmfTMNIRnhZEqqJcVmpG9Dalmi97psalKnDbkedgzPtWZnCwx3K4V4q/8lk64jf+pZd6hXSk6FFGYy968S8WquxFynkEjawWM4pP7J7FomxCGPnUUNtHyq2UdajDce+RLmS/OOvk6DIKhzsXhqb00lZzKLnUXH1fBoZfN11nl/nQc/yMufLz/Bxe8Xf1x+uvgL1g1c/nj5C1z8Rq9/Xv508esjWIe3U+jCMAQZVuW/C++E/OfvF14l2sGhdDtpH5PpF/8B6pCGOc3RAVHjFdgJ3oHV8HJGChzvesl1ljRUdXBUy4soq7rc42WRU3yLHd/wZNRjRYGSd6bBokaWtl0dPBk1UWlibg56p/uVzEiWUtmVJpJLrAp/5+ZzX9fV0FVJtavAx6iuGE6rQmXKT+IR0dbZe/WGrkeZC4khTJDxHI0JxgvXDjWHdp5VC4Pfa5hyB/dx5TbssVuwmvSGnSmlVGXUct4Nj8fBXbPmLOtNddO2WDa/d1HUeRqlrU+xftd4gtpUWTf3RLNOBvSbK4R4c6XU2C7l5XbMFF0N1bahQb9/Vgm9Q5jBLUb7X+5944nxd1Z3F4b0srL/qwGIOYm+iRdcs+K0WebZOJ+g/S9Q5M6BbQsAAA=="
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_spells.gd"
+          git commit -m "Magical Mallet: choose which hand cards to shuffle (Yes/No per card)"
+          git push
