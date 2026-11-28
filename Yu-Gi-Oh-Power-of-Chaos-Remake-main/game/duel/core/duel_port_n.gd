@@ -33,7 +33,6 @@ func f57aca0() -> int:
 				f53baa0((((desc & 0x3e) | (desc << 16) | 0x1480) << 15) | idx, (z << 8) | p)
 			elif id == 0x585 or id == 0x45e: f54e250(p, z, 1)
 			elif id == 0x31c: f54e660(p, z, 0, 0)
-			CustomCardEffects.on_summon_or_flip(self, p, z, cards.id_of(idx) & 0xffff, "normal")
 		_: return 1
 	_n_next_summon()
 	return 0
@@ -71,7 +70,6 @@ func f57b6e0() -> int:
 			if f541d10(id, 0) != 0 and f551c40(p, m.u16(zone) & 0xfff, z) != 0 and f542f30(0, 0x5fa) == 0 and f542f30(1, 0x5fa) == 0:
 				issue((desc << 15) | 0xad, f401a70(idx), 0, 0)
 				f53baa0((((desc & 0x3e) | (desc << 16) | 0x1880) << 15) | idx, (z << 8) | p)
-			CustomCardEffects.on_summon_or_flip(self, p, z, cards.id_of(idx) & 0xffff, "flip")
 		_: return 1
 	_n_next_summon()
 	return 0
@@ -101,7 +99,6 @@ func f57c0c0() -> int:
 		8:
 			issue((desc << 15) | 0x92, z, m.u16(0xa15bec), 0)
 			if effect_card_id(idx) == 0x4de: f53baa0((((desc & 0x3e) | (desc << 16) | 0x1480) << 15) | idx, (z << 8) | p)
-			CustomCardEffects.on_summon_or_flip(self, p, z, cards.id_of(idx) & 0xffff, "special")
 		_: return 1
 	_n_next_summon()
 	return 0
@@ -991,7 +988,6 @@ func f57c440() -> int:
 			var sum_kind: String = "special"
 			if trigger == 5:
 				sum_kind = "tribute" if (desc & ((1 << 25) | (1 << 26))) != 0 else "normal"
-			CustomCardEffects.on_summon_or_flip(self, p, z, cards.id_of(entry & 0xfff) & 0xffff, sum_kind)
 		f56a380(1 - p, trigger, (z << 8) | p)
 	if (m.u8(0xa15bee) & 2) and not (m.u32(0xa15be0) & 1):
 		f53ed60(0xf05b, 0, 0, 0)
@@ -1059,12 +1055,6 @@ func f57a490(p: int, idx: int) -> int:
 	if kind == 3 or kind == 2:
 		return 0
 	var id := effect_card_id(idx) & 0xffff
-	var raw_id := cards.id_of(idx) & 0xffff
-	if CustomCardEffects.handles(raw_id):
-		if CustomCardEffects.can_special_summon(self, p, raw_id, CustomDuelOps.LOC_HAND, -1) and f56e660(p) != 0:
-			return 1
-		if not CustomCardEffects.can_normal_summon(self, p, raw_id, false) and not CustomCardEffects.can_normal_summon(self, p, raw_id, true):
-			return 0
 	if f541ce0(id) != 0 and f542fb0(p) == 0:
 		return 0
 	match id:

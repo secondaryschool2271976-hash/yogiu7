@@ -460,8 +460,6 @@ func f54d2d0(p: int, z: int, trigger_effect: int, visual_effect: int) -> int:
 		issue(mask | 0x92, z, 2, 0)
 		if trigger_effect != 0 and flip:
 			f53baa0(((((z & 0x1f) | (p << 15) | 0x1640) << 16) | index) & 0xffffffff, 0)
-		if trigger_effect != 0 and CustomCardEffects.handles(cards.id_of(index) & 0xffff):
-			CustomCardEffects.on_summon_or_flip(self, p & 1, z, cards.id_of(index) & 0xffff, "flipped")
 	return 0
 
 ## FUN_0054d420: cambia la posición y prepara efectos dependientes de ella.
@@ -478,8 +476,6 @@ func f54d420(p: int, z: int, position: int, flip_effect: int, mode: int) -> int:
 		f53baa0(descriptor, 0)
 	if flip_effect != 0 and position != 0 and (m.u8(zone + 6) & 2) == 0 and f541d10(id, 0) != 0 and f542f30(0, 0x5fa) == 0 and f542f30(1, 0x5fa) == 0:
 		f53baa0(descriptor, 0)
-	if flip_effect != 0 and position != 0 and (m.u8(zone + 6) & 2) == 0 and CustomCardEffects.handles(cards.id_of(index) & 0xffff):
-		CustomCardEffects.on_summon_or_flip(self, p & 1, z, cards.id_of(index) & 0xffff, "flipped")
 	return 0
 
 ## FUN_0054d570: mueve una carta a una zona vacía, aplicando daños de control.
@@ -861,7 +857,6 @@ func f54f140(p: int, count: int, discard_spells: int) -> int:
 ## FUN_0054f470: robo normal sin descarte de magias.
 func f54f470(p: int, count: int) -> int:
 	var res := f54f140(p, count, 0)
-	CustomCardEffects.on_draw(self, p, count)
 	return res
 
 ## FUN_0054f490: retira cartas de la parte superior del mazo.

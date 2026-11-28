@@ -86,10 +86,6 @@ func f53a400() -> int:
 	var index := m.u16(0xa13404)
 	match action:
 		0:
-			var raw_ns := cards.id_of(index) & 0xffff
-			if loc == 11 and ctype(index) <= 0x14 and CustomCardEffects.handles(raw_ns) and not CustomCardEffects.can_normal_summon(self, p, raw_ns, false):
-				_f_card_action_finish()
-				return 0
 			return invoke_original(0x56e6e0, [1, 0])
 		1:
 			if loc == 0:
@@ -138,11 +134,6 @@ func f53a400() -> int:
 				11:
 					if ctype(index) < 0x15:
 						var id := effect_card_id(index)
-						var raw_id := cards.id_of(index) & 0xffff
-						if CustomCardEffects.handles(raw_id) and CustomCardEffects.can_activate(self, p, raw_id, CustomDuelOps.LOC_HAND, z, {}):
-							CustomCardEffects.resolve_chain_link(self, p, raw_id, CustomDuelOps.LOC_HAND, z, {"hand_slot": z})
-							_f_card_action_finish()
-							return 0
 						if id == 0x1a8:
 							f56e0b0(p)
 							f54e680(p, z, 0, 1)
@@ -164,10 +155,6 @@ func f53a400() -> int:
 			return result
 		4:
 			if loc == 11:
-				var raw_set := cards.id_of(index) & 0xffff
-				if ctype(index) <= 0x14 and CustomCardEffects.handles(raw_set) and not CustomCardEffects.can_normal_summon(self, p, raw_set, true):
-					_f_card_action_finish()
-					return 0
 				if ctype(index) > 0x14:
 					return f570040(0, 0, 0)
 				return invoke_original(0x56e6e0, [0, 0])
@@ -191,17 +178,6 @@ func f53a400() -> int:
 				return 0
 		9: return invoke_original(0x5703c0)
 		10, 11:
-			if loc == 11:
-				var raw_ss := cards.id_of(index) & 0xffff
-				if CustomCardEffects.handles(raw_ss) and CustomCardEffects.can_special_summon(self, p, raw_ss, CustomDuelOps.LOC_HAND, z):
-					CustomCardEffects.special_summon(self, p, raw_ss, CustomDuelOps.LOC_HAND, z)
-					_f_card_action_finish()
-					return 0
-				if CustomCardEffects.handles(raw_ss) and not CustomCardEffects.can_normal_summon(self, p, raw_ss, false):
-					# Special-Summon-only custom card whose condition is not met: never fall back
-					# to the generic Tribute Summon flow.
-					_f_card_action_finish()
-					return 0
 			return invoke_original(0x56e6e0, [1 if action == 10 else 0, 1])
 	_f_card_action_finish()
 	return action
@@ -345,13 +321,10 @@ func f539ac0(p: int, zero_attack: int) -> int:
 		elif defending_id == 0x4e5 and f545c40(p, source) == 0xf:
 			m.set_u16(def + 4, m.u16(def + 4) + 2000)
 			m.set_u16(def + 6, m.u16(def + 6) + 2000)
-		var atk_raw := cards.id_of(m.u16(atk + 2)) & 0xffff
-		var def_raw := cards.id_of(m.u16(def + 2)) & 0xffff
 		var before_atk := f547c60(p, source)
 		var before_def_a := f547c60(other, target)
 		var before_def_d := f547c80(other, target)
-		CustomCardEffects.on_damage_calc(self, p, source, other, target, false)
-		if CustomCardEffects.handles(atk_raw) or CustomCardEffects.handles(def_raw) or f547c60(p, source) != before_atk or f547c60(other, target) != before_def_a or f547c80(other, target) != before_def_d:
+		if f547c60(p, source) != before_atk or f547c60(other, target) != before_def_a or f547c80(other, target) != before_def_d:
 			m.set_u16(atk + 4, maxi(0, m.u16(atk + 4) + f547c60(p, source) - before_atk))
 			m.set_u16(def + 4, maxi(0, m.u16(def + 4) + f547c60(other, target) - before_def_a))
 			m.set_u16(def + 6, maxi(0, m.u16(def + 6) + f547c80(other, target) - before_def_d))
@@ -367,7 +340,7 @@ func f539ac0(p: int, zero_attack: int) -> int:
 				m.set_u8(atk, m.u8(atk) | 8)
 				m.set_u8(def, m.u8(def) | 8)
 		elif attack > defense:
-			if f545730(p, source, 0x604) != 0 or id == 0x53d or f545730(p, source, 0x521) != 0 or CustomCardEffects.has_pierce(self, p, source) or (m.u16(def) & 0x10) == 0:
+			if f545730(p, source, 0x604) != 0 or id == 0x53d or f545730(p, source, 0x521) != 0 or (m.u16(def) & 0x10) == 0:
 				m.set_u16(def + 10, attack - defense)
 			m.set_u8(def, m.u8(def) | 8)
 		else:
@@ -394,11 +367,6 @@ func f539ac0(p: int, zero_attack: int) -> int:
 		_f_battle_prevent_destruction(atk, p)
 		_f_battle_prevent_damage(def, other)
 		_f_battle_prevent_damage(atk, p)
-		# Dimension Fusion Destruction (2548): no battle damage to the summoner of the marked monster.
-		if CustomCardEffects.battle_damage_blocked(self, p, source):
-			m.set_u16(atk + 10, 0)
-		if CustomCardEffects.battle_damage_blocked(self, other, target):
-			m.set_u16(def + 10, 0)
 		for out in [0xa114c4, 0xa114d0]:
 			m.set_u8(out, m.u8(out) ^ (((m.u8(out) * 4) ^ m.u8(out)) & 0x20))
 	return 0
@@ -1392,44 +1360,9 @@ func f53ca00() -> int:
 				return 1
 		4:
 			var entry_idx := m.u16(entry)
-			var raw_id := cards.id_of(entry_idx) & 0xffff
 			var at := f56e540(entry_idx)
 			m.set_u16(0xa15fd4, at) # ASM 53cb59: mov word ptr; 0xa15fd6 se conserva
 			if at < 0:
-				if CustomCardEffects.handles(raw_id):
-					var cflags: int = m.u16(entry + 2)
-					var cp: int = cflags & 1
-					var cz: int = (cflags >> 4) & 0x3f
-					var ckind: int = ctype(entry_idx)
-					if ckind >= 0x15:
-						var csupp: bool = false
-						if (cflags & 0xe) != 6 and cz <= 10 and (m.u8(DuelMem.zone(cp, cz) + 0x8f) & 4) != 0:
-							csupp = true
-						var csub_t: int = f53b880(entry_idx)
-						var cglob: int = m.u32(0xa133ec)
-						if csub_t == 2 and (cglob & 0x200) != 0:
-							csupp = true
-						if csub_t == 3 and (cglob & 0x180) != 0:
-							csupp = true
-						if ckind == 0x15:
-							csupp = csupp or (cglob & 0x40) != 0 or (csub_t == 4 and (cglob & 0x800) != 0)
-						elif ckind == 0x16:
-							csupp = csupp or (cglob & 0x20) != 0 or (csub_t == 4 and (cglob & 0x400) != 0)
-						if csupp:
-							issue((cflags << 15) | 0xb1, cz, 1, 0)
-							m.set_u8(entry + 4, m.u8(entry + 4) | 4)
-					var clast: int = m.u8(0xa11948 + cp * PS) - 1 if (cflags & 0x3f0) == 0xe0 else 0
-					f541cb0(0xa15fdc, f5419b0(cp, cz, clast))
-					var cloc: int = CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz < 10 else (CustomDuelOps.LOC_FIELD_SPELL if cz == 10 else (CustomDuelOps.LOC_HAND if cz == 11 else CustomDuelOps.LOC_GRAVE)))
-					var cprev: int = 0 if count < 2 else entry - 0x14
-					var cctx: Dictionary = CustomCardEffects.build_core_ctx(self, entry, cprev, 1 if cz == 11 else 0)
-					cctx["chain_entry"] = entry
-					cctx["prev_entry"] = cprev
-					if (m.u8(entry + 4) & 4) == 0:
-						CustomCardEffects.resolve_chain_link(self, cp, raw_id, cloc, cz if cz <= 10 else -1, cctx)
-					if f53bb70(entry) != 0:
-						issue((cflags << 15) | 0x78, cz, 0, 0)
-						_f_resolve_remove(entry, false)
 				_f_resolve_finish_effect()
 				return 1
 			m.set_u32(0xa15fd8, effect_column(at, 0x4))

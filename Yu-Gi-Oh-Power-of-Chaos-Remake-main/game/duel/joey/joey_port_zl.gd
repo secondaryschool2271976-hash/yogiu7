@@ -39,7 +39,7 @@ func f599140(context: int, player: int, area: int, slot: int) -> int:
 	elif area == 11:
 		index = m.u16(JoeyMem.pl(player) + JoeyMem.P_HAND + slot * 4) & 0xfff
 		if player != owner or _s32(f56a030(owner)) < 0: return 0
-		if ExtraCardEffects.matches_ritual_monster_joey(self, index, ritual) and _s32(f56d2c0(player, cards.id_of(index))) < 2: return 0
+		if CustomDuelOps.matches_ritual_monster_joey(self, index, ritual) and _s32(f56d2c0(player, cards.id_of(index))) < 2: return 0
 	if (f4025d0(index) & 0xffff) > 20: return 0
 	var level := f4026c0(index) & 0xffff
 	if remaining <= level and level < smallest + remaining: return 1
@@ -50,7 +50,7 @@ func f599140(context: int, player: int, area: int, slot: int) -> int:
 	for i in m.u8(JoeyMem.pl(owner) + JoeyMem.P_HAND_N):
 		if area == 11 and slot == i: continue
 		var card := m.u16(JoeyMem.pl(owner) + JoeyMem.P_HAND + i * 4) & 0xfff
-		if ExtraCardEffects.matches_ritual_monster_joey(self, card, ritual):
+		if CustomDuelOps.matches_ritual_monster_joey(self, card, ritual):
 			ritual = 0xffffffff # Sólo reservar la primera copia.
 		elif count < 42:
 			m.set_u32(candidates + count * 4, f4026c0(card) & 0xffff)
@@ -75,7 +75,7 @@ func f599840() -> int:
 func f599850(context: int) -> int:
 	var owner := m.u8(context + 2) & 1
 	if f570b40(owner) == 0 or f5699c0(0x58a) != 0: return 0
-	ExtraCardEffects.sync_ritual_table_joey(self, m.u16(context), owner)
+	CustomDuelOps.sync_ritual_table_joey(self, m.u16(context), owner)
 	var row := 0
 	while (m.u32(0x5ed060 + row * 4) & 0x1fff) != 0:
 		var record := m.u32(0x5ed060 + row * 4)
@@ -144,7 +144,7 @@ func f5999d0(context: int) -> int:
 			var req_id := m.u32((0x5ed060 + row * 4) & 0xffffffff) & 0x1fff if row >= 0 else 0
 			for slot in m.u8(JoeyMem.pl(owner) + JoeyMem.P_HAND_N):
 				var at := JoeyMem.pl(owner) + JoeyMem.P_HAND + slot * 4
-				if ExtraCardEffects.matches_ritual_monster_joey(self, m.u16(at) & 0xfff, req_id):
+				if CustomDuelOps.matches_ritual_monster_joey(self, m.u16(at) & 0xfff, req_id):
 					f5675c0(0xa55c90, at)
 					m.set_u32(0xa53750, slot)
 					return 99

@@ -128,7 +128,6 @@ func f56dd30(p: int, z: int, out: int) -> int:
 		while halves != 0:
 			m.set_u32(out + 4, f5be050(m.u32(out + 4)))
 			halves -= 1
-	ExtraCardEffects.apply_post_modifiers_joey(self, p, z, out, zo)
 	return 0
 
 
@@ -218,7 +217,6 @@ func _je_own_effect(p: int, z: int, out: int, zo: int, v: Array) -> void:
 			var turn := m.u8(JoeyMem.TURN)
 			if (p & _JE_M32) != (turn & 1) and (turn & 0xe) == 6:
 				v[_JE_ATK] = 300
-	ExtraCardEffects.apply_own_effect_joey(self, p, z, out, zo, v)
 
 
 ## 56dd30: magia de campo boca arriba (primera de los dos lados cuyo 569660 coincide con

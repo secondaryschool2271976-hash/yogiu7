@@ -3477,7 +3477,7 @@ func f5887c0(param_1: int) -> int:
 				return (((((((uVar3) & 0xffffffff) & ((0xffff0000) & 0xffffffff))) & 0xffffffff)) & 0xffffffff)
 			7:
 				var _p_draw: int = _zp_signed((_zp_signed(bVar1, 32) & _zp_signed(1, 32)), 32)
-				var _v1: int = f578b60(_p_draw, 2 + ExtraCardEffects.pot_of_greed_extra_draws_joey(self, _p_draw))
+				var _v1: int = f578b60(_p_draw, 2)
 				uVar3 = ((_v1) & 0xffffffff)
 				_pc = 6
 			8:

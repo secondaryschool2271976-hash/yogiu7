@@ -81,10 +81,7 @@ func f575210(p: int, z: int, face: int, check: int, notify: int) -> int:
 		if face == 0:
 			return 1
 		if up == 0 and f5699c0(0x5fa) == 0:
-			var raw_flip_id: int = cards.id_of(index) & 0xffff
-			if CustomCardEffects.handles(raw_flip_id):
-				CustomCardEffects.on_summon_or_flip(self, p, z, raw_flip_id, "flipped")
-			elif f567620(index, 0) != 0:
+			if f567620(index, 0) != 0:
 				f5ba490(chain, word & 0xff, word)
 	if face != 0 and up != 0:
 		f598590(m.u8(_JN_TURN) & 1, 8, word)

@@ -113,9 +113,6 @@ func f54de00(p: int, z: int, a3: int, a4: int) -> int:
 	if reg:
 		var entry := m.u32(zone)
 		f53baa0((((entry & 0xfffff78d) << 0x13) | ix | 0x3c6e0000) & 0xffffffff, 0)
-	var raw_destroyed := cards.id_of(ix) & 0xffff
-	CustomCardEffects.on_destroyed(self, p, raw_destroyed, false, true)
-	CustomCardEffects.on_sent_to_gy(self, p, raw_destroyed, CustomDuelOps.LOC_FIELD_MONSTER if z < 5 else CustomDuelOps.LOC_FIELD_ST)
 	f54ca50(p, z, 1)
 	return 0
 
@@ -217,43 +214,6 @@ func f563df0(p: int, code: int) -> int:
 func f563e50(p: int, index: int, out_addr: int) -> int:
 	if ctype(index) >= 0x15 or (f541950(index) & 0xffff) != 2:
 		return 0
-	var extra_mats: Array[int] = ExtraCardEffects.fusion_materials(cards.id_of(index & 0xfff) & 0xffff)
-	if extra_mats.size() == 2:
-		var er1 := f563c20(p, extra_mats[0], 0xffff, 0xffff)
-		m.set_u16(out_addr + 2, er1)
-		var er0 := f563c20(p, extra_mats[1], er1, 0xffff)
-		m.set_u16(out_addr, er0)
-		if (er0 & 0xffff) == 0xffff or m.u16(out_addr + 2) == 0xffff:
-			return 0
-		if f563b40(effect_card_id(f563df0(p, er0))) != 0 \
-				and f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 2)))) != 0:
-			return 0
-		if (m.u16(out_addr) & 0x8000) == 0 or (m.u16(out_addr + 2) & 0x8000) == 0:
-			return 1
-		return 0 if f543360(p) < 0 else 1
-	elif extra_mats.size() == 3:
-		var er2 := f563c20(p, extra_mats[0], 0xffff, 0xffff)
-		m.set_u16(out_addr + 4, er2)
-		var er1 := f563c20(p, extra_mats[1], er2, 0xffff)
-		m.set_u16(out_addr + 2, er1)
-		var er0 := f563c20(p, extra_mats[2], m.u16(out_addr + 4), er1)
-		m.set_u16(out_addr, er0)
-		if (er0 & 0xffff) == 0xffff or m.u16(out_addr + 2) == 0xffff \
-				or m.u16(out_addr + 4) == 0xffff:
-			return 0
-		if f563b40(effect_card_id(f563df0(p, er0))) != 0 \
-				and f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 2)))) != 0:
-			return 0
-		if f563b40(effect_card_id(f563df0(p, m.u16(out_addr)))) != 0 \
-				and f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 4)))) != 0:
-			return 0
-		if f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 2)))) != 0 \
-				and f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 4)))) != 0:
-			return 0
-		if (m.u16(out_addr) & 0x8000) == 0 or (m.u16(out_addr + 2) & 0x8000) == 0 \
-				or (m.u16(out_addr + 4) & 0x8000) == 0:
-			return 1
-		return 0 if f543360(p) < 0 else 1
 	var cid := effect_card_id(index) & 0xffff
 	if cid >= 0x7d0 and cid < 2500:
 		cid = (cid + 0xf830) & 0xffff
@@ -702,8 +662,6 @@ func f571810(p: int, z: int, a3: int) -> int:
 		k += f542f30(0, 0x42a)
 		if k != 0 and m.u16(0xa11944 + q) <= k * 500:
 			return 0
-	if not CustomCardEffects.can_attack(self, p, z):
-		return 0
 	if ((effect_card_id(ix) & 0xffff) == 0x31c or (flags & 1) == 0) \
 			and (m.u8(zone + 7) & 8) == 0 and (m.u8(zone + 0x8e) & 0xc) == 0:
 		return 1
@@ -819,13 +777,6 @@ func f563b40(card_id: int) -> int:
 ## FUN_00563b70: 1 si la carta `b` es material de la fusion `a` (tablas de 0x5aa890 y
 ## 0x5aa9d0) o es un comodin.
 func f563b70(a: int, b: int) -> int:
-	var extra_mats: Array[int] = ExtraCardEffects.fusion_materials(cards.id_of(a & 0xfff) & 0xffff)
-	if not extra_mats.is_empty():
-		var raw_b := cards.id_of(b & 0xfff) & 0xffff
-		var norm_b := (raw_b - 2000) if (raw_b >= 2000 and raw_b < 2500) else raw_b
-		if raw_b in extra_mats or norm_b in extra_mats:
-			return 1
-		return 1 if f563b40(effect_card_id(b) & 0xffff) != 0 else 0
 	var u1 := effect_card_id(a) & 0xffff
 	var u2 := effect_card_id(b) & 0xffff
 	if u1 >= 0x7d0 and u1 < 2500:

@@ -18,11 +18,6 @@ func _zm_fusion_row(index: int) -> Array:
 
 func f5918c0(index: int, material: int) -> int:
 	material &= 0xffff
-	var extra_mats: Array[int] = ExtraCardEffects.fusion_materials(cards.id_of(index & 0xfff) & 0xffff)
-	if not extra_mats.is_empty():
-		if material < extra_mats.size():
-			return f402460(extra_mats[material])
-		return 0
 	var row := _zm_fusion_row(index)
 	if not row.is_empty() and material < row[1]:
 		return f402460(m.u16(row[0] + 2 + material * 2))
@@ -32,9 +27,6 @@ func f5918c0(index: int, material: int) -> int:
 
 
 func f5919b0(index: int) -> int:
-	var extra_mats: Array[int] = ExtraCardEffects.fusion_materials(cards.id_of(index & 0xfff) & 0xffff)
-	if not extra_mats.is_empty():
-		return extra_mats.size()
 	var row := _zm_fusion_row(index)
 	return 0 if row.is_empty() else int(row[1])
 
@@ -60,8 +52,6 @@ func f591a10(player: int, card_id: int, exclude_a: int, exclude_b: int) -> int:
 				var matches := false
 				if substitute:
 					matches = f568580(index) != 0
-				elif card_id >= 2500:
-					matches = (cards.id_of(index) & 0xffff) == card_id
 				else:
 					var raw_id := cards.id_of(index) & 0xffff
 					matches = ((effect_card_id(index) & 0xffff) in [card_id, card_id + 2000]) or (raw_id in [card_id, card_id + 2000])
@@ -73,12 +63,11 @@ func f591a10(player: int, card_id: int, exclude_a: int, exclude_b: int) -> int:
 func f591d10(player: int, index: int, out: int) -> int:
 	if (f4025d0(index) & 0xffff) >= 21 or (f402740(index) & 0xffff) != 2: return 0
 	if f56b440(index & 0xffff, 0xffffffff) != 0: return 0
-	var mats: Array[int] = ExtraCardEffects.fusion_materials(cards.id_of(index & 0xfff) & 0xffff)
-	if mats.is_empty():
-		var row := _zm_fusion_row(index)
-		if row.is_empty(): return 0
-		for i in int(row[1]):
-			mats.append(m.u16(row[0] + 2 + i * 2))
+	var mats: Array[int] = []
+	var row := _zm_fusion_row(index)
+	if row.is_empty(): return 0
+	for i in int(row[1]):
+		mats.append(m.u16(row[0] + 2 + i * 2))
 	var refs: Array[int] = []
 	for i in mats.size():
 		var ref := f591a10(player, mats[i], refs[0] if refs.size() else 0xffff, refs[1] if refs.size() > 1 else 0xffff)
