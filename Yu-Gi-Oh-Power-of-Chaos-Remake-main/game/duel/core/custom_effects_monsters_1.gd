@@ -1078,6 +1078,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					duel.f542c40(p, z)
 					duel.f5423a0(p, eq_z - 5, tmp, 1)
 				CustomDuelOps.link_equip(duel, p, eq_z, p, tz)
+				# Tyrant Burst Dragon: el monstruo equipado gana 400 ATK/DEF y puede atacar 3 veces.
+				CustomDuelOps.add_stat_mod(duel, p, tz, 400, 400, false)
+				CustomDuelOps.zflags(duel, p, tz)["max_attacks"] = 3
 		2677: # Uria destroy 1 Set S/T
 			CustomDuelOps.mark_opt(duel, p, 2677, z)
 			var pick_run1082 := func(pick) -> void:
@@ -1995,6 +1998,9 @@ static func on_end_phase(duel, turn_p: int) -> void:
 
 static func on_continuous_enforce(duel) -> void:
 	var has_toon_w = CustomDuelOps.has_toon_world(duel, -1)
+	# Mound of the Bound Creator (2619): los monstruos de Nivel 10 o mas no pueden ser objetivo
+	# ni destruidos por efectos de carta.
+	var mound_bound: bool = CustomDuelOps.has_faceup_id(duel, 0, 2619) or CustomDuelOps.has_faceup_id(duel, 1, 2619)
 	var has_field = CustomDuelOps.zone_idx(duel, 0, 10) != 0 and CustomDuelOps.is_face_up(duel, 0, 10) \
 		or CustomDuelOps.zone_idx(duel, 1, 10) != 0 and CustomDuelOps.is_face_up(duel, 1, 10)
 	for pl in 2:
@@ -2023,6 +2029,9 @@ static func on_continuous_enforce(duel) -> void:
 				zf["indest_battle"] = true
 			if cid == 2519: # Blue-Eyes Ultimate Dragon, the God-Surpassing Servant: no puede ser destruido por efectos
 				zf["indest_effect"] = true
+			if mound_bound and CustomDuelOps.monster_level(duel, CustomDuelOps.zone_idx(duel, pl, z)) >= 10:
+				zf["indest_effect"] = true
+				zf["untargetable"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue

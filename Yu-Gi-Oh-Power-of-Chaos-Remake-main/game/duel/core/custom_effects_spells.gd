@@ -837,6 +837,13 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.zflags(duel, tgt["p"], tgt["z"])["max_attacks"] = 2
 				elif cid == 3082:
 					CustomDuelOps.zflags(duel, tgt["p"], tgt["z"])["direct_atk"] = true
+				elif cid == 2756:
+					# Heart of Clear Water: el equipado no muere en batalla ni por un efecto que lo elige,
+					# y esta carta se destruye si el equipado llega a 1300 ATK o mas.
+					CustomDuelOps.zflags(duel, tgt["p"], tgt["z"])["indest_battle"] = true
+					CustomDuelOps.zflags(duel, tgt["p"], tgt["z"])["indest_targeted"] = true
+					if CustomDuelOps.eff_atk(duel, tgt["p"], tgt["z"]) >= 1300:
+						CustomDuelOps.destroy_zone(duel, p, z)
 			return true
 		2736: # The Puppet Magic of Dark Ruler
 			var gi = _find_race_in_pile(duel, p, CustomDuelOps.LOC_GRAVE, 3)
