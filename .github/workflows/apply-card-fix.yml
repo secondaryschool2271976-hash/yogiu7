@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64_0: "H4sIAHK6CmsC/61U72vbMBD9XP8VRwvDJrGTlKylYRmFBjbGoKNsH0YZRrFOiYgteZKcLPvrd1KcH92akULBYHF673T39HRcCgFpOpMOWO97k36Q6f08/aJXaFIt0rs50zZ9wIotMK2YVL0Zq7DHGyx7hTbYKxrrdJUXzPAchcDC2WzGYfp6uSKpOP4CHAgxnLIsu7ruX18WNzDo96+GwyhN09esPOp0Oq9a/e0tpG9vBt0b6Pjf4AooYh1zsgDRqAK0yqfMuRJzVDz2+brA3CKvRyCV26x/t2uOYhf36zYeQfR3So7WGb3GbcYtq5C8XU3X7bkjmGpNEF3XbeEwGoNgpcUurJjNnZHTxiHPhTZ57TfTQQLpe1hqyhbB2QV8K52sGFDzjkE4u5GcjaBk0Fim6G/hq2FVTf+fDYJBVhRSK9oihNpyQgziB10jaAGfpcAki9Kzu6DthDq5r23mW8XQV/J4Tpndvttc8vMfMPZtvohWB1YNb2DwIt5GwUDe6Rl1zpbMQMlz60YwkYXzjZo1YY4m3nNcY1S4oX/gfidXTTVFsyNdwCeNaxDSoCUlZ6jQkAvaAmGu9QLiXWXjcKkJMOHQgJsjbOIbHN1uiFnytb9Julp/wAKxPsSKks1gNUdFQWmBviek7mapV1RJu/aFZ/sOfcKN56hFpd1eOWCKh404iJfN0MVHFO9uDJokgUNy/YdCnuhCn6DjYIwTGDURyOOBEQdXnHKO7/OA2F7mCcSClaVta3wHlyRVwD4+j/Nmi09P2PHFS7FVHpBkI5cfO+PgAR2DHD6WY5ighYe1KhwFPveCQO+MEqbLhJkFPDQlmfYjgwlZPb68Hg6TEY0OqLTyo0Pvxo4G8iYlIg0Y1JSKQBMkmPSYEoxcshKW5NkmZEc/8jRdU1MyrmngWhlmlNJASnFpa2ZYRlAS8alVn77POfNt5Qpn9Kztdu6GkZuMoj8nTpqSaQcAAA=="
+        run: |
+          set -e
+          printf %s "$PATCH_B64_0" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_card_effects.gd"
+          git commit -m "Keep the battle-destroyed flag when Joey's generic destroy hook follows the battle hook"
+          git push
