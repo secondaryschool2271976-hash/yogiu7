@@ -396,9 +396,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 						CustomDuelOps.send_zone_to_gy(duel, pl, zz)
 				while CustomDuelOps.pile_count(duel, pl, CustomDuelOps.LOC_HAND) > 0:
 					CustomDuelOps.discard_hand_slot(duel, pl, 0)
-			var opp_mon_i = CustomDuelOps.choose_pile_card(duel, opp, CustomDuelOps.LOC_DECK, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx))
-			if opp_mon_i >= 0:
-				CustomDuelOps.special_summon_from_pile(duel, opp, CustomDuelOps.LOC_DECK, opp_mon_i, opp, true, false)
+			CustomDuelOps.after_queue(duel, func() -> void:
+				var opp_mon_i: int = CustomDuelOps.choose_pile_card(duel, opp, CustomDuelOps.LOC_DECK, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx))
+				if opp_mon_i >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, opp, CustomDuelOps.LOC_DECK, opp_mon_i, opp, true, false))
 			CustomDuelOps.pflags(duel, p)["last_turn_active"] = t
 			CustomDuelOps.schedule_delayed(duel, t, CustomDuelOps.PHASE_EP, p, 2718, "last_turn_judge", {})
 			return true

@@ -174,6 +174,20 @@ static func _evening_finish(duel, p: int, cid: int, loc: int, slot: int, attr: i
 	return z
 
 
+## Invocacion Especial cuyo coste envio monstruos del campo al Cementerio: en Joey ese traslado sigue encolado,
+## asi que se invoca cuando la cola termina (Core: de inmediato). Devuelve la zona (Core) o 0 si se aplaza.
+static func _summon_after_cost(duel, p: int, loc: int, slot: int, cid: int) -> int:
+	var go := func() -> int:
+		var sz: int = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
+		if sz >= 0:
+			on_summon_or_flip(duel, p, sz, cid, "special")
+		return sz
+	if not CustomDuelOps.is_joey(duel):
+		return int(go.call())
+	CustomDuelOps.after_queue(duel, func() -> void: go.call())
+	return 0
+
+
 static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 	p &= 1
 	var opp = 1 - p
@@ -326,20 +340,14 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 					cur_slot -= 1
 				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, hi, p, CustomDuelOps.LOC_GRAVE)
 				sent += 1
-			var z = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, cur_slot, p, true, false)
-			if z >= 0:
-				on_summon_or_flip(duel, p, z, cid, "special")
-			return z
+			return _summon_after_cost(duel, p, CustomDuelOps.LOC_HAND, cur_slot, cid)
 		2589, 2677:
 			var sub = 4 if cid == 2589 else -1
 			var cat = 0x16 if cid == 2589 else 0x15
 			var zones = _collect_faceup_st_sub(duel, p, cat, sub)
 			for i in 3:
 				CustomDuelOps.send_zone_to_gy(duel, p, zones[i])
-			var z = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
-			if z >= 0:
-				on_summon_or_flip(duel, p, z, cid, "special")
-			return z
+			return _summon_after_cost(duel, p, loc, slot, cid)
 		2602:
 			var ei = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_FUSION, 2538)
 			CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_FUSION, ei)
@@ -1951,11 +1959,12 @@ static func on_end_phase(duel, turn_p: int) -> void:
 			# Immortal Phoenix -> send to GY & SS Sphere Mode
 			if cid == 2504:
 				CustomDuelOps.send_zone_to_gy(duel, pl, z)
-				for srcloc in [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_GRAVE]:
-					var si = CustomDuelOps.find_pile_index_by_id(duel, pl, srcloc, 2503)
-					if si >= 0:
-						CustomDuelOps.special_summon_from_pile(duel, pl, srcloc, si, pl, true, false)
-						break
+				CustomDuelOps.after_queue(duel, func() -> void:
+					for srcloc in [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_GRAVE]:
+						var si: int = CustomDuelOps.find_pile_index_by_id(duel, pl, srcloc, 2503)
+						if si >= 0:
+							CustomDuelOps.special_summon_from_pile(duel, pl, srcloc, si, pl, true, false)
+							break)
 				continue
 			# Magical Scientist Fusion return
 			if int(zf.get("return_extra_ep", -1)) == t:

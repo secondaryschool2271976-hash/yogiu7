@@ -467,12 +467,14 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			if lv_next == 0:
 				return true
 			CustomDuelOps.send_zone_to_gy(duel, p, lv_zone)
-			var lv_locs: Array[int] = [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK]
-			for lv_loc: int in lv_locs:
-				var lv_i: int = CustomDuelOps.find_pile_index_by_id(duel, p, lv_loc, lv_next)
-				if lv_i >= 0:
-					CustomDuelOps.special_summon_from_pile(duel, p, lv_loc, lv_i, p, true, false)
-					return true
+			# Joey: el traslado al Cementerio sigue encolado; invocar despues, con la zona ya libre.
+			CustomDuelOps.after_queue(duel, func() -> void:
+				var lv_locs: Array[int] = [CustomDuelOps.LOC_HAND, CustomDuelOps.LOC_DECK]
+				for lv_loc: int in lv_locs:
+					var lv_i: int = CustomDuelOps.find_pile_index_by_id(duel, p, lv_loc, lv_next)
+					if lv_i >= 0:
+						CustomDuelOps.special_summon_from_pile(duel, p, lv_loc, lv_i, p, true, false)
+						return)
 			return true
 		2507: # Ancient Chant
 			CustomDuelOps.mark_hopt(duel, p, 2507)
@@ -756,7 +758,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				var fi = _find_in_pile(duel, p, CustomDuelOps.LOC_FUSION, [2542, 2506])
 				if fi >= 0:
 					CustomDuelOps.send_zone_to_gy(duel, p, dmz)
-					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, fi, p)
+					CustomDuelOps.after_queue(duel, func() -> void:
+						var mf_i: int = _find_in_pile(duel, p, CustomDuelOps.LOC_FUSION, [2542, 2506])
+						if mf_i >= 0:
+							CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, mf_i, p))
 			return true
 		2656: # The Fang of Critias
 			CustomDuelOps.mark_hopt(duel, p, 2656)
