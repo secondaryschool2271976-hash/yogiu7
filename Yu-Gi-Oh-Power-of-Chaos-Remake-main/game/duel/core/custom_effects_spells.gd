@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144, 3155, 3156, 3160, 3161, 3162,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144, 3155, 3156, 3160, 3161, 3162, 3170, 3171,
 ]
 
 
@@ -132,6 +132,18 @@ static func _lair_banish(duel, p: int, n: int, then: Callable) -> void:
 	step.call(idxs[0])
 
 
+static func _bond_pred() -> Callable:
+	return func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx)
+
+
+static func _fh_gy_count(duel, p: int) -> int:
+	var n: int = 0
+	for i in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE):
+		if CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+			n += 1
+	return n
+
+
 static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -> bool:
 	p &= 1
 	var opp = 1 - p
@@ -142,6 +154,15 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 		return false
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
+	if cid == 3170: # Fifth Hope
+		return _fh_gy_count(duel, p) >= 5
+	if cid == 3171: # HERO's Bond
+		var hb_up: bool = false
+		for hb_pl in 2:
+			for hb_z in 5:
+				if CustomDuelOps.zone_idx(duel, hb_pl, hb_z) != 0 and CustomDuelOps.is_face_up(duel, hb_pl, hb_z) and CustomDuelOps.zone_id(duel, hb_pl, hb_z) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+					hb_up = true
+		return hb_up and CustomDuelOps.free_monster_zone(duel, p) >= 0 and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, _bond_pred(), true) >= 0
 	if cid == 3160: # Hero Heart
 		return not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true, false).is_empty()
 	if cid == 3161: # Burst Return
@@ -397,6 +418,30 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	p &= 1
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
+	if cid == 3170: # Fifth Hope: shuffle 5 Elemental HEROs from the GY into the Deck, draw 2 (3 if nothing else on field/hand)
+		if _fh_gy_count(duel, p) >= 5:
+			var fh_others: int = CustomDuelOps.count_monsters(duel, p, false) + CustomDuelOps.count_st(duel, p, true) + CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
+			for fh_z in range(5, 11):
+				if CustomDuelOps.zone_idx(duel, p, fh_z) != 0 and CustomDuelOps.zone_id(duel, p, fh_z) == 3170:
+					fh_others -= 1
+			if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3170) >= 0:
+				fh_others -= 1
+			for fh_n in 5:
+				var fh_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true)
+				if fh_i >= 0:
+					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, fh_i, p, CustomDuelOps.LOC_DECK)
+			CustomDuelOps.shuffle_deck(duel, p)
+			CustomDuelOps.draw(duel, p, 3 if fh_others <= 0 else 2)
+		return true
+	if cid == 3171: # HERO's Bond: Special Summon 2 Level 4 or lower Elemental HEROs from the hand
+		var hb_a: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, _bond_pred(), true)
+		if hb_a >= 0:
+			CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hb_a, p)
+			CustomDuelOps.after_queue(duel, func() -> void:
+				var hb_b: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, _bond_pred(), true)
+				if hb_b >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hb_b, p))
+		return true
 	if cid == 3160: # Hero Heart: halve ATK until the end of the turn, can attack twice
 		CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true, false, func(pick) -> void:
 			var hz: int = int(pick["z"])

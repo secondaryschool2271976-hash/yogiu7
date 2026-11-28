@@ -12,7 +12,7 @@ const IDS: Array[int] = [
 	2932, 2944, 2951, 2952, 2953, 2954, 2955, 2957, 2971, 2978,
 	2979, 2980, 2982, 2985, 3006, 3007, 3012, 3014, 3015, 3024,
 	3037, 3040, 3041, 3042, 3044, 3067, 3068, 3073, 3075, 3077,
-	3102, 3103, 3104, 3105, 3106, 3107, 3108, 3131,
+	3102, 3103, 3104, 3105, 3106, 3107, 3108, 3131, 3163, 3164, 3165, 3167, 3168, 3169,
 ]
 
 
@@ -30,6 +30,19 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 	if int(pf.get("locked_st_until_ep", -1)) == CustomDuelOps.turn_number(duel):
 		return false
 	match cid:
+		3167: # Elemental Recharge
+			return _hero_faceup_count(duel, p) > 0
+		3168: # Edge Hammer
+			return CustomDuelOps.count_faceup_id(duel, p, 3149) > 0 and CustomDuelOps.count_monsters(duel, opp, false) > 0
+		3169: # Clay Charge
+			var cc_dz: int = int(ctx.get("def_z", -1))
+			return ev == "attack_declare" and int(ctx.get("atk_p", -1)) == opp and int(ctx.get("def_p", -1)) == p and cc_dz >= 0 and cc_dz < 5 and CustomDuelOps.zone_idx(duel, p, cc_dz) != 0 and CustomDuelOps.zone_id(duel, p, cc_dz) == 2558
+		3163: # Hero Barrier
+			return ev == "attack_declare" and int(ctx.get("atk_p", -1)) == opp
+		3164: # Hero Signal
+			return ev == "destroyed_battle_gy" and int(ctx.get("owner_p", -1)) == p and CustomDuelOps.free_monster_zone(duel, p) >= 0 and (CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx), true) >= 0 or CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true) >= 0)
+		3165: # Hero Blast
+			return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.is_normal_monster(d, idx), true) >= 0
 		3131: # Red-Eyes Spirit
 			return CustomDuelOps.free_monster_zone(duel, p) >= 0 and not CustomDuelOps.is_necrovalley_active(duel) and _red_eyes_spirit_target(duel, p) >= 0
 		2521: # Bottomless Trap Hole
@@ -225,11 +238,86 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 	return false
 
 
+static func _hero_faceup_count(duel, p: int) -> int:
+	var n: int = 0
+	for z in 5:
+		if CustomDuelOps.zone_idx(duel, p, z) != 0 and CustomDuelOps.is_face_up(duel, p, z) and CustomDuelOps.zone_id(duel, p, z) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+			n += 1
+	return n
+
+
 static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -> bool:
 	p &= 1
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3167: # Elemental Recharge
+			CustomDuelOps.heal(duel, p, 1000 * _hero_faceup_count(duel, p))
+			return true
+		3168: # Edge Hammer: Tribute Bladedge, destroy 1 opponent monster, damage = its original ATK
+			var eh_t: Dictionary = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
+			var eh_b: int = -1
+			for eh_z in 5:
+				if CustomDuelOps.zone_idx(duel, p, eh_z) != 0 and CustomDuelOps.is_face_up(duel, p, eh_z) and CustomDuelOps.zone_id(duel, p, eh_z) == 3149:
+					eh_b = eh_z
+					break
+			if not eh_t.is_empty() and eh_b >= 0:
+				var eh_dmg: int = CustomDuelOps.base_atk(duel, CustomDuelOps.zone_idx(duel, opp, int(eh_t["z"])))
+				CustomDuelOps.tribute_zone(duel, p, eh_b)
+				CustomDuelOps.destroy_zone(duel, opp, int(eh_t["z"]))
+				CustomDuelOps.damage(duel, opp, eh_dmg)
+			return true
+		3169: # Clay Charge: destroy the attacker and Clayman, 800 damage
+			var cc_az: int = int(ctx.get("atk_z", -1))
+			var cc_dz: int = int(ctx.get("def_z", -1))
+			if cc_az >= 0 and cc_az < 5 and CustomDuelOps.zone_idx(duel, opp, cc_az) != 0:
+				ctx["negate_attack"] = true
+				CustomDuelOps.negate_attack(duel, p, opp, cc_az)
+				CustomDuelOps.destroy_zone(duel, opp, cc_az)
+			if cc_dz >= 0 and cc_dz < 5 and CustomDuelOps.zone_idx(duel, p, cc_dz) != 0 and CustomDuelOps.zone_id(duel, p, cc_dz) == 2558:
+				CustomDuelOps.destroy_zone(duel, p, cc_dz)
+			CustomDuelOps.damage(duel, opp, 800)
+			return true
+		3163: # Hero Barrier: negate 1 attack; needs a face-up Elemental HERO to resolve
+			var hb_az := int(ctx.get("atk_z", -1))
+			var hb_hero: bool = false
+			for hb_z in 5:
+				if CustomDuelOps.zone_idx(duel, p, hb_z) != 0 and CustomDuelOps.is_face_up(duel, p, hb_z) and CustomDuelOps.zone_id(duel, p, hb_z) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+					hb_hero = true
+			if hb_hero and hb_az >= 0 and hb_az < 5 and CustomDuelOps.zone_idx(duel, opp, hb_az) != 0:
+				ctx["negate_attack"] = true
+				CustomDuelOps.negate_attack(duel, p, opp, hb_az)
+			return true
+		3164: # Hero Signal: Special Summon a Level 4 or lower Elemental HERO from hand or Deck
+			var hs_hand_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx)
+			var hs_deck_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4
+			var hs_hand: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, hs_hand_pred, true)
+			var hs_deck: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, hs_deck_pred, true)
+			var hs_from_hand := func() -> void:
+				var hi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, hs_hand_pred, true)
+				if hi >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hi, p)
+			var hs_from_deck := func() -> void:
+				var di: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, hs_deck_pred, true)
+				if di >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, di, p)
+					CustomDuelOps.shuffle_deck(duel, p)
+			if hs_hand >= 0 and hs_deck >= 0:
+				var hs_q: String = CustomDuelOps.lang_text("إشارة البطل: نعم = من الدك، لا = من اليد", "Hero Signal: Si = del Deck, No = de la mano", "Hero Signal: Yes = from your Deck, No = from your hand")
+				if not CustomDuelOps.ask_optional(duel, p, hs_q, hs_from_deck, hs_from_hand):
+					hs_from_hand.call()
+			elif hs_hand >= 0:
+				hs_from_hand.call()
+			elif hs_deck >= 0:
+				hs_from_deck.call()
+			return true
+		3165: # Hero Blast: add an Elemental HERO Normal Monster from the GY, then destroy a monster with ATK <= its ATK
+			var hbl_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.is_normal_monster(d, idx), true)
+			if hbl_i >= 0:
+				var hbl_atk: int = CustomDuelOps.base_atk(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, hbl_i))
+				CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_GRAVE, hbl_i)
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.eff_atk(d, pl, zz) <= hbl_atk, true, true, func(pick) -> void: CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"])))
+			return true
 		3131: # Red-Eyes Spirit
 			var rs_i: int = _red_eyes_spirit_target(duel, p)
 			if rs_i >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:

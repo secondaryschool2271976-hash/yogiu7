@@ -22,7 +22,7 @@ const IDS: Array[int] = [
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
 	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142, 3145,
-	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159,
+	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159, 3166,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -286,6 +286,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return CustomDuelOps.can_opt(duel, p, cid, z) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and not bool(CustomDuelOps.zflags(duel, p, z).get("union_stolen", false))
 		return false
 	match cid:
+		3166: # Elemental HERO Captain Gold: discard itself; add Skyscraper from the Deck
+			return loc == CustomDuelOps.LOC_HAND and CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 2645) >= 0
 		3140: # Black Metal Dragon: equip itself from the hand or field to a Red-Eyes monster
 			if loc != CustomDuelOps.LOC_HAND and loc != CustomDuelOps.LOC_FIELD_MONSTER:
 				return false
@@ -412,6 +414,15 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					duel.m.set_u8(DuelMem.zone(p, mz) + 6, duel.m.u8(DuelMem.zone(p, mz) + 6) | 2)
 		return
 	match cid:
+		3166: # Elemental HERO Captain Gold
+			var cg_h: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3166)
+			var cg_d: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 2645)
+			if cg_h >= 0 and cg_d >= 0:
+				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, cg_h, p, CustomDuelOps.LOC_GRAVE)
+				cg_d = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 2645)
+				if cg_d >= 0:
+					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, cg_d)
+					CustomDuelOps.shuffle_deck(duel, p)
 		3140: # Black Metal Dragon
 			var bmd_self: int = z if loc == CustomDuelOps.LOC_FIELD_MONSTER else CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3140)
 			var bmd_t: int = _bmd_target(duel, p, z if loc == CustomDuelOps.LOC_FIELD_MONSTER else -1)
@@ -1448,6 +1459,14 @@ static func on_continuous_enforce(duel) -> void:
 			if cid == 3125 and not CustomDuelOps.is_atk_pos(duel, pl, z) and not sd:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
+			if cid == 3166 and not sd: # Captain Gold: destroyed if Skyscraper is not face-up on the field
+				var cg_sky: bool = false
+				for cg_p in 2:
+					if CustomDuelOps.zone_idx(duel, cg_p, 10) != 0 and CustomDuelOps.is_face_up(duel, cg_p, 10) and CustomDuelOps.zone_id(duel, cg_p, 10) == 2645:
+						cg_sky = true
+				if not cg_sky:
+					CustomDuelOps.destroy_zone(duel, pl, z)
+					continue
 			if cid == 3148: # Elemental HERO Phoenix Enforcer: cannot be destroyed by battle
 				CustomDuelOps.zflags(duel, pl, z)["indest_battle"] = not sd
 			if cid == 3021: # Blindly Loyal Goblin: cannot switch control

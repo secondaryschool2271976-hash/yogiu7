@@ -797,7 +797,16 @@
     "1774": "ad_40044918.webp",
     "1775": "ad_67951831.webp",
     "1776": "ad_27191436.webp",
-    "1777": "ad_78387742.webp"
+    "1777": "ad_78387742.webp",
+    "1778": "ad_44676200.webp",
+    "1779": "ad_22020907.webp",
+    "1780": "ad_37412656.webp",
+    "1781": "ad_80908502.webp",
+    "1782": "ad_36586443.webp",
+    "1783": "ad_84361420.webp",
+    "1784": "ad_22479888.webp",
+    "1785": "ad_55428811.webp",
+    "1786": "ad_76442616.webp"
   },
   "cards": [
     {
@@ -34495,6 +34504,345 @@
         "joey"
       ],
       "image": "ad_78387742.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1778,
+      "internal_id": 3163,
+      "password": "44676200",
+      "names": {
+        "eng": "Hero Barrier",
+        "ara": "حاجز البطل"
+      },
+      "descriptions": {
+        "eng": "Negate 1 attack from an opponent's monster. You must control a face-up \"Elemental HERO\" monster to resolve this effect.",
+        "ara": "أبطل هجومًا واحدًا من وحش الخصم. يجب أن تتحكم بوحش مكشوف من \"بطل العناصر\" لتنفيذ هذا التأثير."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_44676200.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1779,
+      "internal_id": 3164,
+      "password": "22020907",
+      "names": {
+        "eng": "Hero Signal",
+        "ara": "إشارة البطل"
+      },
+      "descriptions": {
+        "eng": "When a monster you control is destroyed by battle and sent to the Graveyard: Special Summon 1 Level 4 or lower \"Elemental HERO\" monster from your hand or Deck.",
+        "ara": "عندما يُدمَّر وحش تتحكم به بالمعركة ويُرسل إلى المقبرة: استدعِ بالاستدعاء الخاص وحشًا واحدًا من \"بطل العناصر\" مستواه 4 أو أقل من يدك أو الدك."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_22020907.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1780,
+      "internal_id": 3165,
+      "password": "37412656",
+      "names": {
+        "eng": "Hero Blast",
+        "ara": "انفجار البطل"
+      },
+      "descriptions": {
+        "eng": "Target 1 \"Elemental HERO\" Normal Monster in your Graveyard; add that target to your hand, then if your opponent controls any monsters with ATK less than or equal to that target's ATK, destroy 1 of them.",
+        "ara": "استهدف وحش عادي واحد من \"بطل العناصر\" في مقبرتك؛ أضف ذلك الهدف إلى يدك، ثم إذا كان خصمك يتحكم بأي وحوش هجومها أقل من أو يساوي هجوم ذلك الهدف، دمّر واحدًا منها."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_37412656.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1781,
+      "internal_id": 3166,
+      "password": "80908502",
+      "names": {
+        "eng": "Elemental HERO Captain Gold",
+        "ara": "الكابتن غولد، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "You can discard this card to the Graveyard; add 1 \"Skyscraper\" from your Deck to your hand. If \"Skyscraper\" is not face-up on the field, destroy this card.",
+        "ara": "يمكنك التخلص من هذه البطاقة إلى المقبرة؛ أضف بطاقة 1 \"ناطحة السحاب\" من مجموعتك إلى يدك. إذا لم تكن \"ناطحة السحاب\" مكشوفة في الساحة، دمّر هذه البطاقة."
+      },
+      "atk": 2100,
+      "defense": 800,
+      "level": 4,
+      "attribute": "light",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_80908502.webp",
+      "prop": 687187024,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1782,
+      "internal_id": 3167,
+      "password": "36586443",
+      "names": {
+        "eng": "Elemental Recharge",
+        "ara": "إعادة شحن العناصر"
+      },
+      "descriptions": {
+        "eng": "Gain 1000 Life Points for each face-up \"Elemental HERO\" monster you control.",
+        "ara": "اكسب 1000 نقطة حياة لكل وحش مكشوف من \"بطل العناصر\" تتحكم به."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_36586443.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1783,
+      "internal_id": 3168,
+      "password": "84361420",
+      "names": {
+        "eng": "Edge Hammer",
+        "ara": "مطرقة الحافة"
+      },
+      "descriptions": {
+        "eng": "Tribute 1 \"Elemental HERO Bladedge\" to target 1 monster your opponent controls; destroy that target and inflict damage to your opponent equal to that target's original ATK.",
+        "ara": "قدّم 1 \"بطل العناصر بليدج\" كقربان لاستهداف وحش واحد يتحكم به خصمك؛ دمّر ذلك الهدف وأوقع بخصمك ضررًا يساوي هجوم ذلك الهدف الأصلي."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_84361420.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1784,
+      "internal_id": 3169,
+      "password": "22479888",
+      "names": {
+        "eng": "Clay Charge",
+        "ara": "شحنة الطين"
+      },
+      "descriptions": {
+        "eng": "When an \"Elemental HERO Clayman\" you control is targeted for an attack (even if it is face-down, but reveal it to your opponent in that case): Destroy the attacking monster and that \"Elemental HERO Clayman\", and inflict 800 damage to your opponent.",
+        "ara": "عندما يُستهدف \"بطل العناصر كليمان\" الذي تتحكم به بهجوم (حتى لو كان مقلوبًا، لكن اكشفه للخصم في هذه الحالة): دمّر الوحش المهاجم وذلك الـ\"كليمان\"، وأوقع بخصمك 800 ضرر."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_22479888.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1785,
+      "internal_id": 3170,
+      "password": "55428811",
+      "names": {
+        "eng": "Fifth Hope",
+        "ara": "الأمل الخامس"
+      },
+      "descriptions": {
+        "eng": "Target 5 \"Elemental HERO\" cards in your Graveyard; shuffle them into the Deck, then draw 2 cards (draw 3 cards instead, if you had no other cards on your side of the field and in your hand when you activated this card).",
+        "ara": "استهدف 5 بطاقات \"بطل العناصر\" في مقبرتك؛ اخلطها في الدك، ثم اسحب بطاقتين (اسحب 3 بطاقات بدلًا من ذلك إذا لم تكن لديك بطاقات أخرى في ساحتك ويدك عند تفعيل هذه البطاقة)."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_55428811.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1786,
+      "internal_id": 3171,
+      "password": "76442616",
+      "names": {
+        "eng": "HERO's Bond",
+        "ara": "رابطة الأبطال"
+      },
+      "descriptions": {
+        "eng": "If there is a face-up \"HERO\" monster on the field: Special Summon 2 Level 4 or lower \"Elemental HERO\" monsters from your hand.",
+        "ara": "إذا كان هناك وحش \"بطل\" مكشوف في الساحة: استدعِ بالاستدعاء الخاص وحشين من \"بطل العناصر\" مستواهما 4 أو أقل من يدك."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_76442616.webp",
       "prop": 23068672,
       "effect_alias": 0,
       "subcategory": "normal",
