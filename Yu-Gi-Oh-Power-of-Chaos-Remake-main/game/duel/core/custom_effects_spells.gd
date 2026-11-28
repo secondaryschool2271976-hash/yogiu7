@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144, 3155, 3156,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144, 3155, 3156, 3160, 3161, 3162,
 ]
 
 
@@ -142,6 +142,12 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 		return false
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
+	if cid == 3160: # Hero Heart
+		return not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true, false).is_empty()
+	if cid == 3161: # Burst Return
+		return CustomDuelOps.count_faceup_id(duel, p, 2557) > 0
+	if cid == 3162: # Fake Hero
+		return CustomDuelOps.free_monster_zone(duel, p) >= 0 and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and not CustomDuelOps.is_extra_deck_monster(d, idx), true) >= 0
 	if cid == 3155: # E - Emergency Call
 		return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true) >= 0
 	if cid == 3156: # A Hero Lives
@@ -391,6 +397,31 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	p &= 1
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
+	if cid == 3160: # Hero Heart: halve ATK until the end of the turn, can attack twice
+		CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true, false, func(pick) -> void:
+			var hz: int = int(pick["z"])
+			CustomDuelOps.add_stat_mod(duel, p, hz, -int(CustomDuelOps.eff_atk(duel, p, hz) / 2), 0)
+			CustomDuelOps.zflags(duel, p, hz)["multi_atk_2"] = t)
+		return true
+	if cid == 3161: # Burst Return: return every other face-up Elemental HERO on the field to the hand
+		for br_p in 2:
+			for br_z in 5:
+				var br_idx: int = CustomDuelOps.zone_idx(duel, br_p, br_z)
+				if br_idx != 0 and CustomDuelOps.is_face_up(duel, br_p, br_z) and CustomDuelOps.zone_id(duel, br_p, br_z) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.zone_id(duel, br_p, br_z) != 2557:
+					CustomDuelOps.bounce_zone(duel, br_p, br_z)
+		return true
+	if cid == 3162: # Fake Hero: Special Summon an Elemental HERO from the hand; it cannot attack and returns in the End Phase
+		var fh_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and not CustomDuelOps.is_extra_deck_monster(d, idx), true)
+		if fh_i >= 0:
+			var fh_idx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, fh_i)
+			var fh_z: int = CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, fh_i, p)
+			if fh_z >= 0:
+				CustomDuelOps.after_queue(duel, func() -> void:
+					for zz in 5:
+						if CustomDuelOps.zone_idx(duel, p, zz) == fh_idx:
+							CustomDuelOps.zflags(duel, p, zz)["cannot_atk_turn"] = t
+							CustomDuelOps.zflags(duel, p, zz)["fake_hero_turn"] = t)
+		return true
 	if cid == 3155: # E - Emergency Call: add 1 Elemental HERO from the Deck
 		var ec_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true)
 		if ec_i >= 0:

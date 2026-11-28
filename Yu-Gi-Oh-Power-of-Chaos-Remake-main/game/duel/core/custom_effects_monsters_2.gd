@@ -22,7 +22,7 @@ const IDS: Array[int] = [
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
 	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142, 3145,
-	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154,
+	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -636,6 +636,34 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 	var t = CustomDuelOps.turn_number(duel)
 	var zf = CustomDuelOps.zflags(duel, p, z)
 	zf["summoned_turn"] = t
+	if cid == 3159 and (kind == "normal" or kind == "tribute" or kind == "special") and not CustomDuelOps.is_skill_drain_active(duel): # Elemental HERO Stratos
+		var st_z: int = z
+		var st_hero_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS
+		var st_add := func() -> void:
+			var st_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, st_hero_pred, true)
+			if st_i >= 0:
+				CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, st_i)
+				CustomDuelOps.shuffle_deck(duel, p)
+		var st_destroy := func() -> void:
+			var st_n: int = 0
+			for hz in 5:
+				if CustomDuelOps.zone_idx(duel, p, hz) != 0 and CustomDuelOps.is_face_up(duel, p, hz) and CustomDuelOps.zone_id(duel, p, hz) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+					st_n += 1
+			for _k in st_n:
+				var st_pick := CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz >= 5, true, true)
+				if st_pick.is_empty():
+					break
+				CustomDuelOps.destroy_zone(duel, int(st_pick["p"]), int(st_pick["z"]))
+		var st_has_st: bool = not CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz >= 5, true, true).is_empty()
+		var st_has_hero: bool = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, st_hero_pred, true) >= 0
+		var st_q: String = CustomDuelOps.lang_text("ستراتوس: نعم = دمّر السحر/الفخ، لا = أضف وحش بطل من الدك", "Stratos: Si = destruir Magicas/Trampas, No = añadir un HERO del Deck", "Stratos: Yes = destroy Spells/Traps, No = add a HERO from your Deck")
+		if st_has_st and st_has_hero:
+			if not CustomDuelOps.ask_optional(duel, p, st_q, st_destroy, st_add):
+				st_add.call()
+		elif st_has_hero:
+			CustomDuelOps.optional_effect(duel, p, cid, st_add)
+		elif st_has_st:
+			CustomDuelOps.optional_effect(duel, p, cid, st_destroy)
 
 	# King Tiger Wanghu (2878) reactive trigger
 	var my_atk_now = CustomDuelOps.eff_atk(duel, p, z)
@@ -911,6 +939,8 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 					var cur_def: bool = not CustomDuelOps.is_atk_pos(duel, def_p, int(pk["z"]))
 					CustomDuelOps.change_position(duel, def_p, int(pk["z"]), 0 if cur_def else 1, -1)
 			CustomDuelOps.optional_effect(duel, atk_p, 2822, ga_run)
+	if def_z >= 0 and CustomDuelOps.zone_id(duel, def_p, def_z) == 3157 and CustomDuelOps.is_face_up(duel, def_p, def_z) and _knospe_active(duel, def_p, def_z) and not CustomDuelOps.is_skill_drain_active(duel):
+		return false # Elemental HERO Knospe cannot be targeted for an attack
 	if (cid == 2813 or cid == 2966) and def_z >= 0 and not CustomDuelOps.is_face_up(duel, def_p, def_z) and not CustomDuelOps.is_atk_pos(duel, def_p, def_z):
 		CustomDuelOps.destroy_zone(duel, def_p, def_z)
 	if cid == 2811 and def_z >= 0 and not CustomDuelOps.is_face_up(duel, def_p, def_z):
@@ -948,6 +978,9 @@ static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: i
 	var cid = CustomDuelOps.zone_id(duel, dmg_p, dmg_z)
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3157: # Elemental HERO Knospe: +100 ATK / -100 DEF each time it inflicts Battle Damage
+			if not CustomDuelOps.is_skill_drain_active(duel):
+				CustomDuelOps.add_stat_mod(duel, dmg_p, dmg_z, 100, -100, false)
 		2836: # Dark Scorpion Burglars: opp sends 1 Spell from Deck to GY
 			var si = CustomDuelOps.choose_pile_card(duel, opp_p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.is_spell(d, idx), false)
 			if si >= 0:
@@ -1293,6 +1326,20 @@ static func on_standby_tick(duel, turn_p: int) -> void:
 					CustomDuelOps.add_from_pile_to_hand(duel, turn_p, wloc, wi)
 			if CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_DECK, 1003) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_GRAVE, 1003) >= 0:
 				CustomDuelOps.optional_effect(duel, turn_p, cid, woodsman_body)
+		if cid == 3158 and not CustomDuelOps.is_skill_drain_active(duel) and CustomDuelOps.can_opt(duel, turn_p, 3158, z): # Elemental HERO Ocean: return 1 HERO from the field or GY to the hand
+			var oc_z: int = z
+			var oc_gy_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS
+			var oc_has_gy: bool = CustomDuelOps.choose_pile_card(duel, turn_p, CustomDuelOps.LOC_GRAVE, oc_gy_pred, true) >= 0
+			var oc_body := func() -> void:
+				CustomDuelOps.mark_opt(duel, turn_p, 3158, oc_z)
+				var oc_i: int = CustomDuelOps.choose_pile_card(duel, turn_p, CustomDuelOps.LOC_GRAVE, oc_gy_pred, true)
+				if oc_i >= 0:
+					CustomDuelOps.add_from_pile_to_hand(duel, turn_p, CustomDuelOps.LOC_GRAVE, oc_i)
+				else:
+					CustomDuelOps.choose_zone_then(duel, turn_p, func(d, pl, zz, idx): return pl == turn_p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, false, false, func(pick) -> void: CustomDuelOps.bounce_zone(duel, turn_p, int(pick["z"])))
+			var oc_has_field: bool = not CustomDuelOps.choose_zone(duel, turn_p, func(d, pl, zz, idx): return pl == turn_p and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, false, false).is_empty()
+			if oc_has_gy or oc_has_field:
+				CustomDuelOps.optional_effect(duel, turn_p, cid, oc_body)
 		if ARCHFIEND_UPKEEP.has(cid):
 			var cost := int(ARCHFIEND_UPKEEP[cid])
 			if CustomDuelOps.has_faceup_id(duel, turn_p, 3078) or CustomDuelOps.has_faceup_id(duel, opp, 3078):
@@ -1340,6 +1387,9 @@ static func on_end_phase(duel, turn_p: int) -> void:
 				continue
 			var cid = CustomDuelOps.zone_id(duel, pl, z)
 			var zf = CustomDuelOps.zflags(duel, pl, z)
+			if pl == turn_p and int(zf.get("fake_hero_turn", -1)) == t and not (CustomDuelOps.zone_idx(duel, pl, z) == 0):
+				CustomDuelOps.bounce_zone(duel, pl, z) # Fake Hero: returns to the hand in the End Phase
+				continue
 			if cid == 3153 and pl == turn_p and CustomDuelOps.is_face_up(duel, pl, z) and not CustomDuelOps.is_skill_drain_active(duel) and not bool(zf.get("negated", false)): # Elemental HERO Lady Heat
 				var lh_n: int = 0
 				for lz in 5:
@@ -1476,6 +1526,8 @@ static func can_direct_attack(duel, p: int, z: int, cid: int) -> bool:
 		return true
 	if int(CustomDuelOps.zflags(duel, p, z).get("direct_atk_turn", -1)) == t:
 		return true
+	if cid == 3157 and _knospe_active(duel, p, z): # Elemental HERO Knospe: can attack directly while another Elemental HERO is face-up
+		return true
 	if cid == 3147: # Elemental HERO Mariner: direct attack while you have a face-down Spell/Trap
 		for zz in range(5, 11):
 			if CustomDuelOps.zone_idx(duel, p, zz) != 0 and not CustomDuelOps.is_face_up(duel, p, zz):
@@ -1492,6 +1544,16 @@ static func can_direct_attack(duel, p: int, z: int, cid: int) -> bool:
 			if CustomDuelOps.zone_idx(duel, opp, zz) != 0:
 				return false
 		return opp_monsters > 0
+	return false
+
+
+## Knospe: another face-up Elemental HERO is controlled and its effects are not negated.
+static func _knospe_active(duel, p: int, z: int) -> bool:
+	if CustomDuelOps.is_skill_drain_active(duel) or bool(CustomDuelOps.zflags(duel, p, z).get("negated", false)):
+		return false
+	for oz in 5:
+		if oz != z and CustomDuelOps.zone_idx(duel, p, oz) != 0 and CustomDuelOps.is_face_up(duel, p, oz) and CustomDuelOps.zone_id(duel, p, oz) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+			return true
 	return false
 
 

@@ -791,7 +791,13 @@
     "1768": "ad_95362816.webp",
     "1769": "ad_75434695.webp",
     "1770": "ad_213326.webp",
-    "1771": "ad_8949584.webp"
+    "1771": "ad_8949584.webp",
+    "1772": "ad_62107981.webp",
+    "1773": "ad_37195861.webp",
+    "1774": "ad_40044918.webp",
+    "1775": "ad_67951831.webp",
+    "1776": "ad_27191436.webp",
+    "1777": "ad_78387742.webp"
   },
   "cards": [
     {
@@ -34252,6 +34258,243 @@
         "joey"
       ],
       "image": "ad_8949584.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1772,
+      "internal_id": 3157,
+      "password": "62107981",
+      "names": {
+        "eng": "Elemental HERO Knospe",
+        "ara": "البرعم، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "Each time this card inflicts Battle Damage to your opponent: It gains 100 ATK and loses 100 DEF. While you control another face-up \"Elemental HERO\" monster, your opponent cannot target this card for an attack, and this card can attack your opponent directly.",
+        "ara": "في كل مرة تلحق فيها هذه البطاقة ضررًا بالمعركة بخصمك: تكسب 100 نقطة هجوم وتخسر 100 نقطة دفاع. طالما تتحكم بوحش آخر مكشوف من \"بطل العناصر\"، لا يمكن لخصمك استهداف هذه البطاقة بهجوم، ويمكن لهذه البطاقة مهاجمة خصمك مباشرة."
+      },
+      "atk": 600,
+      "defense": 1000,
+      "level": 3,
+      "attribute": "earth",
+      "type_id": 13,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_62107981.webp",
+      "prop": 2798942308,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1773,
+      "internal_id": 3158,
+      "password": "37195861",
+      "names": {
+        "eng": "Elemental HERO Ocean",
+        "ara": "المحيط، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "Once per turn, during your Standby Phase: You can target 1 \"HERO\" monster you control or in your Graveyard; return that target to the hand.",
+        "ara": "مرة في كل دور، خلال مرحلة الاستعداد الخاصة بك: يمكنك استهداف وحش \"بطل\" واحد تتحكم به أو في مقبرتك؛ أعد ذلك الهدف إلى اليد."
+      },
+      "atk": 1500,
+      "defense": 1200,
+      "level": 4,
+      "attribute": "water",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_37195861.webp",
+      "prop": 1760898168,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1774,
+      "internal_id": 3159,
+      "password": "40044918",
+      "names": {
+        "eng": "Elemental HERO Stratos",
+        "ara": "ستراتوس، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "When this card is Normal or Special Summoned: You can activate 1 of these effects.\n● Destroy Spells/Traps on the field, up to the number of \"HERO\" monsters you control, except this card.\n● Add 1 \"HERO\" monster from your Deck to your hand.",
+        "ara": "عندما تُستدعى هذه البطاقة استدعاءً عاديًا أو خاصًا: يمكنك تفعيل أحد هذين التأثيرين.\n● دمّر بطاقات سحر/فخ على الساحة، بعدد أقصاه عدد وحوش \"بطل\" التي تتحكم بها، باستثناء هذه البطاقة.\n● أضف وحشًا واحدًا من \"بطل\" من الدك إلى يدك."
+      },
+      "atk": 1800,
+      "defense": 300,
+      "level": 4,
+      "attribute": "wind",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_40044918.webp",
+      "prop": 3371526174,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1775,
+      "internal_id": 3160,
+      "password": "67951831",
+      "names": {
+        "eng": "Hero Heart",
+        "ara": "قلب البطل"
+      },
+      "descriptions": {
+        "eng": "Target 1 face-up \"Elemental HERO\" monster you control; halve its ATK until the end of this turn, but it can attack twice during this turn's Battle Phase.",
+        "ara": "استهدف وحشًا واحدًا مكشوفًا من \"بطل العناصر\" تتحكم به؛ اقسم هجومه إلى النصف حتى نهاية هذا الدور، لكن يمكنه الهجوم مرتين خلال مرحلة المعركة لهذا الدور."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_67951831.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1776,
+      "internal_id": 3161,
+      "password": "27191436",
+      "names": {
+        "eng": "Burst Return",
+        "ara": "عودة الانفجار"
+      },
+      "descriptions": {
+        "eng": "If you control a face-up \"Elemental HERO Burstinatrix\": Return all face-up \"Elemental HERO\" monsters on the field to the hand, except \"Elemental HERO Burstinatrix\".",
+        "ara": "إذا كنت تتحكم بـ\"سيدة انفجار بطل العناصر\" مكشوفة: أعد كل وحوش \"بطل العناصر\" المكشوفة على الساحة إلى اليد، باستثناء \"سيدة انفجار بطل العناصر\"."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_27191436.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1777,
+      "internal_id": 3162,
+      "password": "78387742",
+      "names": {
+        "eng": "Fake Hero",
+        "ara": "البطل المزيف"
+      },
+      "descriptions": {
+        "eng": "Special Summon 1 \"Elemental HERO\" monster from your hand. That monster cannot attack, and returns to the hand during the End Phase.",
+        "ara": "استدعِ بالاستدعاء الخاص وحشًا واحدًا من \"بطل العناصر\" من يدك. لا يمكن لذلك الوحش الهجوم، ويعود إلى اليد خلال مرحلة النهاية."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_78387742.webp",
       "prop": 23068672,
       "effect_alias": 0,
       "subcategory": "normal",
