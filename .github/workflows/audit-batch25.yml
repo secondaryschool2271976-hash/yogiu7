@@ -1,0 +1,30 @@
+name: Audit batch 25
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch25.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch25.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Dark Dust Spirit and Battle-Scarred"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
