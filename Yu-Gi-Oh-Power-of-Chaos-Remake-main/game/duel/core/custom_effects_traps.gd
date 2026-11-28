@@ -31,9 +31,9 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		return false
 	match cid:
 		3172: # Hero Counterattack
-			return ev == "destroyed_battle_gy" and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and int(ctx.get("destroyed_id", 0)) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0
+			return _destroyed_ev(ev, ctx) and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and int(ctx.get("destroyed_id", 0)) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0
 		3173: # Change of Hero - Reflector Ray
-			return ev == "destroyed_battle_gy" and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and _hero_fusion_gy_level(duel, p, int(ctx.get("destroyed_id", 0))) > 0
+			return _destroyed_ev(ev, ctx) and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and _hero_fusion_gy_level(duel, p, int(ctx.get("destroyed_id", 0))) > 0
 		3167: # Elemental Recharge
 			return _hero_faceup_count(duel, p) > 0
 		3168: # Edge Hammer
@@ -44,7 +44,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		3163: # Hero Barrier
 			return ev == "attack_declare" and int(ctx.get("atk_p", -1)) == opp
 		3164: # Hero Signal
-			return ev == "destroyed_battle_gy" and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and (CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx), true) >= 0 or CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true) >= 0)
+			return _destroyed_ev(ev, ctx) and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and (CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx), true) >= 0 or CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true) >= 0)
 		3165: # Hero Blast
 			return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.is_normal_monster(d, idx), true) >= 0
 		3131: # Red-Eyes Spirit
@@ -162,7 +162,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		2875: # Barrel Behind the Door
 			return ev == "effect_damage_incoming" and int(ctx.get("recv_p", -1)) == p
 		2887: # Rope of Life
-			return ev == "destroyed_battle_gy" and int(ctx.get("owner_p", -1)) == p and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) >= 1 and CustomDuelOps.free_monster_zone(duel, p) >= 0
+			return _destroyed_ev(ev, ctx) and int(ctx.get("owner_p", -1)) == p and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) >= 1 and CustomDuelOps.free_monster_zone(duel, p) >= 0
 		2916: # Disarmament
 			return _has_any_equip_on_field(duel)
 		2917: # Hidden Spellbook
@@ -252,6 +252,10 @@ static func _hero_fusion_gy_level(duel, p: int, cid: int) -> int:
 	if not CustomDuelOps.is_extra_deck_monster(duel, gidx):
 		return 0
 	return CustomDuelOps.monster_level(duel, gidx)
+
+
+static func _destroyed_ev(ev: String, ctx: Dictionary) -> bool:
+	return ev == "destroyed_battle_gy" or (ev == "damage_calc" and bool(ctx.get("battle_destroyed_now", false)))
 
 
 static func _hero_faceup_count(duel, p: int) -> int:

@@ -123,6 +123,25 @@ static func build_core_ctx(duel, e: int, other: int, hand: int) -> Dictionary:
 		ctx["amount"] = CustomDuelOps.battle_damage_to(duel, p, ap, az, dp, -1 if (bflags & 4) != 0 else dz)
 		if az < 5:
 			ctx["tribute_summoned"] = bool(CustomDuelOps.zflags(duel, ap, az).get("tribute_summoned", false))
+		if ev == "damage_calc":
+			# Core raises this window (reason 0x13) right after battle destroys are recorded and
+			# before on_destroyed runs, so read the battle records here for "destroyed by battle" traps.
+			var bd_atk_dead: bool = (duel.m.u8(0xa114c4 + ap * 12) & 8) != 0
+			var bd_def_dead: bool = (duel.m.u8(0xa114d0 - ap * 12) & 8) != 0 and (bflags & 4) == 0
+			var bd_atk_raw: int = duel.cards.id_of(duel.m.u16(0xa114c6 + ap * 12) & 0xfff) & 0xffff
+			var bd_def_raw: int = duel.cards.id_of(duel.m.u16(0xa114d2 - ap * 12) & 0xfff) & 0xffff
+			if bd_atk_dead and ap == (p & 1) and bd_atk_raw > 0:
+				ctx["battle_destroyed_now"] = true
+				ctx["owner_p"] = p & 1
+				ctx["destroyed_p"] = p & 1
+				ctx["destroyed_id"] = bd_atk_raw
+				ctx["destroyed_battle"] = true
+			elif bd_def_dead and dp == (p & 1) and bd_def_raw > 0:
+				ctx["battle_destroyed_now"] = true
+				ctx["owner_p"] = p & 1
+				ctx["destroyed_p"] = p & 1
+				ctx["destroyed_id"] = bd_def_raw
+				ctx["destroyed_battle"] = true
 	elif ev == "draw":
 		ctx["draw_p"] = CustomDuelOps.turn_player(duel)
 	elif ev == "effect_damage_incoming":
