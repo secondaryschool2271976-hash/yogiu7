@@ -1161,6 +1161,14 @@ static func _battle_damage_calc(duel, recv_p: int, atk_p: int, atk_z: int, def_p
 	return 0
 
 
+## Zona del monstruo al que esta equipada la Union que ocupa `p:z` (-1 si no hay enlace).
+static func union_host_zone(duel, p: int, z: int) -> int:
+	var link: Dictionary = state(duel).get("equip_links", {}).get("%d:%d" % [p & 1, z], {})
+	if link.is_empty() or int(link.get("target_p", -1)) != (p & 1):
+		return -1
+	return int(link.get("target_z", -1))
+
+
 ## Union monster `union_id` equipada al monstruo `p:z` (usa los enlaces de equipo del estado).
 static func union_equipped_to(duel, p: int, z: int, union_id: int) -> bool:
 	var links: Dictionary = state(duel).get("equip_links", {})
