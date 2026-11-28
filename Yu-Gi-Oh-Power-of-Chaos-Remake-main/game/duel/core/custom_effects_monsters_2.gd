@@ -22,7 +22,7 @@ const IDS: Array[int] = [
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
 	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142, 3145,
-	3146, 3147, 3148,
+	3146, 3147, 3148, 3149, 3150, 3151,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -269,6 +269,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 	# Goblin of Greed blocks discard-cost activation
 	if cid == 2925 and _has_goblin_of_greed(duel):
 		return false
+	if cid == 3151 and loc == CustomDuelOps.LOC_FIELD_MONSTER: # Elemental HERO Plasma Vice: discard 1 -> destroy 1 Attack Position monster
+		return CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0 and not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.is_atk_pos(d, pl, zz), true, true).is_empty()
 	if cid == 2974 and loc == CustomDuelOps.LOC_FIELD_ST: # Kiryu: only while it is equipped to a monster
 		return CustomDuelOps.can_opt(duel, p, cid, z) and CustomDuelOps.union_host_zone(duel, p, z) >= 0
 	if cid in FLIP_DOWN_CYCLE_IDS and loc == CustomDuelOps.LOC_FIELD_MONSTER:
@@ -362,6 +364,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	p &= 1
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
+	if cid == 3151 and loc == CustomDuelOps.LOC_FIELD_MONSTER: # Elemental HERO Plasma Vice
+		var pv_after := func() -> void:
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.is_atk_pos(d, pl, zz), true, true, func(pick) -> void: CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"])))
+		CustomDuelOps.discard_cost(duel, p, pv_after)
+		return
 	if cid == 2974 and loc == CustomDuelOps.LOC_FIELD_ST: # Kiryu: Tribute itself so the equipped monster can attack directly
 		var khost := CustomDuelOps.union_host_zone(duel, p, z)
 		if khost >= 0 and CustomDuelOps.can_opt(duel, p, cid, z):
@@ -1466,13 +1473,13 @@ static func has_pierce(duel, p: int, z: int, cid: int) -> bool:
 	# Pitch-Dark Dragon (2939) and Koitsu (2959): the equipped monster inflicts piercing damage.
 	if CustomDuelOps.union_equipped_to(duel, p, z, 2939) or CustomDuelOps.union_equipped_to(duel, p, z, 2959):
 		return true
-	return cid in [2857, 2994, 3027] or bool(CustomDuelOps.zflags(duel, p, z).get("pierce", false))
+	return cid in [2857, 2994, 3027, 3149, 3151] or bool(CustomDuelOps.zflags(duel, p, z).get("pierce", false))
 
 
 static func max_attacks(_duel, _p: int, _z: int, cid: int) -> int:
 	if cid == 3113:
 		return 2
-	if cid == 3070:
+	if cid == 3070 or cid == 3150: # Elemental HERO Wildedge attacks every opponent monster
 		return 5
 	return 1
 

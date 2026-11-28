@@ -783,7 +783,10 @@
     "1760": "ad_81197327.webp",
     "1761": "ad_52031567.webp",
     "1762": "ad_14225239.webp",
-    "1763": "ad_41436536.webp"
+    "1763": "ad_41436536.webp",
+    "1764": "ad_59793705.webp",
+    "1765": "ad_10526791.webp",
+    "1766": "ad_60493189.webp"
   },
   "cards": [
     {
@@ -33914,6 +33917,133 @@
       ],
       "image": "ad_41436536.webp",
       "prop": 2365170808,
+      "monster_kind": "fusion",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [
+        "fusion"
+      ],
+      "divine": false,
+      "series": [],
+      "frame_type": "fusion",
+      "card_shape": "fusion",
+      "custom_effect": true
+    },
+    {
+      "index": 1764,
+      "internal_id": 3149,
+      "password": "59793705",
+      "names": {
+        "eng": "Elemental HERO Bladedge",
+        "ara": "ذو النصل، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "If this card attacks a Defense Position monster, inflict piercing battle damage to your opponent.",
+        "ara": "إذا هاجمت هذه البطاقة وحشًا في وضع الدفاع، ألحق بخصمك ضررًا نافذًا بالمعركة."
+      },
+      "atk": 2600,
+      "defense": 1800,
+      "level": 7,
+      "attribute": "earth",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_59793705.webp",
+      "prop": 2935359668,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1765,
+      "internal_id": 3150,
+      "password": "10526791",
+      "names": {
+        "eng": "Elemental HERO Wildedge",
+        "ara": "الوحشي ذو النصل، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "\"Elemental HERO Wildheart\" + \"Elemental HERO Bladedge\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. This card can attack every monster your opponent controls (one attack on each monster per Battle Phase).",
+        "ara": "\"البري، بطل العناصر\" + \"ذو النصل، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. يمكن لهذه البطاقة مهاجمة كل وحش يتحكم به خصمك (هجوم واحد على كل وحش في كل مرحلة معركة)."
+      },
+      "atk": 2600,
+      "defense": 2300,
+      "level": 8,
+      "attribute": "earth",
+      "type_id": 15,
+      "kind_bits": 2,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_10526791.webp",
+      "prop": 2969176294,
+      "monster_kind": "fusion",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [
+        "fusion"
+      ],
+      "divine": false,
+      "series": [],
+      "frame_type": "fusion",
+      "card_shape": "fusion",
+      "custom_effect": true
+    },
+    {
+      "index": 1766,
+      "internal_id": 3151,
+      "password": "60493189",
+      "names": {
+        "eng": "Elemental HERO Plasma Vice",
+        "ara": "ملزمة البلازما، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "\"Elemental HERO Sparkman\" + \"Elemental HERO Bladedge\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. If this card attacks a Defense Position monster, inflict piercing Battle Damage to your opponent. You can discard 1 card to target 1 Attack Position monster your opponent controls; destroy that target.",
+        "ara": "\"رجل الشرارة، بطل العناصر\" + \"ذو النصل، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. إذا هاجمت هذه البطاقة وحشًا في وضع الدفاع، ألحق بخصمك ضررًا نافذًا بالمعركة. يمكنك التخلص من بطاقة واحدة لاستهداف وحش واحد في وضع الهجوم يتحكم به خصمك؛ دمّر ذلك الهدف."
+      },
+      "atk": 2600,
+      "defense": 2300,
+      "level": 8,
+      "attribute": "earth",
+      "type_id": 15,
+      "kind_bits": 2,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_60493189.webp",
+      "prop": 2969176294,
       "monster_kind": "fusion",
       "effect_alias": 0,
       "subcategory": "normal",

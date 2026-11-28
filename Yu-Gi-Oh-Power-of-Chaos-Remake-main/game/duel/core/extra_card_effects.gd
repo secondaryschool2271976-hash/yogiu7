@@ -23,6 +23,8 @@ const EXTRA_FUSION_RECIPES := {
 	2559: [2555, 2557], # Elemental HERO Flame Wingman (Avian + Burstinatrix)
 	2560: [9001, 9003], # Elemental HERO Flame Wingman - Infernal Rage (2 "Elemental HERO" with different Attributes)
 	2564: [2561, 9002], # Elemental HERO Neos Knight (Neos + 1 Warrior)
+	3150: [2570, 3149], # Elemental HERO Wildedge (Wildheart + Bladedge)
+	3151: [2566, 3149], # Elemental HERO Plasma Vice (Sparkman + Bladedge)
 	3145: [2557, 2556], # Elemental HERO Steam Healer (Burstinatrix + Bubbleman)
 	3146: [2556, 2558], # Elemental HERO Mudballman (Bubbleman + Clayman)
 	3147: [2556, 2555], # Elemental HERO Mariner (Bubbleman + Avian)
