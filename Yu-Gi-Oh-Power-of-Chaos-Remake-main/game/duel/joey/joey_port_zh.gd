@@ -60,6 +60,12 @@ func f59df40(face: int, set_card: int, announce: int) -> int:
 			if special.has(id):
 				return _jh_state(special[id])
 			var kind := (m.u32(0xa57804) >> 3) & 15
+			# Custom Special-Summon-only monsters (level 5+): skip the generic tribute flow.
+			var raw_sp: int = int(cards.id_of(index & 0xffff)) & 0xffff
+			if set_card != 0 and kind in [10, 11] and CustomCardEffects.handles(raw_sp) \
+					and CustomCardEffects.can_special_summon(self, p, raw_sp, CustomDuelOps.LOC_HAND, hand):
+				f5adbf0(p, hand, f56a030(p), 0, face)
+				return _jh_done(1)
 			if id == 0x546 and kind in [10, 11]:
 				f5adbf0(p, hand, f56a030(p), 0, face)
 				return _jh_done(1)
