@@ -51,6 +51,16 @@ func _ready() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_refresh()
 
+## Movil con raton fisico (USB/Bluetooth): el sistema oculta su puntero (mouse_mode HIDDEN), asi que
+## al primer evento de raton real (no el sintetizado por el toque, marcado con platform_touch) se
+## muestra el puntero del juego.
+func _input(event: InputEvent) -> void:
+	if show_pointer or _waves_only or not OS.has_feature("mobile"): return
+	if event is InputEventMouse and not bool(event.get_meta("platform_touch", false)) and event.device != InputEvent.DEVICE_ID_EMULATION:
+		show_pointer = true
+		visible = true
+		_refresh()
+
 func _exit_tree() -> void:
 	if _owns_mouse:
 		_mouse_owners -= 1
