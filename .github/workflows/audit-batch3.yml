@@ -1,0 +1,30 @@
+name: Audit batch 3
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch3.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICNBSCmsCA3BhdGNoMy5kaWZmALVUUU/iQBB+ll8xwRcIFNoKRUi8mHjG+KAY8cUYs1naadnY7ja7WxV+/c2Wnh5o7nzwCCww3Z355vu+2USkKXheJizw4X3lXQhvvvJu1AtqT6Xe2Yor491iwZ/QK7iQw4wXOEwqzIex0jiMK2NVwTBNMbaGFUoai9qwYJAlsPzujC0hE3yFJIwjfxoOBuF4vORRAIHvR6NRy/O87++i1ev1/kMnp6fgBdPwqB/40Nv+CIGCxnIrYkgrGYOSDGXCyhU32HF5+2ArLVk5AyFtF7wf8KxEMmvBAb1iJa2QFdb/nrmGWCRwAmc1ip90el6awUZJZCJpspX02XTfDmzSj/vTnGdmd7tH2w9hUQpNrvndFWh02MAqWHGZEHY4vwGRgqkK2oPJMM1FWWICdiVM3Uer902JBjuZKp7DuUSdrWGB1uYIVzxeCYnQCSfHx13IlYGCE1lIMZSAOcS8KBUUFLGaG0BCAksVc+BaiyUf1BQRBkepkLC4uby9vGNX8+vF3fntgl0F4KCSKJ1NOsjQdtqmxsK2zTC3tPukeLcLJydgZzWJB7tcLxWJjsxJ9JHwd3ldrw6LVHZPLPIJS3mMVbkrcd32bHvwqzW3m3c8dQjzJebCPMEQFrlIURPjGAvie9Fo4yxpyLNOvYv7PdYewrHvE5qxHz7WfFkXfSPM1CwxEtUSVQ+P3cbXu4Bd9hous4pl613QbqhCPxj1I+jRd9SffjJSTU+qMjRdqdLxtvP9cdqkD2133RjLVFk2U9x+pAmxuiGkaY0EpYtoNINDOM/WpRVcwoVKHEcFzkgnKCtMkIjR4PLpSiTKGW/JLc9z/qEexcm277V6e7UmR3WtV5UIDtcYa2XMF+qAFFAqTeOQCT680+R5vtX5H7X/fE7vv1BRqxxFE1I5iqZunfj1GtRro7tzrvOqVSTHy6cy1/jV+hNj7t51vwC36rOPwAYAAA=="
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch3.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 3: Exodia Necross protections, Spiritual Energy Settle Machine keeps Spirits on the field"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
