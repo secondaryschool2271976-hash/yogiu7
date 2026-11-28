@@ -127,6 +127,17 @@ they call it wrong, return the attacking monster to the hand."
 Done: nothing. Why: the effect has to run when an attack is declared, and attack declaration belongs to
 the original engine with no hook, the same reason Raregold Armor and Marshmallon Glasses are listed.
 
+### 2790 Lava Golem
+Text: "...You cannot Normal Summon/Set the turn you Special Summon this card."
+Done: the Special Summon by Tributing two of the opponent's monsters. Missing: the Normal Summon lock.
+Why: the game only asks the custom layer whether a summon is allowed when the card being summoned is
+itself a custom card. A lock that applies to every card in the hand cannot be enforced that way.
+
+### 2869 Non Aggression Area
+Text: "Discard 1 card. Your opponent cannot Summon or Set a monster during their next turn."
+Done: the discard. Missing: the Summon lock.
+Why: same reason as Lava Golem - the summon gate only covers custom cards.
+
 ## Fixed during this audit
 
 | Card | What was wrong |
@@ -161,9 +172,11 @@ the original engine with no hook, the same reason Raregold Armor and Marshmallon
 | 2788 Spiritual Energy Settle Machine | Spirit monsters still returned to the hand |
 | 2880 Dark Room of Nightmare | was a no-op; the extra 300 damage now applies |
 | 2964 Demotion | the equipped monster's Level was not lowered |
+| 2977 Diffusion Wave-Motion | every monster could still attack, not only the chosen one |
 | 2993 Guardian Kay'est | was not unaffected by Spell effects |
 | 3004 Non-Spellcasting Area | Normal Monsters were still destroyed by Spell effects |
 | 3068 Dice Re-Roll | the flag it set was never read, so no re-roll ever happened |
+| 3075 Staunch Defender | the opponent's monsters could attack anything |
 | 3076 Morale Boost | no LP gain on equipping and no damage when the Equip Spell left |
 | 3079 Rod of the Mind's Eye | battle damage from the equipped monster was not set to 1000 |
 | 3103 Begone, Knave! | was a no-op; the monster that dealt battle damage is now returned to the hand |
