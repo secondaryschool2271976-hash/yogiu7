@@ -138,6 +138,39 @@ Text: "Discard 1 card. Your opponent cannot Summon or Set a monster during their
 Done: the discard. Missing: the Summon lock.
 Why: same reason as Lava Golem - the summon gate only covers custom cards.
 
+## State flags written but never read
+
+These are places where a card's code records something in the duel state and nothing ever looks at it.
+The card looks implemented in the source and does nothing in play, which makes this the easiest kind of
+defect to miss. Every flag below was checked against the whole repository, not just the effect files.
+
+| Flag | Card | What the text needs | Status |
+|---|---|---|---|
+| union_equipped | Union monsters (2690, 2692, 2914, 2915, 2939, 2941, 2947, 2959, 2974, 2975, 2989) | the Union card is destroyed instead of the equipped monster | fixed |
+| dice_reroll_turn | 3068 Dice Re-Roll | repeat a die roll once per turn | fixed |
+| only_attacker_zone_turn | 2977 Diffusion Wave-Motion | only the chosen monster may attack | fixed |
+| must_attack_zone_turn | 3075 Staunch Defender | the opponent must attack the chosen monster | fixed |
+| poisonous_snake_token | 2882 Cobra Jar | 500 damage when the token dies in battle | fixed |
+| cannot_normal_summon_turn | 2790 Lava Golem | no Normal Summon that turn | needs an engine hook (see below) |
+| cannot_summon_until_turn | 2608, 2869 | no Summon for a turn | needs an engine hook |
+| extra_tribute_summon_turn | 2507 Ancient Chant | a second Tribute Summon that turn | needs an engine hook |
+| force_ep_turn | 2908 Neko Mane King | end the turn immediately | needs an engine hook |
+| skip_mp1_turn | 2843 Timeater | skip the opponent's next Main Phase 1 | needs an engine hook |
+| max_attackers_turn | 2666 Thunderforce Attack | limit how many monsters may attack | needs an engine hook |
+| must_attack_turn | 2955 Amazoness Archers | force the opponent's monsters to attack | needs an engine hook |
+| can_activate_set_turn | 2626 Reactor Slime | the Set card may be activated that turn | needs an engine hook |
+| maharaghi_scry_turn | 2735 Maharaghi | look at the top card in the next Standby Phase | open (the scry is a presentation-only step) |
+| blaze_cannon_turn | 2517 Blaze Cannon | the extra effect granted to Ra for the turn | open (needs the Ra effect list read) |
+| reborn_ra_turn | 2610 Millennium Revelation | Special Summon Ra with Monster Reborn that turn | open |
+| capsule_card_id | 2809 Different Dimension Capsule | the banished card returns later | redundant: the card id is already passed in the scheduled effect |
+| pharaoh_treasure_armed | 2856 Pharaoh's Treasure | recognise the drawn copy | redundant: the draw is recognised from the effect context |
+| name_is_dmg | 2543 Dark Magician Girl the Magician's Apprentice | the name becomes "Dark Magician Girl" | redundant: 2543 is already in the Dark Magician id list |
+| last_turn_active | 2718 Last Turn | resolve the end-of-turn judgement | redundant: a scheduled effect does the work |
+
+The "needs an engine hook" rows share one cause: the original engine decides whether a Summon, a phase
+or an attack may happen, and the custom layer is only consulted for cards it owns. Locks that apply to
+every card in a hand, or that change the turn structure, cannot be enforced from GDScript alone.
+
 ## Fixed during this audit
 
 | Card | What was wrong |
@@ -171,6 +204,7 @@ Why: same reason as Lava Golem - the summon gate only covers custom cards.
 | 2784 Spring of Rebirth | no LP gain when a monster returned to the hand |
 | 2788 Spiritual Energy Settle Machine | Spirit monsters still returned to the hand |
 | 2880 Dark Room of Nightmare | was a no-op; the extra 300 damage now applies |
+| 2882 Cobra Jar | the Poisonous Snake Token did not inflict 500 damage when destroyed in battle |
 | 2964 Demotion | the equipped monster's Level was not lowered |
 | 2977 Diffusion Wave-Motion | every monster could still attack, not only the chosen one |
 | 2993 Guardian Kay'est | was not unaffected by Spell effects |
