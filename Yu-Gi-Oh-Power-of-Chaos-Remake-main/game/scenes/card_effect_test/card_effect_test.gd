@@ -17,15 +17,15 @@ const ST_MAX := 5
 const HAND_MAX := 5
 const KINDS := ["hand", "field", "st", "grave"]
 
-const C_BG := Color(0.92, 0.96, 1.0)
-const C_TEXT := Color(0.12, 0.16, 0.28)
-const C_PLAYER := Color(0.16, 0.46, 0.92)
-const C_OPP := Color(0.93, 0.36, 0.30)
-const C_ADD := Color(0.14, 0.70, 0.42)
-const C_GY := Color(0.62, 0.42, 0.88)
+const C_BG := Color(0.88, 0.93, 0.99)
+const C_TEXT := Color(0.07, 0.10, 0.22)
+const C_PLAYER := Color(0.10, 0.34, 0.76)
+const C_OPP := Color(0.78, 0.20, 0.18)
+const C_ADD := Color(0.05, 0.50, 0.30)
+const C_GY := Color(0.45, 0.27, 0.74)
 const C_HAND := Color(1.0, 0.72, 0.18)
 const C_CARD := Color(1.0, 1.0, 1.0)
-const C_BAR := Color(0.80, 0.88, 1.0)
+const C_BAR := Color(0.70, 0.80, 0.95)
 
 var _scroll: ScrollContainer
 var _list_box: VBoxContainer
@@ -44,6 +44,13 @@ var _tab_buttons: Array = []
 var _slots_box: VBoxContainer
 var _rtl := false
 var _last_press := {}
+## Colocacion elegida para lo que se anade al campo: 0 ataque, 1 defensa, 11 boca abajo (monstruos);
+## en magia/trampa, false = boca abajo y true = boca arriba. Se guarda en paralelo a _field / _st.
+var _mon_pos := 0
+var _st_up := false
+var _field_c: Array = [[], []]
+var _st_c: Array = [[], []]
+var _pos_btn: Button
 
 
 func _ready() -> void:
@@ -65,6 +72,8 @@ func _flat(color: Color, radius := 12) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = color
 	s.set_corner_radius_all(radius)
+	s.border_color = color.darkened(0.28)
+	s.set_border_width_all(2)
 	s.content_margin_left = 12
 	s.content_margin_right = 12
 	s.content_margin_top = 8
@@ -167,6 +176,13 @@ func _build() -> void:
 		_deck_btns.append(db)
 	_update_deck_buttons()
 
+	_pos_btn = Button.new()
+	_pos_btn.custom_minimum_size = Vector2(0, 50)
+	_pos_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tap(_pos_btn, _cycle_pos)
+	col.add_child(_pos_btn)
+	_update_pos_btn()
+
 	var search := LineEdit.new()
 	search.placeholder_text = _txt("Search a card by name", "ابحث عن بطاقة بالاسم", "Busca una carta por nombre")
 	search.text_changed.connect(_refresh)
@@ -174,7 +190,7 @@ func _build() -> void:
 	search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	search.text_direction = Control.TEXT_DIRECTION_RTL if _rtl else Control.TEXT_DIRECTION_AUTO
 	search.add_theme_color_override("font_color", C_TEXT)
-	search.add_theme_color_override("font_placeholder_color", Color(0.45, 0.5, 0.6))
+	search.add_theme_color_override("font_placeholder_color", Color(0.35, 0.40, 0.52))
 	search.add_theme_stylebox_override("normal", _flat(C_CARD))
 	search.add_theme_stylebox_override("focus", _flat(Color(1, 1, 0.92)))
 	col.add_child(search)
@@ -232,9 +248,39 @@ func _build() -> void:
 	var back := Button.new()
 	back.text = _txt("Back", "رجوع", "Volver")
 	back.custom_minimum_size = Vector2(130, 56)
-	_color_button(back, Color(0.45, 0.52, 0.68), 19)
+	_color_button(back, Color(0.33, 0.40, 0.56), 19)
 	back.pressed.connect(func() -> void: Game.open_launcher())
 	row.add_child(back)
+
+
+func _pos_name() -> String:
+	var mon: String = _txt("Attack", "هجوم", "Ataque")
+	if _mon_pos == 1:
+		mon = _txt("Defense", "دفاع", "Defensa")
+	elif _mon_pos == 11:
+		mon = _txt("Face-down", "مقلوب", "Boca abajo")
+	var st: String = _txt("face-up", "مكشوف", "boca arriba") if _st_up else _txt("face-down", "مخفي", "boca abajo")
+	return "%s: %s  |  %s: %s" % [_txt("Monsters", "الوحوش", "Monstruos"), mon, _txt("Spell/Trap", "السحر/الفخ", "Magia/Trampa"), st]
+
+
+func _update_pos_btn() -> void:
+	if _pos_btn == null:
+		return
+	_pos_btn.text = _pos_name() + "  (" + _txt("tap to change", "اضغط للتغيير", "toca para cambiar") + ")"
+	_color_button(_pos_btn, Color(0.35, 0.40, 0.62), 15)
+
+
+## Cada toque pasa a la siguiente combinacion: ataque, defensa, boca abajo; y al dar la vuelta
+## completa se alterna magia/trampa boca abajo / boca arriba.
+func _cycle_pos() -> void:
+	if _mon_pos == 0:
+		_mon_pos = 1
+	elif _mon_pos == 1:
+		_mon_pos = 11
+	else:
+		_mon_pos = 0
+		_st_up = not _st_up
+	_update_pos_btn()
 
 
 func _lp_edit(parent: HBoxContainer, placeholder: String) -> LineEdit:
@@ -301,22 +347,25 @@ func _list_add(text: String, id: int) -> void:
 	row.add_child(name_btn)
 
 	var hand_btn := Button.new()
-	hand_btn.text = "Hand"
+	hand_btn.text = _txt("Hand", "اليد", "Mano")
 	hand_btn.custom_minimum_size = Vector2(84, ROW_HEIGHT)
+	hand_btn.clip_text = true
 	hand_btn.set_meta("role", "hand")
 	_tap(hand_btn, _on_add_pressed.bind(id, "hand"))
 	row.add_child(hand_btn)
 
 	var add_btn := Button.new()
-	add_btn.text = "Add"
+	add_btn.text = _txt("Add", "إضافة", "Añadir")
 	add_btn.custom_minimum_size = Vector2(76, ROW_HEIGHT)
+	add_btn.clip_text = true
 	add_btn.set_meta("role", "add")
 	_tap(add_btn, _on_add_pressed.bind(id, "board"))
 	row.add_child(add_btn)
 
 	var gy_btn := Button.new()
-	gy_btn.text = "GY"
-	gy_btn.custom_minimum_size = Vector2(60, ROW_HEIGHT)
+	gy_btn.text = _txt("GY", "المقبرة", "Cem.")
+	gy_btn.custom_minimum_size = Vector2(72, ROW_HEIGHT)
+	gy_btn.clip_text = true
 	gy_btn.set_meta("role", "gy")
 	_tap(gy_btn, _on_add_pressed.bind(id, "grave"))
 	row.add_child(gy_btn)
@@ -380,6 +429,11 @@ func _kind_label(card: Dictionary) -> String:
 	return _txt("Monster", "وحش", "Monstruo")
 
 
+func _is_field_spell(id: int) -> bool:
+	var card := CardDB.by_id(id)
+	return str(card.get("category", "")) == "spell" and CardDB.card_subcategory(card) == "field"
+
+
 func _is_st(id: int) -> bool:
 	var cat := str(CardDB.by_id(id).get("category", "monster"))
 	return cat == "spell" or cat == "trap"
@@ -416,7 +470,18 @@ func _on_add_pressed(id: int, kind: String) -> void:
 				"%s: %s ممتلئ (%d)." % [_side_name(_side), _kind_title(kind), cap],
 				"%s: %s está lleno (%d)." % [_side_name(_side), _kind_title(kind), cap])
 		return
+	if kind == "st" and _is_field_spell(id):
+		for existing in lst:
+			if _is_field_spell(int(existing)):
+				_status.text = _txt("%s already has a Field Spell." % _side_name(_side),
+						"%s لديه بطاقة ساحة بالفعل." % _side_name(_side),
+						"%s ya tiene una Magia de Campo." % _side_name(_side))
+				return
 	lst.append(id)
+	if kind == "field":
+		_field_c[_side].append(_mon_pos)
+	elif kind == "st":
+		_st_c[_side].append(0 if _st_up else 1)
 	_status.text = _txt("Added %s to %s - %s (#%d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
 			"أُضيفت %s إلى %s - %s (رقم %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
 			"Añadida %s a %s - %s (n.º %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()])
@@ -427,6 +492,10 @@ func _remove_card(side: int, kind: String, index: int) -> void:
 	var lst: Array = _list_for(side, kind)
 	if index >= 0 and index < lst.size():
 		lst.remove_at(index)
+		if kind == "field" and index < _field_c[side].size():
+			_field_c[side].remove_at(index)
+		elif kind == "st" and index < _st_c[side].size():
+			_st_c[side].remove_at(index)
 	_update_slots()
 
 
@@ -461,7 +530,7 @@ func _update_slots() -> void:
 				if kind == "grave":
 					chip_color = C_GY
 				elif kind == "hand":
-					chip_color = Color(0.80, 0.55, 0.05)
+					chip_color = Color(0.68, 0.42, 0.02)
 				_color_button(chip, chip_color, 14)
 				_tap(chip, _remove_card.bind(s, kind, i))
 				flow.add_child(chip)
@@ -556,7 +625,7 @@ func _open_deck_picker(side: int) -> void:
 	var close := Button.new()
 	close.text = _txt("Back", "رجوع", "Volver")
 	close.custom_minimum_size = Vector2(0, 56)
-	_color_button(close, Color(0.45, 0.52, 0.68), 19)
+	_color_button(close, Color(0.33, 0.40, 0.56), 19)
 	_tap(close, _close_deck_picker)
 	page.add_child(close)
 
@@ -667,18 +736,20 @@ func _on_start() -> void:
 		var entries: Array = []
 		var mz := 0
 		var sz := 5
-		for id in _field[s2]:
+		for fi in range(_field[s2].size()):
 			if mz < MON_MAX:
-				entries.append({"card": int(id), "zone": mz, "c": 0})
+				var fc := int(_field_c[s2][fi]) if fi < _field_c[s2].size() else 0
+				entries.append({"card": int(_field[s2][fi]), "zone": mz, "c": fc})
 				mz += 1
-		for id in _st[s2]:
+		for si in range(_st[s2].size()):
 			if sz >= 10:
 				break
-			var card := CardDB.by_id(int(id))
-			if str(card.get("category", "")) == "spell" and CardDB.card_subcategory(card) == "field":
-				entries.append({"card": int(id), "zone": 10, "c": 0})
+			var id := int(_st[s2][si])
+			var sc := int(_st_c[s2][si]) if si < _st_c[s2].size() else 1
+			if _is_field_spell(id):
+				entries.append({"card": id, "zone": 10, "c": 0})
 			else:
-				entries.append({"card": int(id), "zone": sz, "c": 1})
+				entries.append({"card": id, "zone": sz, "c": sc})
 				sz += 1
 		if not entries.is_empty():
 			opts["field_" + key] = entries
