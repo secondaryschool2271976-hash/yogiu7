@@ -44,6 +44,8 @@ const BY_INDEX := {
 }
 
 const EXACT_PHRASES := {
+	"Designate which one of your opponent's monsters that you wish to offer as tribute.": "حدد أي وحش من وحوش خصمك تريد تقديمه كتضحية.",
+	"Designate which one of your opponent's monsters that you wish to offer as tribute": "حدد أي وحش من وحوش خصمك تريد تقديمه كتضحية",
 	"Select a card.": "اختر بطاقة.",
 	"Select a Monster Card.": "اختر بطاقة وحش.",
 	"Select a Spell Card.": "اختر بطاقة سحر.",
@@ -175,6 +177,7 @@ static func _translate_segment(seg: String) -> String:
 		return String(EXACT_PHRASES[trimmed])
 	var s: String = seg
 	# Reemplazos de plantillas frecuentes del motor de duelo (dlg_eng.json)
+	s = _rep_ci(s, "Designate which one of your opponent's monsters that you wish to offer as tribute", "حدد أي وحش من وحوش خصمك تريد تقديمه كتضحية")
 	s = _rep_ci(s, "Do you want to activate the effect of", "هل تريد تفعيل تأثير")
 	s = _rep_ci(s, "Would you like to activate the effect of", "هل تريد تفعيل تأثير")
 	s = _rep_ci(s, "Do you want to use the effect of", "هل تريد استخدام تأثير")

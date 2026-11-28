@@ -848,9 +848,11 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 		2991: # Maju Garzett: ATK = combined original ATK of the 2 Tributed monsters
 			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
 				zf["garrzett_pending"] = 2
+				CustomDuelOps.state(duel).get_or_add("garrzett_need", {})[str(CustomDuelOps.zone_idx(duel, p, z))] = 2
 		3030: # Great Maju Garzett: ATK = 2x original ATK of the 1 Tributed monster
 			if kind == "normal" or kind == "tribute" or kind == "normal_summon":
 				zf["garrzett_pending"] = 1
+				CustomDuelOps.state(duel).get_or_add("garrzett_need", {})[str(CustomDuelOps.zone_idx(duel, p, z))] = 1
 		3128: # Chopman: Flip Summon -> equip 1 Equip Spell from GY
 			if kind == "flip_summon" and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_st_zone(duel, p) >= 0:
 				var ch_pred := func(d, idx, _s): return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 1

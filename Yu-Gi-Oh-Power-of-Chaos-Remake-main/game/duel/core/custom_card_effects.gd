@@ -781,7 +781,10 @@ static func modify_post_stats(duel, p: int, z: int, cur_atk: int, cur_def: int) 
 		var fixed_g: Dictionary = st_g.get_or_add("garrzett_fixed", {})
 		var idx_g: int = CustomDuelOps.zone_idx(duel, p, z)
 		var key_g: String = "%d" % idx_g
-		if not fixed_g.has(key_g) and int(CustomDuelOps.zflags(duel, p, z).get("garrzett_pending", 0)) != 0:
+		# La marca de "pendiente" se guarda tambien por instancia de carta: los flags de zona se borran
+		# cuando los monstruos ofrendados salen del campo, justo despues de la invocacion.
+		var need_rec: Dictionary = st_g.get_or_add("garrzett_need", {})
+		if not fixed_g.has(key_g) and (int(CustomDuelOps.zflags(duel, p, z).get("garrzett_pending", 0)) != 0 or int(need_rec.get(key_g, 0)) != 0):
 			var need_g: int = 2 if cid == 2991 else 1
 			var gy_n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE)
 			var total_g: int = 0
