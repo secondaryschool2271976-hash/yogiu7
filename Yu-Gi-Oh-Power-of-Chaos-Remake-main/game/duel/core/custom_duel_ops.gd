@@ -1095,6 +1095,11 @@ static func send_zone_to_gy(duel, p: int, z: int) -> bool:
 	var cid = raw_id(duel, idx)
 	if is_joey(duel):
 		duel.f577b30(p, z)
+		# Joey solo ENCOLA el traslado: la zona sigue ocupada en memoria hasta que el motor procesa el
+		# comando. Se apunta como "por liberar" para que una invocacion inmediata la use (ver
+		# special_summon_from_pile) en vez de fallar con el campo lleno o caer en otra zona.
+		var pend: Dictionary = state(duel).get_or_add("joey_pending_free", {})
+		pend["%d_%d" % [p, z]] = idx
 	else:
 		var tmp: int = duel.m.local(4)
 		duel.f541cb0(tmp, DuelMem.zone(p, z))
@@ -1423,6 +1428,18 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 	src_p &= 1
 	target_p &= 1
 	var z = free_monster_zone(duel, target_p)
+	if is_joey(duel):
+		# Zona que acaba de recibir send_zone_to_gy y que el motor aun no ha vaciado: tiene prioridad
+		# (es la que dejo libre el monstruo que se sustituye) siempre que siga conteniendo esa carta.
+		var pend: Dictionary = state(duel).get_or_add("joey_pending_free", {})
+		for pz in 5:
+			var pk: String = "%d_%d" % [target_p, pz]
+			if pend.has(pk):
+				var cur: int = zone_idx(duel, target_p, pz)
+				if cur == int(pend[pk]) or cur == 0:
+					z = pz
+				pend.erase(pk)
+				break
 	if z < 0:
 		return -1
 	var idx = pile_idx(duel, src_p, loc, i)
