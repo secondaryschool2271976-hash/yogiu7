@@ -1,0 +1,26 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAKZuCmsC/7VWa2/aSBT9DL/ibirtxoIhtgFD2KVqGmi2ahqipIoUrVYjY4/JCDPDesbk8et7Z2wIDqm2UROEjGzf57n3zCHmSQKEzLiG8OA6JyecTG7IubxlGZEJOb4JpSIXbBHOGVmEXBzMwgU7iHOWHkQyYwdRrrRcUJYkLNKKLqRQmmWKeq1ZDNPXjljnImZ34HlJ3O5MW61e5B6ydhc81w06nToh5PW7qDcajTfo5MMHIF6/12v2oWF/vS7gM6VDzSNIchGBFBRvRTy9p/hsvm8iN0HnmaDLAXChHSDvYSV5PKhDzXxUCkM4tmlHaDxZqtbp5Jj+fXQ2Kix4AorD+yG4axfKVjJdMSqXmksRppUsTXhogt/1XHv1nDpBD7/baw/gHYzvZMxDOGNRJpWCRtd14ejbl3rjhzaDjdGfEDOlM3kPuUgZeodpCl34JLMpj2MmYCIYLDmLGL7KGDYL+obByTXsXxaQwPlNqBhilN47RSvVvsM4NuhphD3e7QnLaAJ+kzBVzLEl11ZhBqIolMo5DIags5wV7xKZQcJjU0c1zafJxcfPo9H4jE7OxvTz6HJQOBikq5YJ7i5d8pRRu8QUp8qfVrY7upOLo6tx0+R24C8ztSJ6bavQYdHF+s00Y+G8uMEahNRbTa3dq3nKUdAHKdhTqAps/aAdmHFeYvlCw9dwxiMeCji96sAt1zc4ukjmwmy3WcnTq/5m3aqpZkzT0nJ3KHtqydJ0zzH72QWcstnx/WqAhyQNZ2qnShN4fy9ddSh2HyNf8M0eGjgGNb3edTNhXP/hq0xmND7+grQI2j3Hktl3O4eGxA3f7QbN4BkyR1JoLnKZK8oEblRUoP2ExYhZVGzaP34Q9EyK4NBce669evbq/2sBMuNFHlAtMf7t4DkiPDPdZbqZbK0sillql7mHQ/gByTP2X84z9jxfseSTaxvHIm1X01KIvJRC5OUUMj39BH2KyLUt2pBt2pAt2hi6kNpLAC2sN4hCFdHA9SszSzhL418aWfxG4u2/unj7j+KdJP2kH3RarX6710EhfzPx9t9EvP2NePt+G2nesL+e/2viXTyH34fg4Z1lz3KJK+oBKX3Kx3rn9LKvRb6YlkeqUbN3cJQtkG/jOwb7fv+w6wyQsUpCnGdczKyWTs7PkW9n3/5QUJVUrhWYFctkmrIMKb+QK8N4uDTHMxwXxzdgeNw7rtZKzuIWZi65Uy2RK6rmPE1pnCHSNIw0X5Vnn1UkczSED+Zk6BYKtcN8wwTk+l0JI4LTRA8HfsN/MpZUOwmTMGI0Xz512LUtQz81NIxF4AYVJa16FshQq1prVVPbcTznpwV3nRfHbNBYgwH/j8WjCJqaXTOXZydQBeTRqziBNmfKd2Z7E/kRDAAA"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_monsters_1.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_monsters_2.gd"
+          git commit -m "Exodia Necross only checks its Forbidden One condition in the Standby Phase; Armor Exe also upkeeps in the opponent's Standby Phase"
+          git push
