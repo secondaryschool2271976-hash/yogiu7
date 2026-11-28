@@ -779,7 +779,11 @@
     "1754": "ad_27657173.webp",
     "1755": "ad_93969023.webp",
     "1756": "ad_58257569.webp",
-    "1757": "ad_67300516.webp"
+    "1757": "ad_67300516.webp",
+    "1760": "ad_81197327.webp",
+    "1761": "ad_52031567.webp",
+    "1762": "ad_14225239.webp",
+    "1763": "ad_41436536.webp"
   },
   "cards": [
     {
@@ -33752,6 +33756,178 @@
       "series": [],
       "frame_type": "spell",
       "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1760,
+      "internal_id": 3145,
+      "password": "81197327",
+      "names": {
+        "eng": "Elemental HERO Steam Healer",
+        "ara": "المعالج البخاري، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "\"Elemental HERO Burstinatrix\" + \"Elemental HERO Bubbleman\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. When this card destroys a monster by battle and sends it to the Graveyard: Gain Life Points equal to the ATK of that destroyed monster in the Graveyard.",
+        "ara": "\"سيدة انفجار بطل العناصر\" + \"رجل الفقاعات، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. عندما تدمّر هذه البطاقة وحشًا بالمعركة وترسله إلى المقبرة: اكسب نقاط حياة مساوية لنقاط هجوم الوحش المدمّر في المقبرة."
+      },
+      "atk": 1800,
+      "defense": 1000,
+      "level": 5,
+      "attribute": "water",
+      "type_id": 15,
+      "kind_bits": 2,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_81197327.webp",
+      "prop": 1794730084,
+      "monster_kind": "fusion",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [
+        "fusion"
+      ],
+      "divine": false,
+      "series": [],
+      "frame_type": "fusion",
+      "card_shape": "fusion",
+      "custom_effect": true
+    },
+    {
+      "index": 1761,
+      "internal_id": 3146,
+      "password": "52031567",
+      "names": {
+        "eng": "Elemental HERO Mudballman",
+        "ara": "رجل كرة الطين، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "\"Elemental HERO Bubbleman\" + \"Elemental HERO Clayman\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways.",
+        "ara": "\"رجل الفقاعات، بطل العناصر\" + \"رجل الصلصال، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى."
+      },
+      "atk": 1900,
+      "defense": 3000,
+      "level": 6,
+      "attribute": "earth",
+      "type_id": 15,
+      "kind_bits": 2,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_52031567.webp",
+      "prop": 2902031660,
+      "monster_kind": "fusion",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [
+        "fusion"
+      ],
+      "divine": false,
+      "series": [],
+      "frame_type": "fusion",
+      "card_shape": "fusion",
+      "custom_effect": true
+    },
+    {
+      "index": 1762,
+      "internal_id": 3147,
+      "password": "14225239",
+      "names": {
+        "eng": "Elemental HERO Mariner",
+        "ara": "البحّار، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "\"Elemental HERO Bubbleman\" + \"Elemental HERO Avian\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. While you have any face-down card(s) in your Spell & Trap Card Zones, this card can attack your opponent directly.",
+        "ara": "\"رجل الفقاعات، بطل العناصر\" + \"رجل الريش، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. طالما لديك بطاقة مقلوبة واحدة أو أكثر في منطقة السحر والفخ، يمكن لهذه البطاقة مهاجمة خصمك مباشرة."
+      },
+      "atk": 1400,
+      "defense": 1000,
+      "level": 5,
+      "attribute": "water",
+      "type_id": 15,
+      "kind_bits": 2,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_14225239.webp",
+      "prop": 1794709604,
+      "monster_kind": "fusion",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [
+        "fusion"
+      ],
+      "divine": false,
+      "series": [],
+      "frame_type": "fusion",
+      "card_shape": "fusion",
+      "custom_effect": true
+    },
+    {
+      "index": 1763,
+      "internal_id": 3148,
+      "password": "41436536",
+      "names": {
+        "eng": "Elemental HERO Phoenix Enforcer",
+        "ara": "منفّذ العنقاء، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "\"Elemental HERO Avian\" + \"Elemental HERO Burstinatrix\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. This card cannot be destroyed by battle.",
+        "ara": "\"رجل الريش، بطل العناصر\" + \"سيدة انفجار بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. لا يمكن تدمير هذه البطاقة بالمعركة."
+      },
+      "atk": 2100,
+      "defense": 1200,
+      "level": 6,
+      "attribute": "fire",
+      "type_id": 15,
+      "kind_bits": 2,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_41436536.webp",
+      "prop": 2365170808,
+      "monster_kind": "fusion",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [
+        "fusion"
+      ],
+      "divine": false,
+      "series": [],
+      "frame_type": "fusion",
+      "card_shape": "fusion",
       "custom_effect": true
     }
   ],

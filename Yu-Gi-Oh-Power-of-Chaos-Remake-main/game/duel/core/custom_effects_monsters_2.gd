@@ -1,5 +1,6 @@
 class_name CustomEffectsMonsters2
 extends RefCounted
+## (3146 Elemental HERO Mudballman has no effect besides its Fusion Summon.)
 ## Faithful implementations for all 162 custom Monster cards with internal_id >= 2800 (2800..3129)
 ## across both Core (Duel / DuelMem) and Joey (JoeyEngine / JoeyMem).
 
@@ -20,7 +21,8 @@ const IDS: Array[int] = [
 	3064, 3065, 3066, 3069, 3070, 3071, 3074, 3084, 3085, 3086,
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
-	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142,
+	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142, 3145,
+	3146, 3147, 3148,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -1036,6 +1038,8 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 			CustomDuelOps.destroy_zone(duel, target_p, target_z)
 	if def_destroyed and def_z >= 0:
 		var def_idx = CustomDuelOps.zone_idx(duel, def_p, def_z)
+		if acid == 3145: # Elemental HERO Steam Healer: gain LP equal to the destroyed monster's ATK
+			CustomDuelOps.heal(duel, atk_p, CustomDuelOps.base_atk(duel, def_idx))
 		if acid == 2843: # Timeater: skip opp next MP1
 			CustomDuelOps.pflags(duel, def_p)["skip_mp1_turn"] = t + 1
 		if acid == 2883 and CustomDuelOps.is_atk_pos(duel, def_p, def_z): # Winged Sage Falcos
@@ -1367,6 +1371,8 @@ static func on_continuous_enforce(duel) -> void:
 			if cid == 3125 and not CustomDuelOps.is_atk_pos(duel, pl, z) and not sd:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
+			if cid == 3148: # Elemental HERO Phoenix Enforcer: cannot be destroyed by battle
+				CustomDuelOps.zflags(duel, pl, z)["indest_battle"] = not sd
 			if cid == 3021: # Blindly Loyal Goblin: cannot switch control
 				CustomDuelOps.zflags(duel, pl, z)["cannot_switch_control"] = not sd
 			elif cid == 3036: # Different Dimension Dragon: immune to non-targeting S/T destruction
@@ -1437,6 +1443,10 @@ static func can_direct_attack(duel, p: int, z: int, cid: int) -> bool:
 		return true
 	if int(CustomDuelOps.zflags(duel, p, z).get("direct_atk_turn", -1)) == t:
 		return true
+	if cid == 3147: # Elemental HERO Mariner: direct attack while you have a face-down Spell/Trap
+		for zz in range(5, 11):
+			if CustomDuelOps.zone_idx(duel, p, zz) != 0 and not CustomDuelOps.is_face_up(duel, p, zz):
+				return true
 	if cid == 3124: # Black Tyranno: only when every card the opponent controls is a Defense Position monster
 		var opp = 1 - (p & 1)
 		var opp_monsters := 0
