@@ -12,7 +12,7 @@ const IDS: Array[int] = [
 	2932, 2944, 2951, 2952, 2953, 2954, 2955, 2957, 2971, 2978,
 	2979, 2980, 2982, 2985, 3006, 3007, 3012, 3014, 3015, 3024,
 	3037, 3040, 3041, 3042, 3044, 3067, 3068, 3073, 3075, 3077,
-	3102, 3103, 3104, 3105, 3106, 3107, 3108, 3131, 3163, 3164, 3165, 3167, 3168, 3169,
+	3102, 3103, 3104, 3105, 3106, 3107, 3108, 3131, 3163, 3164, 3165, 3167, 3168, 3169, 3172, 3173,
 ]
 
 
@@ -30,6 +30,10 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 	if int(pf.get("locked_st_until_ep", -1)) == CustomDuelOps.turn_number(duel):
 		return false
 	match cid:
+		3172: # Hero Counterattack
+			return ev == "destroyed_battle_gy" and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and int(ctx.get("destroyed_id", 0)) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0
+		3173: # Change of Hero - Reflector Ray
+			return ev == "destroyed_battle_gy" and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and _hero_fusion_gy_level(duel, p, int(ctx.get("destroyed_id", 0))) > 0
 		3167: # Elemental Recharge
 			return _hero_faceup_count(duel, p) > 0
 		3168: # Edge Hammer
@@ -40,7 +44,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 		3163: # Hero Barrier
 			return ev == "attack_declare" and int(ctx.get("atk_p", -1)) == opp
 		3164: # Hero Signal
-			return ev == "destroyed_battle_gy" and int(ctx.get("owner_p", -1)) == p and CustomDuelOps.free_monster_zone(duel, p) >= 0 and (CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx), true) >= 0 or CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true) >= 0)
+			return ev == "destroyed_battle_gy" and int(ctx.get("destroyed_p", -1)) == p and bool(ctx.get("destroyed_battle", false)) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and (CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4 and not CustomDuelOps.is_extra_deck_monster(d, idx), true) >= 0 or CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true) >= 0)
 		3165: # Hero Blast
 			return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.is_normal_monster(d, idx), true) >= 0
 		3131: # Red-Eyes Spirit
@@ -238,6 +242,18 @@ static func can_activate(duel, p: int, cid: int, loc: int, _z: int, ctx: Diction
 	return false
 
 
+static func _hero_fusion_gy_level(duel, p: int, cid: int) -> int:
+	if not cid in CustomDuelOps.ELEMENTAL_HERO_IDS:
+		return 0
+	var gi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, cid)
+	if gi < 0:
+		return 0
+	var gidx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, gi)
+	if not CustomDuelOps.is_extra_deck_monster(duel, gidx):
+		return 0
+	return CustomDuelOps.monster_level(duel, gidx)
+
+
 static func _hero_faceup_count(duel, p: int) -> int:
 	var n: int = 0
 	for z in 5:
@@ -251,6 +267,24 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		3172: # Hero Counterattack: random card from your hand; if an Elemental HERO, destroy 1 opposing monster and SS it
+			var hc_n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
+			if hc_n > 0:
+				var hc_i: int = (duel.rng.rand() % hc_n) if duel.rng != null else (randi() % hc_n)
+				var hc_idx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, hc_i)
+				if CustomDuelOps.is_monster(duel, hc_idx) and CustomDuelOps.raw_id(duel, hc_idx) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+					var hc_t: Dictionary = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _x): return pl == opp and zz < 5, true, true)
+					if not hc_t.is_empty():
+						CustomDuelOps.destroy_zone(duel, opp, int(hc_t["z"]))
+					CustomDuelOps.after_queue(duel, func() -> void:
+						if CustomDuelOps.free_monster_zone(duel, p) >= 0 and hc_i < CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) and CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, hc_i) == hc_idx:
+							CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, hc_i, p))
+			return true
+		3173: # Change of Hero - Reflector Ray: damage = original Level x 300
+			var rr_lv: int = _hero_fusion_gy_level(duel, p, int(ctx.get("destroyed_id", 0)))
+			if rr_lv > 0:
+				CustomDuelOps.damage(duel, opp, rr_lv * 300)
+			return true
 		3167: # Elemental Recharge
 			CustomDuelOps.heal(duel, p, 1000 * _hero_faceup_count(duel, p))
 			return true

@@ -806,7 +806,10 @@
     "1783": "ad_84361420.webp",
     "1784": "ad_22479888.webp",
     "1785": "ad_55428811.webp",
-    "1786": "ad_76442616.webp"
+    "1786": "ad_76442616.webp",
+    "1787": "ad_19024706.webp",
+    "1788": "ad_74095602.webp",
+    "1789": "ad_63060238.webp"
   },
   "cards": [
     {
@@ -34853,6 +34856,121 @@
       "series": [],
       "frame_type": "spell",
       "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1787,
+      "internal_id": 3172,
+      "password": "19024706",
+      "names": {
+        "eng": "Hero Counterattack",
+        "ara": "الهجوم المضاد للبطل"
+      },
+      "descriptions": {
+        "eng": "When an \"Elemental HERO\" monster you control is destroyed by battle: Your opponent chooses and reveals 1 random card from your hand, then, if it is an \"Elemental HERO\" monster, you destroy 1 monster your opponent controls and Special Summon the chosen monster.",
+        "ara": "عندما يُدمَّر وحش \"بطل العناصر\" تتحكم به بالمعركة: يختار خصمك ويكشف بطاقة عشوائية من يدك، ثم إذا كانت وحش \"بطل العناصر\"، دمّر وحشًا واحدًا يتحكم به خصمك واستدعِ الوحش المختار بالاستدعاء الخاص."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_19024706.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1788,
+      "internal_id": 3173,
+      "password": "74095602",
+      "names": {
+        "eng": "Change of Hero - Reflector Ray",
+        "ara": "تغيير البطل - شعاع الانعكاس"
+      },
+      "descriptions": {
+        "eng": "When an \"Elemental HERO\" Fusion Monster you control is destroyed by battle and sent to the Graveyard: Inflict damage to your opponent equal to its original Level x 300.",
+        "ara": "عندما يُدمَّر وحش اندماج من \"بطل العناصر\" تتحكم به بالمعركة ويُرسل إلى المقبرة: أوقع بخصمك ضررًا يساوي مستواه الأصلي × 300."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "trap",
+      "type_id": 21,
+      "kind_bits": 0,
+      "category": "trap",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_74095602.webp",
+      "prop": 22020096,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "frame_type": "trap",
+      "card_shape": "trap_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1789,
+      "internal_id": 3174,
+      "password": "63060238",
+      "names": {
+        "eng": "Elemental HERO Blazeman",
+        "ara": "بليزمان، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "If this card is Normal or Special Summoned: You can add 1 \"Polymerization\" from your Deck to your hand. During your Main Phase: You can activate this effect; you cannot Special Summon monsters for the rest of this turn, except Fusion Monsters, also send 1 \"Elemental HERO\" monster from your Deck to the GY, except \"Elemental HERO Blazeman\", and if you do, this card's Attribute and ATK/DEF become the same as the monster sent to the GY, until the end of this turn. You can only use 1 \"Elemental HERO Blazeman\" effect per turn, and only once that turn.",
+        "ara": "إذا استُدعيت هذه البطاقة استدعاءً عاديًا أو خاصًا: يمكنك إضافة \"بولي ميريزيشن\" واحدة من الدك إلى يدك. خلال مرحلتك الرئيسية: يمكنك تفعيل هذا التأثير؛ لا يمكنك الاستدعاء الخاص لبقية هذا الدور إلا لوحوش الاندماج، وأرسل وحش \"بطل العناصر\" واحدًا من الدك إلى المقبرة، ما عدا \"بليزمان\"، وإذا فعلت، تصبح سمة هذه البطاقة وهجومها/دفاعها مثل الوحش المرسل حتى نهاية هذا الدور. يمكنك استخدام تأثير واحد فقط من تأثيرات \"بليزمان\" في الدور، ومرة واحدة فقط في ذلك الدور."
+      },
+      "atk": 1200,
+      "defense": 1800,
+      "level": 4,
+      "attribute": "fire",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_63060238.webp",
+      "prop": 2297753780,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
       "custom_effect": true
     }
   ],

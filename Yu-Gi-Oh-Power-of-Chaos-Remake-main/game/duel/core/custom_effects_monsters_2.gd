@@ -22,7 +22,7 @@ const IDS: Array[int] = [
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
 	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142, 3145,
-	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159, 3166,
+	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159, 3166, 3174,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -286,6 +286,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return CustomDuelOps.can_opt(duel, p, cid, z) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and not bool(CustomDuelOps.zflags(duel, p, z).get("union_stolen", false))
 		return false
 	match cid:
+		3174: # Elemental HERO Blazeman: Main Phase ignition
+			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.is_face_up(duel, p, z) and int(CustomDuelOps.pflags(duel, p).get("blazeman_turn", -1)) != CustomDuelOps.turn_number(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.raw_id(d, idx) != 3174, true) >= 0
 		3166: # Elemental HERO Captain Gold: discard itself; add Skyscraper from the Deck
 			return loc == CustomDuelOps.LOC_HAND and CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 2645) >= 0
 		3140: # Black Metal Dragon: equip itself from the hand or field to a Red-Eyes monster
@@ -414,6 +416,23 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					duel.m.set_u8(DuelMem.zone(p, mz) + 6, duel.m.u8(DuelMem.zone(p, mz) + 6) | 2)
 		return
 	match cid:
+		3174: # Elemental HERO Blazeman: send an Elemental HERO from the Deck to the GY, copy its Attribute and ATK/DEF
+			var bz_t: int = CustomDuelOps.turn_number(duel)
+			var bz_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.raw_id(d, idx) != 3174, true)
+			if bz_i >= 0 and CustomDuelOps.zone_idx(duel, p, z) != 0:
+				CustomDuelOps.pflags(duel, p)["blazeman_turn"] = bz_t
+				CustomDuelOps.pflags(duel, p)["ss_fusion_only_turn"] = bz_t
+				var bz_src: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_DECK, bz_i)
+				var bz_atk: int = CustomDuelOps.base_atk(duel, bz_src)
+				var bz_def: int = CustomDuelOps.base_def(duel, bz_src)
+				var bz_attr: int = CustomDuelOps.monster_attr(duel, bz_src)
+				var bz_cur_atk: int = CustomDuelOps.eff_atk(duel, p, z)
+				var bz_cur_def: int = CustomDuelOps.eff_def(duel, p, z)
+				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_DECK, bz_i, p, CustomDuelOps.LOC_GRAVE)
+				CustomDuelOps.shuffle_deck(duel, p)
+				CustomDuelOps.add_stat_mod(duel, p, z, bz_atk - bz_cur_atk, bz_def - bz_cur_def, true)
+				var bz_ov: Dictionary = CustomDuelOps.state(duel).get_or_add("attr_ov", {})
+				bz_ov[CustomDuelOps.zone_idx(duel, p, z)] = [bz_attr, bz_t]
 		3166: # Elemental HERO Captain Gold
 			var cg_h: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 3166)
 			var cg_d: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 2645)
@@ -647,6 +666,14 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 	var t = CustomDuelOps.turn_number(duel)
 	var zf = CustomDuelOps.zflags(duel, p, z)
 	zf["summoned_turn"] = t
+	if cid == 3174 and (kind == "normal" or kind == "tribute" or kind == "special") and not CustomDuelOps.is_skill_drain_active(duel) and int(CustomDuelOps.pflags(duel, p).get("blazeman_turn", -1)) != t: # Elemental HERO Blazeman: add Polymerization
+		if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 1003) >= 0:
+			CustomDuelOps.optional_effect(duel, p, cid, func() -> void:
+				var bp_i: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 1003)
+				if bp_i >= 0 and int(CustomDuelOps.pflags(duel, p).get("blazeman_turn", -1)) != t:
+					CustomDuelOps.pflags(duel, p)["blazeman_turn"] = t
+					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, bp_i)
+					CustomDuelOps.shuffle_deck(duel, p))
 	if cid == 3159 and (kind == "normal" or kind == "tribute" or kind == "special") and not CustomDuelOps.is_skill_drain_active(duel): # Elemental HERO Stratos
 		var st_z: int = z
 		var st_hero_pred := func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS

@@ -23,7 +23,7 @@ const LOC_BANISH := 15
 const EXODIA_IDS := [0x10, 0x11, 0x12, 0x13, 0x14, 2530, 2573, 2574, 2575, 2657, 2660, 2674]
 const FORBIDDEN_ONE_IDS := [0x10, 0x11, 0x12, 0x13, 0x14]
 const HERO_IDS := [2555, 2556, 2557, 2558, 2559, 2560, 2561, 2562, 2563, 2564, 2565, 2566, 2567, 2568, 2569, 2570, 2646, 3108]
-const ELEMENTAL_HERO_IDS := [2555, 2556, 2557, 2558, 2559, 2560, 2561, 2562, 2563, 2564, 2565, 2566, 2567, 2568, 2569, 2570, 3145, 3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159, 3166]
+const ELEMENTAL_HERO_IDS := [2555, 2556, 2557, 2558, 2559, 2560, 2561, 2562, 2563, 2564, 2565, 2566, 2567, 2568, 2569, 2570, 3145, 3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154, 3157, 3158, 3159, 3166, 3174]
 const GRAVEKEEPER_IDS := [2820, 2822, 2823, 2826, 2848, 2855, 2857, 2890, 2891]
 const AMAZONESS_IDS := [2907, 2940, 2945, 2955, 2968, 2972, 2981]
 const SACRED_BEAST_IDS := [2513, 2514, 2525, 2577, 2589, 2594, 2595, 2624, 2677]
@@ -489,6 +489,9 @@ static func monster_race(duel, idx: int) -> int:
 
 
 static func monster_attr(duel, idx: int) -> int:
+	var ov: Dictionary = state(duel).get("attr_ov", {})
+	if ov.has(idx) and int(ov[idx][1]) == turn_number(duel):
+		return int(ov[idx][0])
 	if is_monster(duel, idx):
 		return (prop_of(duel, idx) >> 29) & 7
 	return 0
@@ -1488,6 +1491,8 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 	var z = free_monster_zone(duel, target_p)
 	if z < 0:
 		return -1
+	if loc != LOC_FUSION and int(pflags(duel, target_p).get("ss_fusion_only_turn", -1)) == turn_number(duel):
+		return -1  # Elemental HERO Blazeman: cannot Special Summon except Fusion Monsters this turn
 	var idx = pile_idx(duel, src_p, loc, i)
 	if idx == 0:
 		return -1
