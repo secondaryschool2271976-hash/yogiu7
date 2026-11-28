@@ -1526,8 +1526,9 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 	else:
 		var origin = ((from_z & 0xff) << 8) | from_p
 		var target = ((to_z & 0xff) << 8) | to_p
+		var moving_idx: int = zone_idx(duel, from_p, from_z)
 		duel.f54d570(to_p, origin, target)
-		mark_controller(duel, from_p, from_z, to_p, to_z)
+		mark_controller(duel, from_p, from_z, to_p, to_z, moving_idx)
 	if temporary_until_ep:
 		schedule_delayed(duel, turn_number(duel), PHASE_EP, to_p, 0, "return_control", {"from_p": to_p, "from_z": to_z, "orig_p": from_p})
 	return to_z
@@ -1536,10 +1537,10 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 ## Core: el motor recalcula el controlador de cada monstruo cada fotograma (f54c6e0) y devuelve al
 ## dueno original cualquier monstruo cuyo control no venga de una carta nativa de control. Aqui se
 ## anota el nuevo controlador del monstruo (por indice de carta) para que f54c6e0 lo respete.
-static func mark_controller(duel, from_p: int, from_z: int, to_p: int, to_z: int) -> void:
+static func mark_controller(duel, from_p: int, from_z: int, to_p: int, to_z: int, known_idx := 0) -> void:
 	var rec: Dictionary = state(duel).get_or_add("ctrl_rec", {})
 	rec.erase("%d:%d" % [from_p & 1, from_z])
-	var idx: int = zone_idx(duel, to_p, to_z)
+	var idx: int = known_idx if known_idx != 0 else zone_idx(duel, to_p, to_z)
 	if idx != 0:
 		rec["%d:%d" % [to_p & 1, to_z]] = {"idx": idx, "p": to_p & 1}
 
@@ -1580,9 +1581,12 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 		_present(duel, "zone_swap", {"p": 0, "a": (z0 << 8) | 0, "b": (z1 << 8) | 1})
 		sync_visuals(duel)
 	else:
+		var idx0: int = zone_idx(duel, 0, z0)
+		var idx1: int = zone_idx(duel, 1, z1)
 		duel.f54d6c0(0, (z0 << 8) | 0, (z1 << 8) | 1)
-		mark_controller(duel, 0, z0, 1, z1)
-		mark_controller(duel, 1, z1, 0, z0)
+		var swap_rec: Dictionary = state(duel).get_or_add("ctrl_rec", {})
+		swap_rec["1:%d" % z1] = {"idx": idx0, "p": 1}
+		swap_rec["0:%d" % z0] = {"idx": idx1, "p": 0}
 	return true
 
 
