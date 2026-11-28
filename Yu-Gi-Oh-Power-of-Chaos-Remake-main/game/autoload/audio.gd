@@ -21,9 +21,8 @@ var _bg_prev_master_mute := false
 ## sonidos (sfx_finished devuelve true, igual que con el volumen en 0). Los archivos de audio NO
 ## se borran. Para reactivar el audio: cambiar a false (una sola linea).
 const AUDIO_DISABLED := false
-## El audio solo suena dentro de un duelo (Joey, Yugi, Kaiba). Menus, launcher, editor de mazos y
-## lista de cartas quedan en silencio, sin musica de fondo ni sonidos de interfaz.
-const MENU_SOUND := false
+## true = el audio suena tambien en menus, launcher, editor de mazos y lista de cartas (sonido completo).
+const MENU_SOUND := true
 const DUEL_SCREENS := ["replay_viewer.gd", "bust_up_scene.gd", "bust_up_rival.gd", "janken_scene.gd", "janken_kaiba.gd", "janken_joey.gd", "joey_native_duel.gd"]
 const SFX_CHANNELS := 6
 const LAUNCHER_MUSIC_BUS := &"Launcher Music"
