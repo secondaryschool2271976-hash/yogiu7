@@ -466,6 +466,8 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
 		if def_destroyed and CustomDuelOps.union_equipped_to(duel, atk_p & 1, atk_z, 2914):
 			CustomDuelOps.spawn_token(duel, atk_p & 1, 0, false, 800, 800)
+		if def_destroyed and CustomDuelOps.union_equipped_to(duel, atk_p & 1, atk_z, 2941): # Zombie Tiger
+			CustomDuelOps.discard_random(duel, 1 - (atk_p & 1), 1)
 		var udmg = CustomDuelOps.state(duel).get("union_battle_dmg", null)
 		if udmg is Array and udmg.size() >= 2 and int(udmg[0]) == (1 - (atk_p & 1)) and int(udmg[1]) > 0:
 			var up: int = atk_p & 1
