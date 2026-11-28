@@ -1527,9 +1527,34 @@ static func change_control(duel, from_p: int, from_z: int, to_p: int, temporary_
 		var origin = ((from_z & 0xff) << 8) | from_p
 		var target = ((to_z & 0xff) << 8) | to_p
 		duel.f54d570(to_p, origin, target)
+		mark_controller(duel, from_p, from_z, to_p, to_z)
 	if temporary_until_ep:
 		schedule_delayed(duel, turn_number(duel), PHASE_EP, to_p, 0, "return_control", {"from_p": to_p, "from_z": to_z, "orig_p": from_p})
 	return to_z
+
+
+## Core: el motor recalcula el controlador de cada monstruo cada fotograma (f54c6e0) y devuelve al
+## dueno original cualquier monstruo cuyo control no venga de una carta nativa de control. Aqui se
+## anota el nuevo controlador del monstruo (por indice de carta) para que f54c6e0 lo respete.
+static func mark_controller(duel, from_p: int, from_z: int, to_p: int, to_z: int) -> void:
+	var rec: Dictionary = state(duel).get_or_add("ctrl_rec", {})
+	rec.erase("%d:%d" % [from_p & 1, from_z])
+	var idx: int = zone_idx(duel, to_p, to_z)
+	if idx != 0:
+		rec["%d:%d" % [to_p & 1, to_z]] = {"idx": idx, "p": to_p & 1}
+
+
+## Controlador anotado para el monstruo que ahora esta en p/z, o -1 si no hay nota valida.
+static func recorded_controller(duel, p: int, z: int) -> int:
+	var rec: Dictionary = state(duel).get("ctrl_rec", {})
+	var key: String = "%d:%d" % [p & 1, z]
+	if not rec.has(key):
+		return -1
+	var r: Dictionary = rec[key]
+	if int(r["idx"]) != zone_idx(duel, p, z) or int(r["p"]) != (p & 1):
+		rec.erase(key)
+		return -1
+	return int(r["p"])
 
 
 static func swap_control(duel, z0: int, z1: int) -> bool:
@@ -1556,6 +1581,8 @@ static func swap_control(duel, z0: int, z1: int) -> bool:
 		sync_visuals(duel)
 	else:
 		duel.f54d6c0(0, (z0 << 8) | 0, (z1 << 8) | 1)
+		mark_controller(duel, 0, z0, 1, z1)
+		mark_controller(duel, 1, z1, 0, z0)
 	return true
 
 

@@ -353,6 +353,11 @@ func f54c6e0(p: int, z: int, temporary: int) -> int:
 			var id := effect_card_id(reference) & 0xffff
 			if id in [0x42c, 0x228, 0x280, 0x5ea] or (id in [0x403, 0x4e7] and temporary == 0):
 				owner = extra & 1
+	# Cambios de control de efectos personalizados (CustomDuelOps.change_control / swap_control).
+	if z < 5:
+		var custom_owner: int = CustomDuelOps.recorded_controller(self, p & 1, z)
+		if custom_owner >= 0:
+			owner = custom_owner
 	return owner
 
 ## FUN_0054c860: emite el comando 0x86 conservando los tres argumentos reenviados.
