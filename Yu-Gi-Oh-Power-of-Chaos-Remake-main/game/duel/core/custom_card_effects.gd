@@ -416,6 +416,9 @@ static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int,
 
 
 static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: int, is_direct := false) -> void:
+	# Se recuerda el dano de batalla para los Union que reaccionan a el (2947, 2975).
+	if amount > 0:
+		CustomDuelOps.state(duel)["union_battle_dmg"] = [dmg_p & 1, amount]
 	# The Secret of the Bandit (2789): el monstruo elegido hace descartar al rival cada vez que le
 	# hace dano de batalla ese turno.
 	if amount > 0 and not CustomDuelOps.is_joey(duel):
@@ -457,6 +460,30 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 			if int(azf.get("extra_atk_used_turn", -1)) != CustomDuelOps.turn_number(duel):
 				azf["extra_atk_used_turn"] = CustomDuelOps.turn_number(duel)
 				CustomDuelOps.clear_attacked(duel, atk_p & 1, atk_z)
+	# Union monsters equipped to the attacker: Des Dendle (2914) makes a Wicked Plant Token when the
+	# equipped monster destroys a monster in battle; Burning Beast (2947) destroys a face-up Spell/Trap
+	# and Freezing Beast (2975) a face-down one when the equipped monster inflicts battle damage.
+	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
+		if def_destroyed and CustomDuelOps.union_equipped_to(duel, atk_p & 1, atk_z, 2914):
+			CustomDuelOps.spawn_token(duel, atk_p & 1, 0, false, 800, 800)
+		var udmg = CustomDuelOps.state(duel).get("union_battle_dmg", null)
+		if udmg is Array and udmg.size() >= 2 and int(udmg[0]) == (1 - (atk_p & 1)) and int(udmg[1]) > 0:
+			var up: int = atk_p & 1
+			if CustomDuelOps.union_equipped_to(duel, up, atk_z, 2947):
+				var face_up_st = func(d, pl, zz, idx): return zz >= 5 and zz <= 9 and CustomDuelOps.zone_idx(d, pl, zz) != 0 and CustomDuelOps.is_face_up(d, pl, zz)
+				var pick_st = CustomDuelOps.choose_zone(duel, up, func(d, pl, zz, idx): return pl == (1 - up) and face_up_st.call(d, pl, zz, idx))
+				if pick_st.is_empty():
+					pick_st = CustomDuelOps.choose_zone(duel, up, face_up_st)
+				if not pick_st.is_empty():
+					CustomDuelOps.destroy_zone(duel, int(pick_st["p"]), int(pick_st["z"]))
+			if CustomDuelOps.union_equipped_to(duel, up, atk_z, 2975):
+				var down_st = func(d, pl, zz, idx): return zz >= 5 and zz <= 9 and CustomDuelOps.zone_idx(d, pl, zz) != 0 and not CustomDuelOps.is_face_up(d, pl, zz)
+				var pick_dn = CustomDuelOps.choose_zone(duel, up, func(d, pl, zz, idx): return pl == (1 - up) and down_st.call(d, pl, zz, idx))
+				if pick_dn.is_empty():
+					pick_dn = CustomDuelOps.choose_zone(duel, up, down_st)
+				if not pick_dn.is_empty():
+					CustomDuelOps.destroy_zone(duel, int(pick_dn["p"]), int(pick_dn["z"]))
+		CustomDuelOps.state(duel).erase("union_battle_dmg")
 	# Blaze Cannon (2517): despues del calculo de dano, si ese Ra ataco, puede mandar al Cementerio
 	# todos los monstruos que controla el rival.
 	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
