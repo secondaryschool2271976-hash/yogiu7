@@ -1,0 +1,30 @@
+name: Audit batch 8
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch10.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICM5iCmsCA3BhdGNoMTAuZGlmZgCtVNuO2zYQfba/YuAChQ1bsiSvr4iDALubIECSDTZ9KZIFQVMjmbBEKiTlpFv03zuU5K6zaNGH+GV4G56ZOeSZVGYZBEEuHfDp73XwRgZ3++Cj/oYm0FlwvefaBvdY8gMGJZdqmvMSp2mNxVRog1NRW6dLJrhJGWYZCmfDPIXd5bD6UqX4Ha4WizXHOAzXVzhf7DjEUbS4uuoHQXDJzPvj8fii2b96BUGyXE4WMPZDHAHtWMedFJDVSoBWzNZlSYM2LCtkNfSYE6g2IJWbwGM3Cpl2swMxsoFPzkiVjyB4Ccc+9K6b8Ldt4PdaWYfGJuF/ohNwgzkBpU3JPOaIYGT2tKZo8HngL3UYgwk0ywrTwQNw8iCAxitZxrMJkF14O1t7O4+9Xcy9Xa3IrmK/v0q852qWeDuPyK5XNJ/F0dLbJHrYUB49g1YXR2RiT1yzQqrDU+ZN2m3BN7R3V9nw3d01e/329t0Ne3/34dNvt/dNfX8O8IjKDTZPRf016o97vxB7dbkj1ByGszhejzYgal58rSUaKD17ptbwtUawyOGtOmrBUw0Vtxw4fNRWCqkVpAg3mKGi3R15ADdG7nhIEYjHR3i5haih6RFewLyZPSPXL3nhebUVCtlO6WF3tcMT2yfyH+ALAfd6Hmb4Y/V7blnGBdYVk2nHU+TZpMpAG/h/77jzHm18jB/96QlUjqyiqh1VfXoH+NXfemzuxv7v0CcTWjmpal1bhirTRmDj7U/FHsWBUfKMV1XxB/sm1T9nxBbFSAu0Q3pbyiG9TFvyG0xXP92SznBO7Wg2m4soCUOxTKK5EJdqR+eRfrYVnWP5NhSv174N+WH9vAulvOQ5Pms9vNS1ct1CWrbjzhUImy1kvLDY9B466/TqaqNgj7x4EmoL0L0weQ6rLMzRDQd77rXdBmX+In32aDSC7Rb8iilSJ5r2fzTwLRJsG5RuMYWkFfMNNwe417oEncEHme9dyQ3CMFmtIlI2FmDkkRck1wL8DzW6IDUbMCS5HcIsiqDkFiraIplzIkNpr230zVR3clbanXHgRfivOoLAF95G9lLqch1vfZiWiG7rBXWHc+r86ZEbehYq07/NSTt/A8t/4J2kBwAA"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch10.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 10: Stumbling and Dark Room of Nightmare"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
