@@ -33181,7 +33181,7 @@
       },
       "descriptions": {
         "eng": "Send 1 face-up \"LV\" monster you control to the GY; Special Summon 1 monster from your hand or Deck that is listed in the sent monster's text, ignoring its Summoning conditions.",
-        "ara": "أرسل وحش 1 \"مستوى\" تتحكم به إلى المقبرة؛ استدعِ وحش 1 بشكل خاص من يدك أو مجموعتك يكون مذكوراً في نص الوحش المُرسَل، متجاهلاً شروط استدعائه."
+        "ara": "أرسل وحش 1 \"مستوى\" تتحكم به إلى المقبرة؛ استدعِ وحش 1 بشكل خاص من يدك أو مجموعتك يكون في نص الوحش المُرسَل، متجاهلاً شروط استدعائه."
       },
       "atk": 0,
       "defense": 0,
@@ -33215,11 +33215,11 @@
       "password": "44397496",
       "names": {
         "eng": "Red-Eyes Spirit",
-        "ara": "روح أحمر العينين"
+        "ara": "طاقة أحمر العينين"
       },
       "descriptions": {
         "eng": "Target 1 \"Red-Eyes\" monster in your GY; Special Summon it.",
-        "ara": "استهدف وحش 1 \"أحمر العينين\" في مقبرتك؛ استدعِه بشكل خاص."
+        "ara": "استهدف وحشًا 1 \"أحمر العينين\" في مقبرتك، استدعه بشكل خاص."
       },
       "atk": 0,
       "defense": 0,
@@ -33256,7 +33256,7 @@
       },
       "descriptions": {
         "eng": "Send 1 \"Red-Eyes\" monster from your hand or Deck to the Graveyard; add 1 \"Red-Eyes\" Spell/Trap Card from your Deck to your hand, except \"Red-Eyes Insight\". You can only activate 1 \"Red-Eyes Insight\" per turn.",
-        "ara": "أرسل وحش 1 \"أحمر العينين\" من يدك أو مجموعتك إلى المقبرة؛ أضف بطاقة سحر/فخ 1 \"أحمر العينين\" من مجموعتك إلى يدك، ما عدا \"بصيرة أحمر العينين\". يمكنك تفعيل 1 \"بصيرة أحمر العينين\" فقط في كل دور."
+        "ara": "أرسل وحشًا 1 \"أحمر العينين\" من يدك أو مجموعتك إلى المقبرة؛ أضف سحر/فخ 1 \"أحمر العينين\" من مجموعتك إلى يدك، باستثناء \"بصيرة أحمر العينين\". يمكنك فقط تفعيل 1 \"بصيرة أحمر العينين\" كل دور."
       },
       "atk": 0,
       "defense": 0,
@@ -33290,11 +33290,11 @@
       "password": "18491580",
       "names": {
         "eng": "Red-Eyes Alternative Black Dragon",
-        "ara": "تنين أحمر العينين الأسود البديل"
+        "ara": "التنين الأسود البديل أحمر العينين"
       },
       "descriptions": {
         "eng": "Cannot be Normal Summoned/Set. Must first be Special Summoned (from your hand) by Tributing 1 \"Red-Eyes\" monster from your hand or field. You can only Special Summon \"Red-Eyes Alternative Black Dragon\" once per turn this way. If this card is destroyed by battle, or if this card in its owner's possession is destroyed by an opponent's card effect: You can target 1 Level 7 or lower \"Red-Eyes\" monster in your GY, except \"Red-Eyes Alternative Black Dragon\"; Special Summon it, and if it was a \"Red-Eyes B. Dragon\" that was Special Summoned, its original ATK becomes doubled.",
-        "ara": "لا يمكن استدعاؤه بشكل عادي/محجوب. يجب أولاً استدعاؤه بشكل خاص (من يدك) عبر التضحية بوحش 1 \"أحمر العينين\" من يدك أو ساحتك. يمكنك استدعاء \"تنين أحمر العينين الأسود البديل\" بشكل خاص بهذه الطريقة مرة واحدة فقط في كل دور. إذا دُمّرت هذه البطاقة في المعركة، أو إذا دُمّرت هذه البطاقة وهي في حوزة مالكها بتأثير بطاقة الخصم: يمكنك استهداف وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل في مقبرتك، ما عدا \"تنين أحمر العينين الأسود البديل\"؛ استدعِه بشكل خاص، وإذا كان \"التنين الأسود أحمر العينين\" الذي استُدعي بشكل خاص، يصبح هجومه الأصلي مضاعفاً."
+        "ara": "لا يمكن استدعاؤه بشكل عادي/محجوب. يجب أولاً استدعاؤه بشكل خاص (من يدك) عبر التضحية بوحش \"أحمر العينين\" من يدك أو ملعبك. يمكنك فقط استدعاء \"التنين الأسود البديل أحمر العينين\" بشكل خاص مرة كل دور بهذه الطريقة. (1) إذا تم تدمير هذه البطاقة في معركة، أو إذا كانت هذه البطاقة في ملكية صاحبها وتم تدميرها بتأثير بطاقة للخصم: يمكنك استهداف وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل في مقبرتك، باستثناء \"التنين الأسود البديل أحمر العينين\"؛ استدعه بشكل خاص، وإذا كان الوحش الذي تم استدعاؤه هو \"التنين الأسود أحمر العينين\"، فتصبح نقاط هجومه الأصلية مضاعفة."
       },
       "atk": 2400,
       "defense": 2000,
@@ -33335,7 +33335,7 @@
       },
       "descriptions": {
         "eng": "Send 1 Level 7 \"Red-Eyes\" monster from your hand to the Graveyard; draw 2 cards, then you can send 1 Level 7 \"Red-Eyes\" monster from your Deck to the Graveyard. You can only activate 1 \"Cards of the Red Stone\" per turn.",
-        "ara": "أرسل وحش 1 \"أحمر العينين\" من المستوى 7 من يدك إلى المقبرة؛ اسحب بطاقتين، ثم يمكنك إرسال وحش 1 \"أحمر العينين\" من المستوى 7 من مجموعتك إلى المقبرة. يمكنك تفعيل \"بطاقات الحجر الأحمر\" واحدة فقط في كل دور."
+        "ara": "أرسل وحشًا 1 \"أحمر العينين\" من المستوى 7 من يدك إلى المقبرة؛ اسحب بطاقتين 2، ثم يمكنك إرسال وحش 1 \"أحمر العينين\" من المستوى 7 من مجموعتك إلى المقبرة. يمكنك فقط تفعيل 1 \"بطاقات الحجر الأحمر\" كل دور."
       },
       "atk": 0,
       "defense": 0,
@@ -33369,11 +33369,11 @@
       "password": "52684508",
       "names": {
         "eng": "Inferno Fire Blast",
-        "ara": "انفجار نار الجحيم"
+        "ara": "انفجار الجحيم الناري"
       },
       "descriptions": {
         "eng": "Target 1 \"Red-Eyes B. Dragon\" in your Monster Zone; inflict damage to your opponent equal to its original ATK. \"Red-Eyes B. Dragon\" cannot attack the turn you activate this card.",
-        "ara": "استهدف \"التنين الأسود أحمر العينين\" 1 في منطقة وحوشك؛ أنزل بخصمك ضرراً يساوي هجومه الأصلي. لا يمكن لـ\"التنين الأسود أحمر العينين\" الهجوم في الدور الذي تفعّل فيه هذه البطاقة."
+        "ara": "استهدف 1 \"التنين الأسود أحمر العينين\" في منطقة وحوشك؛ ألحق ضرراً بخصمك مساويًا لنقاط هجومه الأصلية. لا يمكن لـ \"التنين الأسود أحمر العينين\" الهجوم في الدور الذي فعّلت فيه هذه البطاقة."
       },
       "atk": 0,
       "defense": 0,
@@ -33411,7 +33411,7 @@
       },
       "descriptions": {
         "eng": "Target 1 Level 7 or 8 Dragon monster in your GY; Special Summon it. If a Dragon monster(s) you control would be destroyed by battle or card effect, you can banish this card from your GY instead.",
-        "ara": "استهدف وحش تنين 1 من المستوى 7 أو 8 في مقبرتك؛ استدعِه بشكل خاص. إذا كان وحش تنين (أو أكثر) تتحكم به سيُدمَّر في المعركة أو بتأثير بطاقة، يمكنك نفي هذه البطاقة من مقبرتك بدلاً من ذلك."
+        "ara": "استهدف وحش 1 تنين من المستوى 7 أو 8 في مقبرتك؛ استدعه بشكل خاص. إذا سيُدمّر وحش(وحوش) تنين بالمعركة أو بتأثير بطاقة، يمكنك استبعاد هذه البطاقة من مقبرتك بدلا منه."
       },
       "atk": 0,
       "defense": 0,
@@ -33449,7 +33449,7 @@
       },
       "descriptions": {
         "eng": "You can send this face-up card you control to the Graveyard; Special Summon 1 \"Red-Eyes B. Dragon\" from your hand.",
-        "ara": "يمكنك إرسال هذه البطاقة المكشوفة التي تتحكم بها إلى المقبرة؛ استدعِ \"التنين الأسود أحمر العينين\" 1 من يدك بشكل خاص."
+        "ara": "يمكنك إرسال هذه البطاقة المكشوفة التي تتحكم بها إلى المقبرة؛ استدع 1 \"التنين الأسود أحمر العينين\" بشكل خاص من يدك."
       },
       "atk": 800,
       "defense": 500,
@@ -33486,11 +33486,11 @@
       "password": "66574418",
       "names": {
         "eng": "The Black Stone of Legend",
-        "ara": "الحجر الأسود الأسطوري"
+        "ara": "حجر الأسطورة الأسود"
       },
       "descriptions": {
         "eng": "You can Tribute this card; Special Summon 1 Level 7 or lower \"Red-Eyes\" monster from your Deck, except \"Red-Eyes B. Chick\". If this card is in your Graveyard: You can target 1 Level 7 or lower \"Red-Eyes\" monster in your Graveyard, except \"Red-Eyes B. Chick\"; shuffle it into the Deck, and if you do, add this card to your hand. You can only use 1 \"The Black Stone of Legend\" effect per turn, and only once that turn.",
-        "ara": "يمكنك التضحية بهذه البطاقة؛ استدعِ وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل من مجموعتك بشكل خاص، ما عدا \"فرخ التنين الأسود\". إذا كانت هذه البطاقة في مقبرتك: يمكنك استهداف وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل في مقبرتك، ما عدا \"فرخ التنين الأسود\"؛ اخلطه في المجموعة، وإذا فعلت، أضف هذه البطاقة إلى يدك. يمكنك استخدام تأثير واحد فقط من \"الحجر الأسود الأسطوري\" في كل دور، ومرة واحدة فقط في ذلك الدور."
+        "ara": "(1) يمكنك التضحية بهذه البطاقة؛استدعِ وحشًا 1 \"أحمر العينين\" من المستوى 7 أو أقل بشكل خاص من مجموعتك، باستثناء \"فرخ التنين الأسود\". (2) إذا كانت هذه البطاقة في مقبرتك: فيمكنك استهداف وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل في مقبرتك؛ اخلطه في المجموعة، وإذا فعلت، فأضف هذه البطاقة إلى يدك. يمكنك فقط استخدام تأثير 1 لـ\"حجر الأسطورة الأسود\" مرة كل الدور، وفقط ذلك الدور."
       },
       "atk": 0,
       "defense": 0,
@@ -33527,11 +33527,11 @@
       "password": "27657173",
       "names": {
         "eng": "Red-Eyes Black Meteor Dragon",
-        "ara": "تنين أحمر العينين النيزك الأسود"
+        "ara": "تنين النيزك الأسود أحمر العينين"
       },
       "descriptions": {
         "eng": "You can send 1 Level 5 or higher Normal Monster from your hand or Deck to the GY; Special Summon this card from your hand, then increase its Level by 1. During your Main Phase, except the turn this card was sent to the GY: You can banish this card from your GY; add 1 \"Red-Eyes Fusion\" from your Deck or GY to your hand. You can only use each effect of \"Red-Eyes Black Meteor Dragon\" once per turn.",
-        "ara": "يمكنك إرسال وحش عادي 1 من المستوى 5 أو أعلى من يدك أو مجموعتك إلى المقبرة؛ استدعِ هذه البطاقة من يدك بشكل خاص، ثم ارفع مستواها بمقدار 1. خلال مرحلتك الرئيسية، ما عدا الدور الذي أُرسلت فيه هذه البطاقة إلى المقبرة: يمكنك نفي هذه البطاقة من مقبرتك؛ أضف \"اندماج أحمر العينين\" 1 من مجموعتك أو مقبرتك إلى يدك. يمكنك استخدام كل تأثير من \"تنين أحمر العينين النيزك الأسود\" مرة واحدة فقط في كل دور."
+        "ara": "(1) يمكنك إرسال وحش عادي 1 من المستوى 5 أو أعلى من يدك أو مجموعتك إلى المقبرة؛ استدعِ هذه البطاقة بشكل خاص من يدك، ثم ارفع مستواها بـ 1. (2) خلال مرحلتك الرئيسية، باستثناء الدور الذي أُرسلت فيه هذه البطاقة إلى المقبرة: يمكنك استبعاد هذه البطاقة من المقبرة؛ أضف 1 \"دمج أحمر العينين\" من مجموعتك أو مقبرتك إلى يدك. يمكنك فقط استخدام كل تأثير لـ\"تنين النيزك الأسود أحمر العينين\" مرة كل دور."
       },
       "atk": 2000,
       "defense": 2000,
@@ -33568,11 +33568,11 @@
       "password": "93969023",
       "names": {
         "eng": "Black Metal Dragon",
-        "ara": "التنين المعدني الأسود"
+        "ara": "تنين المعدن الأسود"
       },
       "descriptions": {
         "eng": "You can target 1 \"Red-Eyes\" monster you control; equip this monster from your hand or field to that target. It gains 600 ATK. If this card is sent from the field to the GY: You can add 1 \"Red-Eyes\" card from your Deck to your hand.",
-        "ara": "يمكنك استهداف وحش 1 \"أحمر العينين\" تتحكم به؛ جهّز هذا الوحش من يدك أو ساحتك لذلك الهدف. يكتسب 600 هجوم. إذا أُرسلت هذه البطاقة من الساحة إلى المقبرة: يمكنك إضافة بطاقة 1 \"أحمر العينين\" من مجموعتك إلى يدك."
+        "ara": "(1) يمكنك استهداف وحش 1 \"أحمر العينين\" تتحكم به؛ جهز هذا الوحش من يدك أو ملعبك لذلك الهدف. يكسب 600 هجوم. (2) إذا تم إرسال هذا البطاقة من الملعب إلى المقبرة: فيمكنك إضافة بطاقة 1 \"أحمر العينين\" من مجموعتك إلى يدك."
       },
       "atk": 600,
       "defense": 600,
@@ -33609,11 +33609,11 @@
       "password": "58257569",
       "names": {
         "eng": "Red-Eyes Baby Dragon",
-        "ara": "تنين أحمر العينين الصغير"
+        "ara": "التنين الصغير أحمر العينين"
       },
       "descriptions": {
         "eng": "When this card is destroyed by battle and sent to the GY: You can Special Summon 1 Level 7 or lower \"Red-Eyes\" monster from your Deck, and if you do, equip this card from the GY to it. It gains 300 ATK. If this card is sent to the GY while equipped to a monster: You can add 1 Level 1 Dragon monster from your Deck or GY to your hand.",
-        "ara": "عندما تُدمَّر هذه البطاقة في المعركة وتُرسل إلى المقبرة: يمكنك استدعاء وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل من مجموعتك بشكل خاص، وإذا فعلت، جهّز هذه البطاقة من المقبرة له. يكتسب 300 هجوم. إذا أُرسلت هذه البطاقة إلى المقبرة وهي مجهّزة لوحش: يمكنك إضافة وحش تنين 1 من المستوى 1 من مجموعتك أو مقبرتك إلى يدك."
+        "ara": "(1) عند تدمير هذه البطاقة بمعركة و تُرسل إلى لمقبرة: فيمكنك استدعاء وحش 1 \"أحمر العينين\" من المستوى 7 أو أقل بشكل خاص من مجموعتك، وإذا فعلت، فجهز هذه البطاقة من المقبرة له. يكسب ذلك الوحش 300 هجوم. (2) إذا تم إرسال هذه البطاقة إلى المقبرة وهي مجهزة لوحش: فيمكنك إضافة وحش تنين 1 من المستوى 1 من مجموعتك أو مقبرتك إلى يدك."
       },
       "atk": 1200,
       "defense": 700,
@@ -33650,11 +33650,11 @@
       "password": "67300516",
       "names": {
         "eng": "Red-Eyes Wyvern",
-        "ara": "وايفرن أحمر العينين"
+        "ara": "الوايفرن أحمر العينين"
       },
       "descriptions": {
         "eng": "During your End Phase, if you did not Normal Summon/Set a monster this turn: You can banish this card from your Graveyard; Special Summon 1 \"Red-Eyes\" monster from your Graveyard, except \"Red-Eyes B. Chick\".",
-        "ara": "خلال مرحلتك النهائية، إذا لم تستدعِ/تضع وحشاً بشكل عادي في هذا الدور: يمكنك نفي هذه البطاقة من مقبرتك؛ استدعِ وحش 1 \"أحمر العينين\" من مقبرتك بشكل خاص، ما عدا \"فرخ التنين الأسود\"."
+        "ara": "خلال مرحلة نهايتك، إذا لم تستدع وحشًا بشكل عادي/محجوب هذا الدور: فيمكنك استبعاد هذه البطاقة من مقبرتك؛ استدع وحشًا 1 \"أحمر العينين\" بشكل خاص من مقبرتك."
       },
       "atk": 1800,
       "defense": 1600,
@@ -33691,11 +33691,11 @@
       "password": "90928333",
       "names": {
         "eng": "Dark Factory of Mass Production",
-        "ara": "المصنع المظلم للإنتاج الضخم"
+        "ara": "مصنع الظلام للإنتاج الضخم"
       },
       "descriptions": {
         "eng": "Target 2 Normal Monsters in your Graveyard; add those targets to your hand.",
-        "ara": "استهدف وحشين عاديين 2 في مقبرتك؛ أضف تلك الأهداف إلى يدك."
+        "ara": "استهدف وحشين 2 عاديين في مقبرتك؛ اضفهم إلى يدك."
       },
       "atk": 0,
       "defense": 0,
@@ -33729,11 +33729,11 @@
       "password": "43422537",
       "names": {
         "eng": "Double Summon",
-        "ara": "الاستدعاء المزدوج"
+        "ara": "الاستدعاء المُضاعف"
       },
       "descriptions": {
         "eng": "You can Normal Summon 1 additional time this turn. You can only gain this effect once per turn.",
-        "ara": "يمكنك الاستدعاء العادي مرة إضافية 1 في هذا الدور. يمكنك اكتساب هذا التأثير مرة واحدة فقط في كل دور."
+        "ara": "يمكنك إجراء استدعائين 2 بشكل عادي/محجوب هذا الدور، ليس 1 فقط ."
       },
       "atk": 0,
       "defense": 0,
@@ -33767,11 +33767,11 @@
       "password": "81197327",
       "names": {
         "eng": "Elemental HERO Steam Healer",
-        "ara": "المعالج البخاري، بطل العناصر"
+        "ara": "معالج البخار، بطل العناصر"
       },
       "descriptions": {
         "eng": "\"Elemental HERO Burstinatrix\" + \"Elemental HERO Bubbleman\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. When this card destroys a monster by battle and sends it to the Graveyard: Gain Life Points equal to the ATK of that destroyed monster in the Graveyard.",
-        "ara": "\"سيدة انفجار بطل العناصر\" + \"رجل الفقاعات، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. عندما تدمّر هذه البطاقة وحشًا بالمعركة وترسله إلى المقبرة: اكسب نقاط حياة مساوية لنقاط هجوم الوحش المدمّر في المقبرة."
+        "ara": "\"سيدة انفجار بطل العناصر\" + \"رجل الفقاعات، بطل العناصر\" يجب استدعاؤه بالدمج. عندما تدمر هذه البطاقة وحشًا بالمعركة وترسله إلى المقبرة: فإنك تكسب نقاط حياة مساوية لنقاط هجوم ذلك الوحش المدمّر في المقبرة."
       },
       "atk": 1800,
       "defense": 1000,
@@ -33810,11 +33810,11 @@
       "password": "52031567",
       "names": {
         "eng": "Elemental HERO Mudballman",
-        "ara": "رجل كرة الطين، بطل العناصر"
+        "ara": "رجل كرات الطين، بطل العناصر"
       },
       "descriptions": {
         "eng": "\"Elemental HERO Bubbleman\" + \"Elemental HERO Clayman\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways.",
-        "ara": "\"رجل الفقاعات، بطل العناصر\" + \"رجل الصلصال، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى."
+        "ara": "\"رجل الفقاعات، بطل العناصر\" + \"رجل الطين، بطل العناصر\" يجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق اخرى."
       },
       "atk": 1900,
       "defense": 3000,
@@ -33857,7 +33857,7 @@
       },
       "descriptions": {
         "eng": "\"Elemental HERO Bubbleman\" + \"Elemental HERO Avian\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. While you have any face-down card(s) in your Spell & Trap Card Zones, this card can attack your opponent directly.",
-        "ara": "\"رجل الفقاعات، بطل العناصر\" + \"رجل الريش، بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. طالما لديك بطاقة مقلوبة واحدة أو أكثر في منطقة السحر والفخ، يمكن لهذه البطاقة مهاجمة خصمك مباشرة."
+        "ara": "\"رجل الفقاعات، بطل العناصر\" + \"رجل الريش، بطل العناصر\" يجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق اخرى. بينما تملك أي بطاقة(ـات) محجوبة في مناطق السحر والفخ خاصتك، يمكن لهذه البطاقة الهجوم مباشرة على خصمك."
       },
       "atk": 1400,
       "defense": 1000,
@@ -33896,11 +33896,11 @@
       "password": "41436536",
       "names": {
         "eng": "Elemental HERO Phoenix Enforcer",
-        "ara": "منفّذ العنقاء، بطل العناصر"
+        "ara": "جلّاد العنقاء، بطل العناصر"
       },
       "descriptions": {
         "eng": "\"Elemental HERO Avian\" + \"Elemental HERO Burstinatrix\"\nMust be Fusion Summoned and cannot be Special Summoned by other ways. This card cannot be destroyed by battle.",
-        "ara": "\"رجل الريش، بطل العناصر\" + \"سيدة انفجار بطل العناصر\"\nيجب استدعاؤه بالدمج ولا يمكن استدعاؤه بطرق أخرى. لا يمكن تدمير هذه البطاقة بالمعركة."
+        "ara": "\"رجل الريش، بطل العناصر\" + \"سيدة انفجار بطل العناصر\" يجب استدعاؤه بالدمج. لا يمكن تدمير هذه البطاقة بالمعركة."
       },
       "atk": 2100,
       "defense": 1200,
