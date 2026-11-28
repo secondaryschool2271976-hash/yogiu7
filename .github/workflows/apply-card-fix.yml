@@ -1,0 +1,25 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAOlUCmsC/7VVUW/bNhB+tn7FTUUGCZZsKXFc12iHFl2xvS3YnoYgEGjppBCRSZeilNhd/vuOFOXY3pJhQwYDlnn67rvvjnfngpclxHHFNbDp7238E49/uY2v5D2qWJbx51smm/hXXLM7jNeMi2nF1jgtWqynuVQ4zdtGy3VmDJncNJOqgNXr8HhcFPgAi3R2MU9Xk0m6ejc/ny0gTZL5bObFcfxair3xePxqqj9+hDi9PJ9HCxjb5zsgU6OZ5jmUrcghv2WiwiyXQitZB8Y5glIRz2YJXGh32LmDlnu7xvVGKqa2mQcjrBtc0nPUMQVS8YoL+ABB0DvD95A8lGUI79/DIoQ/XIABr5mqUFs88f8VbYJ64x67lh0XVcaLByuDnHZSoDkfaR9khyaGeTEpL2fF5dvERKC3vcTIhQ69eDRaM3U31KFG9bd0fQHsN1GP/71TdJCA0cbLgzq2QvM6w40tZJPfYtHWmBVYsy0Wjlq3SmSiXa9csDCCq58//fYl+3I1xEki8BVaoFPmR/DN70X5S4fqz7v+TLp8UxL7vgc+Gnk9jUW4XrqYR2limunirfnxv3TTmzfwmRp6CVhTubRUoDBndd7WzJgcOyvoRYGQs4IRTDRatbI/leRUKbZmENC153NMQtgStiM9HQKrbQxSJ6TrBEa0Lau/thzVAVm7lUM4IGyHomImZisYRVKagaDkO2tzuAl8IhZo0MZgQmorWrTYyRPp9VOkgJKnQhQ8xz4n4g5hwxSDry2CywJqSaVoNqhx4sWHhX+pD/+p8tJZQ4h/gE7yYumNX5s7gjsh74Vpe1h+gOQgFti5phtewo8811wK6gKaayMB+x6f0IxmUmWsKAI/16rOCG6a2jVpPkHFGgz8s2J5VvhwBte9PFol6aDuxky5CfX87jge7hPsUwI0tE+H7ygbMOvvJTI76APajjeJvj6Qa8C9WONwc0PxvvnkQONI3zSdw+Aa0KMHbhoXCW10GsZFGqXnp8PY3LPNySjuEncbu/TpyldS1lZTtqHmQqEd2LcJGRa7P4wCs1oYPYNdst/OxraytnRvS+3FjJqtyLOONzRZTX+T+78Kt84pueSZy0iM3PAAmD4DTE06x4t+nicB+Z/IPFL4ws63kfe8z8Ls+1Odtuj/uZmJZCC49lPXHLv0pB0S1w/UCEcOyeCQnDikziF5PNjpqqUVRZ8/AZD5/pR1CQAA"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_duel_ops.gd"
+          git commit -m "Core control steals: record the moving card index before the engine queues the move"
+          git push
