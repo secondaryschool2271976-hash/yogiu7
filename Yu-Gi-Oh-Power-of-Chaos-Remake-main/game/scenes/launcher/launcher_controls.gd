@@ -87,7 +87,7 @@ func _ready() -> void:
 	_import_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	_import_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	_import_dialog.use_native_dialog = true
-	_import_dialog.filters = PackedStringArray(["*.json;Save JSON;application/json", "*.*;All files;*/*"])
+	_import_dialog.filters = PackedStringArray(["*.json;Save JSON;application/json", "*.zip;Private card art;application/zip", "*.*;All files;*/*"])
 	_import_dialog.file_selected.connect(_on_import_save)
 	add_child(_import_dialog)
 	_ydc_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
@@ -561,7 +561,27 @@ func _import_card_pack(parsed: Dictionary) -> void:
 	_reset_result.popup_centered()
 
 
+## A ZIP picked in "Import .json" is private card art (private_cards.zip), stored in the game folder.
+func _import_private_art(path: String) -> void:
+	var count := Assets.install_private_art(path)
+	if count < 0:
+		_reset_result.title = _tr("فشل الاستيراد", "Error al importar", "Import failed")
+		_reset_result.dialog_text = _tr("ملف ZIP لا يحتوي على صور بطاقات صالحة.", "El ZIP no contiene imágenes de cartas válidas.", "The ZIP has no valid card images.")
+	else:
+		_reset_result.title = _tr("تم الاستيراد", "Importado", "Imported")
+		_reset_result.dialog_text = _tr("تم استيراد %d صورة بطاقة خاصة.", "Se importaron %d imágenes de cartas privadas.", "Imported %d private card images.") % count
+		changed.emit()
+	_reset_result.popup_centered()
+
+
 func _on_import_save(path: String) -> void:
+	var head := FileAccess.open(path, FileAccess.READ)
+	if head != null:
+		var magic := head.get_buffer(4)
+		head.close()
+		if magic.size() == 4 and magic[0] == 0x50 and magic[1] == 0x4B and magic[2] == 0x03 and magic[3] == 0x04:
+			_import_private_art(path)
+			return
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		_reset_result.title = _tr("فشل الاستيراد", "Error al importar", "Import failed")

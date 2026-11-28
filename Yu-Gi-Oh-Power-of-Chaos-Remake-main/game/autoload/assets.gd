@@ -702,6 +702,36 @@ func _private_art_data() -> Dictionary:
 	return _private_art
 
 
+## Installs a user-picked private art ZIP into the storage folder. Returns the number of images, or -1 on failure.
+func install_private_art(source: String) -> int:
+	if Paths.storage_dir.is_empty() or Paths.storage_error:
+		return -1
+	var reader := ZIPReader.new()
+	if reader.open(source) != OK:
+		return -1
+	var count := 0
+	for entry: String in reader.get_files():
+		var ext := entry.get_extension().to_lower()
+		if not entry.ends_with("/") and ext in ["webp", "png", "jpg", "jpeg"]:
+			count += 1
+	reader.close()
+	if count == 0:
+		return -1
+	var data := FileAccess.get_file_as_bytes(source)
+	if data.is_empty():
+		return -1
+	var target := Paths.storage_dir.path_join("private_cards.zip")
+	var out := FileAccess.open(target, FileAccess.WRITE)
+	if out == null:
+		return -1
+	out.store_buffer(data)
+	out.close()
+	_private_art.clear()
+	_private_art_loaded = false
+	invalidate_card_face_cache()
+	return count
+
+
 func _card_pack_lookup(rel_path: String) -> Dictionary:
 	var norm := rel_path.replace("\\", "/").to_lower()
 	var is_mini := false
