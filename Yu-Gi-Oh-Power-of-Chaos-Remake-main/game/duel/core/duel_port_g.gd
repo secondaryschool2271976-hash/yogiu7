@@ -875,6 +875,10 @@ func f54f4c0(p: int, count: int, trigger: int) -> int:
 		return f54f490(p, count)
 	issue((0x8000 if p != 0 else 0) | 0x62, count, 0, 0)
 	var base := DuelMem.pl(p & 1)
+	# Skull Invitation (0x51a): 300 de dano por cada carta enviada del mazo al Cementerio.
+	var sent: int = mini(maxi(0, count), m.u8(base + 3))
+	if sent > 0:
+		f56e2e0(p, sent)
 	for i in range(mini(maxi(0, count), m.u8(base + 3))):
 		var index := m.u16(base + 0x7b4 + i * 4) & 0xfff
 		var id := effect_card_id(index)
@@ -892,6 +896,8 @@ func f54f5f0(p: int, id: int, trigger: int) -> int:
 			if f541c10(m.u16(entry) & 0xfff, f401ad0(id)) != 0:
 				issue((0x8000 if p != 0 else 0) | int(pair[2]), m.u16(entry), m.u16(entry + 2), 0)
 				count += 1
+	if count > 0:
+		f56e2e0(p, count)
 	if (id & 0xffff) in [0x412, 0x1de, 0x4da] or ((id & 0xffff) == 0xc6 and trigger != 0):
 		for i in range(count):
 			f53baa0(((f401ad0(id) & 0xffff) | (p << 31) | 0x386e0000) & 0xffffffff, 0)
