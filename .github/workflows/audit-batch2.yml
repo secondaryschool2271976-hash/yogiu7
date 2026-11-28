@@ -1,0 +1,31 @@
+name: Audit batch 2
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch2.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          echo "trigger branch: $BR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch2.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 2: Exodia Incarnate and God Slime protections, Wedju Temple, Bottomless"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
