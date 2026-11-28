@@ -488,17 +488,18 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.zflags(duel, p, eq_z)["union_stolen"] = true
 		2925: # Tribe-Infecting Virus
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-				if pick.is_empty():
-					pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-				if not pick.is_empty():
-					var target_race = CustomDuelOps.monster_race(duel, int(pick["idx"]))
-					for pl in 2:
-						for zz in 5:
-							var idx = CustomDuelOps.zone_idx(duel, pl, zz)
-							if idx != 0 and CustomDuelOps.is_face_up(duel, pl, zz) and CustomDuelOps.monster_race(duel, idx) == target_race:
-								CustomDuelOps.destroy_zone(duel, pl, zz)
+				var tv_after := func() -> void:
+					var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
+					if pick.is_empty():
+						pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
+					if not pick.is_empty():
+						var target_race = CustomDuelOps.monster_race(duel, int(pick["idx"]))
+						for pl in 2:
+							for zz in 5:
+								var idx = CustomDuelOps.zone_idx(duel, pl, zz)
+								if idx != 0 and CustomDuelOps.is_face_up(duel, pl, zz) and CustomDuelOps.monster_race(duel, idx) == target_race:
+									CustomDuelOps.destroy_zone(duel, pl, zz)
+				CustomDuelOps.discard_cost(duel, p, tv_after)
 		2935: # Roulette Barrel
 			CustomDuelOps.mark_opt(duel, p, 2935, z)
 			var r1 = CustomDuelOps.dice_roll(duel, p)

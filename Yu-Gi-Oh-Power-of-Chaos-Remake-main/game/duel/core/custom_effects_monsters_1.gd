@@ -696,10 +696,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.send_zone_to_gy(duel, int(pick["p"]), int(pick["z"]))
 		2508: # Armed Dragon LV10 send 1 card -> destroy all face-up opp
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-				for zz in 5:
-					if CustomDuelOps.zone_idx(duel, opp, zz) != 0 and CustomDuelOps.is_face_up(duel, opp, zz):
-						CustomDuelOps.destroy_zone(duel, opp, zz)
+				var ad_after := func() -> void:
+					for zz in 5:
+						if CustomDuelOps.zone_idx(duel, opp, zz) != 0 and CustomDuelOps.is_face_up(duel, opp, zz):
+							CustomDuelOps.destroy_zone(duel, opp, zz)
+				CustomDuelOps.discard_cost(duel, p, ad_after)
 		2511: # Armed Dragon LV5 send 1 monster -> destroy opp monster w/ ATK <= sent
 			var hi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx), true)
 			if hi >= 0:
@@ -757,8 +758,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					di = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.SACRED_BEAST_IDS and CustomDuelOps.raw_id(d, idx) != 2595, true)
 				if di >= 0:
 					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, di)
-					if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-						CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
+					CustomDuelOps.discard_cost(duel, p, func() -> void: pass)
 			elif cid == 2594:
 				CustomDuelOps.mark_opt(duel, p, 2594, z)
 				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz >= 5, true, true)
@@ -820,10 +820,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		2542: # DMG Dragon Knight discard 1 destroy 1 face-up
 			CustomDuelOps.mark_opt(duel, p, 2542, z)
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return CustomDuelOps.is_face_up(d, pl, zz) and not (pl == p and zz == z), true, true)
-				if not pick.is_empty():
-					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				var dk_after := func() -> void:
+					var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return CustomDuelOps.is_face_up(d, pl, zz) and not (pl == p and zz == z), true, true)
+					if not pick.is_empty():
+						CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.discard_cost(duel, p, dk_after)
 		2545, 2546, 2593, 2635, 2638, 2639, 2643, 2648, 2660, 2741, 2772:
 			var target_entry := int(ctx.get("target_entry", -1))
 			if cid == 2545 and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
@@ -857,10 +858,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		2568: # Thunder Giant discard 1 destroy < ATK
 			CustomDuelOps.mark_opt(duel, p, 2568, z)
 			var my_atk = CustomDuelOps.eff_atk(duel, p, z)
-			CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and not (pl == p and zz == z) and CustomDuelOps.base_atk(d, idx) < my_atk, true, true)
-			if not pick.is_empty():
-				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+			var tg_after := func() -> void:
+				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and not (pl == p and zz == z) and CustomDuelOps.base_atk(d, idx) < my_atk, true, true)
+				if not pick.is_empty():
+					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+			CustomDuelOps.discard_cost(duel, p, tg_after)
 		2569: # Voltic Thunder
 			CustomDuelOps.mark_hopt(duel, p, 2569)
 			CustomDuelOps.tribute_zone(duel, p, z)
@@ -944,10 +946,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		2590: # Horus Deity
 			CustomDuelOps.mark_hopt(duel, p, 2590)
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) >= 2:
-				CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, _zz, _idx): return true, true, true)
-				if not pick.is_empty():
-					CustomDuelOps.send_zone_to_gy(duel, int(pick["p"]), int(pick["z"]))
+				var hd_after := func() -> void:
+					var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, _zz, _idx): return true, true, true)
+					if not pick.is_empty():
+						CustomDuelOps.send_zone_to_gy(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.discard_cost(duel, p, hd_after)
 		2596: # King of the Swamp discard -> add Polymerization
 			var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2596)
 			if hi >= 0:
@@ -1109,18 +1112,19 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.shuffle_deck(duel, p)
 		2687, 2688, 2689, 2691:
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-				var pick = {}
-				if cid == 2687:
-					pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz >= 5 and CustomDuelOps.is_face_up(d, pl, zz), false, true)
-				elif cid == 2688:
-					pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, _zz, _idx): return pl == opp, true, true)
-				elif cid == 2689:
-					pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz >= 5 and zz < 10 and not CustomDuelOps.is_face_up(d, pl, zz), false, true)
-				else:
-					pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and not CustomDuelOps.is_face_up(d, pl, zz), false, true)
-				if not pick.is_empty():
-					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				var un_after := func() -> void:
+					var pick = {}
+					if cid == 2687:
+						pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz >= 5 and CustomDuelOps.is_face_up(d, pl, zz), false, true)
+					elif cid == 2688:
+						pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, _zz, _idx): return pl == opp, true, true)
+					elif cid == 2689:
+						pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz >= 5 and zz < 10 and not CustomDuelOps.is_face_up(d, pl, zz), false, true)
+					else:
+						pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and not CustomDuelOps.is_face_up(d, pl, zz), false, true)
+					if not pick.is_empty():
+						CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.discard_cost(duel, p, un_after)
 		2690, 2692: # Union equip / unequip
 			CustomDuelOps.mark_opt(duel, p, cid, z)
 			if loc == CustomDuelOps.LOC_FIELD_MONSTER:
@@ -1161,8 +1165,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					break
 		2721: # Gray Wing
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
-				CustomDuelOps.discard_hand_slot(duel, p, 0, 1)
-				CustomDuelOps.zflags(duel, p, z)["multi_atk_2"] = t
+				var gw_after := func() -> void:
+					CustomDuelOps.zflags(duel, p, z)["multi_atk_2"] = t
+				CustomDuelOps.discard_cost(duel, p, gw_after)
 		2742: # Possessed Dark Soul
 			CustomDuelOps.tribute_zone(duel, p, z)
 			for zz in 5:

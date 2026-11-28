@@ -1671,6 +1671,23 @@ static func ask_hand_pick(duel, p: int, title: String, filter: Callable, on_pick
 	return ask_pick(duel, p, title, labels, tokens, on_pick)
 
 
+## Coste "descarta 1 carta": el jugador local elige cual de su mano (Si = esta, No = la siguiente) y
+## `then` corre despues del descarte. Sin jugador local (CPU, red, repeticion) se descarta la
+## primera de la mano como antes y `then` corre al momento.
+static func discard_cost(duel, p: int, then: Callable, trigger := 1) -> void:
+	p &= 1
+	if pile_count(duel, p, LOC_HAND) <= 0:
+		then.call()
+		return
+	var on_pick := func(slot) -> void:
+		discard_hand_slot(duel, p, int(slot), trigger)
+		then.call()
+	var title: String = lang_text("اختر البطاقة التي ستتخلص منها", "Elige la carta que descartar", "Choose the card to discard")
+	if not ask_hand_pick(duel, p, title, func(_d, _idx, _s): return true, on_pick):
+		discard_hand_slot(duel, p, 0, trigger)
+		then.call()
+
+
 ## Texto en el idioma activo (arabe, espanol, ingles).
 static func lang_text(ar: String, es: String, en: String) -> String:
 	if Assets.lang == "a":
