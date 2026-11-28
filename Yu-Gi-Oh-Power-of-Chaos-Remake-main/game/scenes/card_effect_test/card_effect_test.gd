@@ -10,7 +10,9 @@ extends Control
 ## cementerio. Tocar una carta anadida la quita.
 ## Todo va dentro de un ScrollContainer y los botones de empezar/volver viven en una barra fija.
 
-const MAX_RESULTS := 80
+const MAX_RESULTS := 150
+## Solo se listan las cartas personalizadas (ids >= 2500); los monstruos normales originales no aportan nada al probar efectos.
+const CUSTOM_MIN_ID := 2500
 const ROW_HEIGHT := 52
 const MON_MAX := 5
 const ST_MAX := 5
@@ -144,9 +146,9 @@ func _build() -> void:
 	col.add_theme_constant_override("separation", 10)
 	margin.add_child(col)
 
-	col.add_child(_label(_txt("Card Effect Test", "اختبار تأثير البطاقة", "Prueba de efecto"), 28))
+	col.add_child(_label(_txt("Card Effect Test", "اختبار تأثير البطاقات", "Prueba de efecto"), 28))
 	col.add_child(_label(_txt("1. Choose Player or Opponent, and optionally a deck for that side. 2. Search a card and tap Hand, Add (field or spell/trap by card type) or GY (graveyard). 3. Tap an added card to remove it. 4. Press Start.",
-			"١. اختر اللاعب أو الخصم، ثم اختر مجموعة لهذا الجانب إن أردت. ٢. ابحث عن بطاقة واضغط Hand (اليد) أو Add (الملعب أو السحر/الفخ حسب نوع البطاقة) أو GY (المقبرة). ٣. اضغط على بطاقة مضافة لحذفها. ٤. اضغط ابدأ.",
+			"١. اختر الجانب (اللاعب أو الخصم)، ويمكنك اختيار ديك له. ٢. ابحث عن البطاقة بالاسم أو الرقم، ثم اضغط «اليد» أو «الملعب» (وحش، أو سحر/فخ حسب نوع البطاقة) أو «المقبرة». ٣. لحذف بطاقة مضافة اضغط عليها. ٤. اضغط «ابدأ المباراة التجريبية». القائمة تعرض بطاقاتنا المخصصة فقط.",
 			"1. Elige Jugador u Oponente y, si quieres, un mazo para ese lado. 2. Busca una carta y pulsa Hand (mano), Add (campo o magia/trampa según el tipo) o GY (cementerio). 3. Toca una carta añadida para quitarla. 4. Pulsa Empezar."), 14))
 
 	var tabs := HBoxContainer.new()
@@ -184,7 +186,7 @@ func _build() -> void:
 	_update_pos_btn()
 
 	var search := LineEdit.new()
-	search.placeholder_text = _txt("Search a card by name", "ابحث عن بطاقة بالاسم", "Busca una carta por nombre")
+	search.placeholder_text = _txt("Search a card by name", "ابحث بالاسم أو برقم البطاقة", "Busca una carta por nombre")
 	search.text_changed.connect(_refresh)
 	search.custom_minimum_size = Vector2(0, 50)
 	search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -209,7 +211,7 @@ func _build() -> void:
 	_list_box.add_theme_constant_override("separation", 6)
 	list_scroll.add_child(_list_box)
 
-	col.add_child(_label(_txt("Added cards (in the order you picked them)", "البطاقات المضافة (بترتيب اختيارك)", "Cartas añadidas (en el orden elegido)"), 18))
+	col.add_child(_label(_txt("Added cards (in the order you picked them)", "البطاقات المضافة (بترتيب إضافتها)", "Cartas añadidas (en el orden elegido)"), 18))
 
 	_slots_box = VBoxContainer.new()
 	_slots_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -219,8 +221,8 @@ func _build() -> void:
 	var lp_row := HBoxContainer.new()
 	lp_row.add_theme_constant_override("separation", 10)
 	col.add_child(lp_row)
-	_lp_p = _lp_edit(lp_row, _txt("Your LP (blank = 8000)", "نقاط حياتك", "Tus LP (vacío = 8000)"))
-	_lp_o = _lp_edit(lp_row, _txt("Opponent LP (blank = 8000)", "نقاط حياة الخصم", "LP rival (vacío = 8000)"))
+	_lp_p = _lp_edit(lp_row, _txt("Your LP (blank = 8000)", "نقاط حياتك (فارغ = 8000)", "Tus LP (vacío = 8000)"))
+	_lp_o = _lp_edit(lp_row, _txt("Opponent LP (blank = 8000)", "نقاط حياة الخصم (فارغ = 8000)", "LP rival (vacío = 8000)"))
 
 	var bar_bg := PanelContainer.new()
 	bar_bg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -238,7 +240,7 @@ func _build() -> void:
 	bar_bg.add_child(row)
 
 	var start := Button.new()
-	start.text = _txt("Start practice duel", "ابدأ مباراة تجريبية", "Empezar duelo de prueba")
+	start.text = _txt("Start practice duel", "ابدأ المباراة التجريبية", "Empezar duelo de prueba")
 	start.custom_minimum_size = Vector2(0, 56)
 	start.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_color_button(start, C_ADD, 19)
@@ -355,7 +357,7 @@ func _list_add(text: String, id: int) -> void:
 	row.add_child(hand_btn)
 
 	var add_btn := Button.new()
-	add_btn.text = _txt("Add", "إضافة", "Añadir")
+	add_btn.text = _txt("Add", "الملعب", "Añadir")
 	add_btn.custom_minimum_size = Vector2(76, ROW_HEIGHT)
 	add_btn.clip_text = true
 	add_btn.set_meta("role", "add")
@@ -450,8 +452,8 @@ func _list_for(side: int, kind: String) -> Array:
 func _kind_title(kind: String) -> String:
 	match kind:
 		"hand": return _txt("Hand", "اليد", "Mano")
-		"field": return _txt("Field (monsters)", "الملعب (الوحوش)", "Campo (monstruos)")
-		"st": return _txt("Spell/Trap", "السحر والفخاخ", "Magia/Trampa")
+		"field": return _txt("Field (monsters)", "ساحة الوحوش", "Campo (monstruos)")
+		"st": return _txt("Spell/Trap", "السحر والفخ", "Magia/Trampa")
 	return _txt("Graveyard", "المقبرة", "Cementerio")
 
 
@@ -467,14 +469,14 @@ func _on_add_pressed(id: int, kind: String) -> void:
 		"st": cap = ST_MAX
 	if lst.size() >= cap:
 		_status.text = _txt("%s: %s is full (%d)." % [_side_name(_side), _kind_title(kind), cap],
-				"%s: %s ممتلئ (%d)." % [_side_name(_side), _kind_title(kind), cap],
+				"%s: %s ممتلئة (%d)." % [_side_name(_side), _kind_title(kind), cap],
 				"%s: %s está lleno (%d)." % [_side_name(_side), _kind_title(kind), cap])
 		return
 	if kind == "st" and _is_field_spell(id):
 		for existing in lst:
 			if _is_field_spell(int(existing)):
 				_status.text = _txt("%s already has a Field Spell." % _side_name(_side),
-						"%s لديه بطاقة ساحة بالفعل." % _side_name(_side),
+						"%s لديه بطاقة ساحة (Field) بالفعل." % _side_name(_side),
 						"%s ya tiene una Magia de Campo." % _side_name(_side))
 				return
 	lst.append(id)
@@ -483,7 +485,7 @@ func _on_add_pressed(id: int, kind: String) -> void:
 	elif kind == "st":
 		_st_c[_side].append(0 if _st_up else 1)
 	_status.text = _txt("Added %s to %s - %s (#%d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
-			"أُضيفت %s إلى %s - %s (رقم %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
+			"تمت إضافة %s إلى %s ← %s (رقم %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()],
 			"Añadida %s a %s - %s (n.º %d)" % [_card_name_by_id(id), _side_name(_side), _kind_title(kind), lst.size()])
 	_update_slots()
 
@@ -720,6 +722,8 @@ func _refresh(query: String) -> void:
 	var q := _norm(query.strip_edges())
 	var shown := 0
 	for card: Dictionary in CardDB.cards:
+		if int(card.get("internal_id", 0)) < CUSTOM_MIN_ID:
+			continue
 		if not _card_matches(card, q):
 			continue
 		_list_add("%s  ·  #%d" % [_card_name(card), int(card.get("internal_id", 0))], int(card.get("internal_id", 0)))
