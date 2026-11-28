@@ -1,0 +1,30 @@
+name: Audit batch 5
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch5.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICLdXCmsCA3BhdGNoNS5kaWZmALVXWXPbNhB+ln7FVnmRRqJEUpepqTJJbCedadNkYqedjpvhQCQoo4YIBgBlS7++C5C6bCpHo+pBvLDfHtj9dhGzJAHHmTMNpPdX7rxhzrtb5724p9IRiXN+S4RyPtAFuaPOgrC0NycL2otzynuRkLQX5UqLRWhehCJT3XkMs9Pg1Fka0wcYnLln3mjc7bq+PyZkAJ7rjgaDuuM4p7K43m63T2b1ixfgeJ7f74ygba8B4CuliWYRJHkaQUyVlmIVrkVKm0a0A9kEWKo7sC6vs1U4I1pzCpMpJIQr2gLnOcyE4JM61FgCqdB7q0gaowrZNGoKzFZ3TnWzQZOERjpUIpcRbXSg0Wi1UAXcNFRGOTdvtCRZ4xP8jbi1mgEyWprrpAAwm6AQQIcFFEoU9rSMITVJdS7T4lW9XXsGv1AiNYgEzjnewZ9oj4SmPx6OWhOgHBYiRUNzAfRzzjISC/QEspzGFBSutLHJGb7OhIQ8BWqUCvicU+AoxNmcdlFRZQSqDNdE4iONd3bvlh6L1lOZCao89BXQ19e5YiKFq3shY3ibS6IwO+AVJ+gMuuwH6PKC0RQjrACNIRunSbXTxDpdeKy6x/Z5Dc+nMCxvf55CYG8luQ9ZXKYTix9aMJ2CseHpNsWnKfkiWCq0O0qlCr0fLf5KxJIG3ID0iR90u2QYuGTonooGqnX+KCFUo1pqcMdnlhrM9Qk1SKoEXz5mhYjF5R0X0SOmiPTDBC5YpDETiVwhTdg6rtUMRDcZDvxo4DYzFGg9/tAn9gP9HK7BgWEH9AIfvXLdufXkAhe/Q2LjLL0LbfZubCsE7Y1G7LaReQbXK0lSDa9yqTRcSDIX6ZGyn5OUwMB14eX1r72Ly9ewKiuCaBIhc/RhSSOqugXyoTUkjkMTNoxvvLNHozUIWP4VlVslvU44mat9udZNY0EeQqwxEt0pJMMp9E0U/NF4PIFn8FEysqFt8OCKarjqXds4HUIviLzDRqB34AZiG/wl+pWx6C6Ueeq5Z75ld9z3pnlpGX4pcK+LRAmCoU2UIKhIFJGGNI3D7JaoTbaYCg+LlNmDgvpjuUikmqW5yBVCJAL7QkGBezLWUIQOtUCBewzHoZu7T0LyzQ44Xst2gLciRz7CDqBvkQztw7mkRAvTB0aeIUUu1DYjFAYWfmdLTBLPBQEL5MoNO6aWHsXsH6rZUlj0lO16hNrnSwODeaOJyRhj/8KoDmfmf2L5vtKNhEQ0z3bU6ZotQyMBkb++2itX74UsYZTHT1SZXo9iDzstntuCn6bgWvY+XMwKRWGeHS63LfqJXY+gve+DLpYjMGYCZNzMBn6RgL5bDDF4DSoT8FsSCX/r5GbTjIsuZusLd5Da79jjkN9stxp6gam2VzynzuWKKvjINVtgjy6ZpGNT6o2InatcZkQpls6xGOUSKWfypTmiTJEn9pQjzdaedmHPXuZUhLDk9JBTzNkyil/ckYwbAmiZtu25k4KRvmKE/Z6nxSBCZkdiZuY4fzQamyQcBZZrbPqObVqO/U/WejNB7Ap2UsXuVRMp37WMcqNPPjnYEVSdamrYopUTAxkFLh3H3W4w9N3RuH/qiWGn71TTwg7R1N9Zf2zKz1y8/v84KHyhOeq5vmng4aC8Wzc+VXRKv8DB0XxbyX3sbZP/CB8zaWZwou8elcS+AnOeKCvpyJnDTh37Z4xFTiUFbClIQoRzYjrJ8TNGZwu+KiZ321qQWkpmWSHNsAMVnNM5AQJev5hpilZWji/fHYUjhPlDYNtjzSM4DOshIuajif9xSEtl6OdmC76BTrZsUh5FNlzmj/sjQ/rXyOzv8yzD0eotmWOa43Ze4DQFH3JO5XZ6mjO0HXss8rM0fYzhyMP4npZDS357dx6++fDyj8sO9Fv1fwEURM+S7BAAAA=="
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch5.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 5: Tyrant Burst Dragon boost, Mound of the Bound Creator protection, Heart of Clear Water"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
