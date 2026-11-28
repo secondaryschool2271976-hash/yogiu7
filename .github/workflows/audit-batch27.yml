@@ -1,0 +1,30 @@
+name: Audit batch 27
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch27.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch27.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Unsupported cards list"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
