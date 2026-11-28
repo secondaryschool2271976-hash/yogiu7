@@ -2019,6 +2019,10 @@ static func on_continuous_enforce(duel) -> void:
 			if cid == 2573: # Exodia Necross: no puede ser destruido en batalla ni por Magia/Trampa
 				zf["indest_battle"] = true
 				zf["indest_st_effect"] = true
+			if cid == 2603 or cid == 2651: # Marshmallon / Spirit Reaper: no pueden ser destruidos en batalla
+				zf["indest_battle"] = true
+			if cid == 2519: # Blue-Eyes Ultimate Dragon, the God-Surpassing Servant: no puede ser destruido por efectos
+				zf["indest_effect"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue

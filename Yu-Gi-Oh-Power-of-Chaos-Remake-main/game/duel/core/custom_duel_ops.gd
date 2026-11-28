@@ -1123,6 +1123,9 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	if not by_battle and str(state(duel).get("effect_source", "")) in ["spell", "trap"] \
 			and bool(zf.get("indest_st_effect", false)):
 		return false
+	# Fusion Sword Murasame Blade (2729): mientras esta equipada no puede ser destruida por efectos.
+	if not by_battle and z >= 5 and z <= 9 and raw_id(duel, idx) == 2729:
+		return false
 	# Unstoppable Exodia Incarnate (2660): no puede ser destruido por efectos del rival.
 	if not by_battle and bool(zf.get("indest_opp_effect", false)) \
 			and int(state(duel).get("effect_source_p", -1)) == 1 - p:
