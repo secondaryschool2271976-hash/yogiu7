@@ -216,3 +216,13 @@ every card in a hand, or that change the turn structure, cannot be enforced from
 | 3103 Begone, Knave! | was a no-op; the monster that dealt battle damage is now returned to the hand |
 | 3119 Stumbling | was a no-op; Summoned monsters now go to Defense Position |
 | 3120 Heart of the Underdog | no extra draw for a Normal Monster drawn in the Draw Phase |
+
+## Choices the engine cannot present yet
+
+These cards need the player to pick between named options (not a card on the field), and the custom layer has no way to ask for that. The effect itself works; only the pick is made for the player.
+
+| Card | What is picked for the player |
+| --- | --- |
+| 2750 Ominous Fortunetelling | The Standby Phase call of Monster, Spell or Trap is rolled at random instead of being chosen. The 700 damage on a correct call is applied normally. |
+
+A multi-option prompt in the custom layer would close this. Until then, treat the call as a coin flip rather than a decision.
