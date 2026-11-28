@@ -686,7 +686,8 @@ static func name_matches(duel, idx: int, substr: String) -> bool:
 		"magnet": return cid in MAGNET_IDS
 		"lv": return cid in LV_IDS
 		"ninja": return cid in NINJA_IDS
-		"millennium": return cid in MILLENNIUM_IDS
+		# Sengenjin (2632) se trata siempre como carta "Millennium".
+		"millennium": return cid in MILLENNIUM_IDS or cid == 2632
 		"shining sarcophagus": return cid in SHINING_SARC_IDS
 		"guardian": return cid in GUARDIAN_IDS
 		"ojama": return cid in OJAMA_IDS
