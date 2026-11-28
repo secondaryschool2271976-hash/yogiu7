@@ -88,7 +88,36 @@ static func _dragon_lords_target(duel, p: int) -> int:
 
 
 static func handles(cid: int) -> bool:
-	return cid in IDS
+	return cid in IDS or cid == 1532
+
+
+## Skull Lair (1532, nativa): monstruos del Cementerio propio.
+static func _lair_gy_monsters(duel, p: int) -> Array:
+	var out: Array = []
+	for i in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE):
+		var idx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, i)
+		if idx != 0 and CustomDuelOps.is_monster(duel, idx):
+			out.append(i)
+	return out
+
+
+## Skull Lair: destierra `n` monstruos del Cementerio (el jugador local elige cuales) y luego corre `then`.
+static func _lair_banish(duel, p: int, n: int, then: Callable) -> void:
+	var idxs: Array = _lair_gy_monsters(duel, p)
+	if n <= 0 or idxs.is_empty():
+		then.call()
+		return
+	var step := func(i) -> void:
+		CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, int(i))
+		_lair_banish(duel, p, n - 1, then)
+	if idxs.size() > n:
+		var labels: Array = []
+		for i in idxs:
+			labels.append(CustomDuelOps.card_name(duel, CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, int(i)))))
+		var title: String = CustomDuelOps.lang_text("اختر وحشًا من المقبرة لإزالته", "Elige un monstruo del Cementerio que desterrar", "Choose a monster in your GY to banish")
+		if CustomDuelOps.ask_pick(duel, p, title, labels, idxs, step):
+			return
+	step.call(idxs[0])
 
 
 static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -> bool:
@@ -102,6 +131,18 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
 	match cid:
+		1532: # Skull Lair: banish N monsters from your GY; destroy 1 face-up monster of Level N
+			var lair_gy: int = _lair_gy_monsters(duel, p).size()
+			if lair_gy <= 0:
+				return false
+			for lair_p in 2:
+				for lair_z in 5:
+					var lair_idx: int = CustomDuelOps.zone_idx(duel, lair_p, lair_z)
+					if lair_idx != 0 and CustomDuelOps.is_face_up(duel, lair_p, lair_z):
+						var lair_lv: int = CustomDuelOps.monster_level(duel, lair_idx)
+						if lair_lv >= 1 and lair_lv <= lair_gy:
+							return true
+			return false
 		3134: # Cards of the Red Stone
 			return CustomDuelOps.can_hopt(duel, p, 3134) and _red_stone_cost(duel, p) >= 0 and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_DECK) >= 2
 		3135: # Inferno Fire Blast
@@ -331,6 +372,18 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
 	match cid:
+		1532: # Skull Lair: elige el monstruo a destruir; su Nivel N = monstruos a desterrar del Cementerio
+			var lair_gy: int = _lair_gy_monsters(duel, p).size()
+			var lair_run := func(pick) -> void:
+				var lair_tp: int = int(pick["p"])
+				var lair_tz: int = int(pick["z"])
+				var lair_ti: int = int(pick["idx"])
+				var lair_after := func() -> void:
+					if CustomDuelOps.zone_idx(duel, lair_tp, lair_tz) == lair_ti:
+						CustomDuelOps.destroy_zone(duel, lair_tp, lair_tz)
+				_lair_banish(duel, p, CustomDuelOps.monster_level(duel, lair_ti), lair_after)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.monster_level(d, idx) >= 1 and CustomDuelOps.monster_level(d, idx) <= lair_gy, true, true, lair_run)
+			return true
 		3134: # Cards of the Red Stone
 			CustomDuelOps.mark_hopt(duel, p, 3134)
 			var rs_cost: int = _red_stone_cost(duel, p)

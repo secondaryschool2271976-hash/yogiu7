@@ -236,6 +236,8 @@ func f5a76e0(p: int) -> int:
 
 ## Tabla nativa de 443 filas; reproduce la busqueda binaria, incluido su limite.
 func f59dbe0(index: int) -> int:
+	if CustomCardEffects.overrides(cards.id_of(index) & 0xffff):
+		return 0xffffffff
 	var id := cards.effect_id_of(effect_card_id(index) & 0xffff)
 	var lo := 0
 	var hi := 0x1ba

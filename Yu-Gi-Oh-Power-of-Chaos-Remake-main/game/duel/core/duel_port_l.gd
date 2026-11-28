@@ -790,6 +790,8 @@ func f56e530() -> int:
 
 ## FUN_0056e540: busqueda binaria exacta del ID en la tabla de efectos (entradas de 24 bytes).
 func f56e540(index: int) -> int:
+	if CustomCardEffects.overrides(cards.id_of(index) & 0xffff):
+		return -1
 	var id := cards.effect_id_of(effect_card_id(index) & 0xffff)
 	var low := 0
 	var high := 0x1ad

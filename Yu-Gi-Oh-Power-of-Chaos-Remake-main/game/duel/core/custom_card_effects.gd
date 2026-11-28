@@ -18,9 +18,18 @@ static func all_registered_ids() -> Array[int]:
 	return out
 
 
+## Cartas del juego original (id < 2500) cuyo efecto nativo no funciona y se sustituye por uno
+## personalizado: los dos motores las tratan como cartas sin fila nativa (ver f59dbe0 / f56e540).
+const NATIVE_OVERRIDES: Array[int] = [1532]
+
+
+static func overrides(cid: int) -> bool:
+	return cid in NATIVE_OVERRIDES
+
+
 static func handles(cid: int) -> bool:
 	if cid < 2500:
-		return false
+		return overrides(cid)
 	return (
 		CustomEffectsTraps.handles(cid)
 		or CustomEffectsSpells.handles(cid)

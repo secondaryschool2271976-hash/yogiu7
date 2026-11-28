@@ -518,7 +518,8 @@ class TestYgojsonAndCustomEffects(unittest.TestCase):
 
 	def test_original_cards_protected_and_field_visual_fallback(self) -> None:
 		cce_text = (CORE_DIR / "custom_card_effects.gd").read_text(encoding="utf-8")
-		self.assertIn("if cid < 2500:\n\t\treturn false", cce_text)
+		self.assertIn("if cid < 2500:\n\t\treturn overrides(cid)", cce_text)
+		self.assertIn("const NATIVE_OVERRIDES: Array[int] = [1532]", cce_text)
 
 		fv_path = REPO_ROOT / "game/scenes/duel/duel_field_visual.gd"
 		fv_text = fv_path.read_text(encoding="utf-8")
