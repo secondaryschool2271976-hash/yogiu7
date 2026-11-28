@@ -205,6 +205,10 @@ Note on 2543: because its id sits in the Dark Magician list unconditionally, the
 | 2735 Maharaghi | the scry flag was set and never read, so the top card was never shown |
 | 2856 Pharaoh's Treasure | the drawn copy was never recognised, so the card never came back from the GY |
 | 3038 Kaiser Glider | no protection at all against a monster with the same ATK |
+| 2914 Des Dendle | the equipped monster made no Wicked Plant Token when it destroyed a monster in battle |
+| 2947 Burning Beast | no face-up Spell/Trap was destroyed when the equipped monster dealt battle damage |
+| 2975 Freezing Beast | no face-down Spell/Trap was destroyed when the equipped monster dealt battle damage |
+| 2989 Metallizing Parasite - Lunatite | the equipped monster was not protected from the opponent's Spell effects |
 | 2750 Ominous Fortunetelling | a stray block biased every die roll to 5 or 6 while it was face-up |
 | 2756 Heart of Clear Water | no protection for the equipped monster, and no self-destruct at 1300 ATK |
 | 2784 Spring of Rebirth | no LP gain when a monster returned to the hand |
@@ -230,5 +234,7 @@ These cards need the player to pick between named options (not a card on the fie
 | Card | What is picked for the player |
 | --- | --- |
 | 2750 Ominous Fortunetelling | The Standby Phase call of Monster, Spell or Trap is rolled at random instead of being chosen. The 700 damage on a correct call is applied normally. |
+| 2984 Spellbook Organization | There is no way to reorder the top 3 cards, so they stay in the order they were in. |
+| 3105 Spatial Collapse | The 5-card limit is checked when it is activated but never enforced afterwards, because the engine decides where cards are placed. |
 
 A multi-option prompt in the custom layer would close this. Until then, treat the call as a coin flip rather than a decision.

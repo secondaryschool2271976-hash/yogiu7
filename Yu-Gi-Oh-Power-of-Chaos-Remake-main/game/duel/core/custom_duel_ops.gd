@@ -1161,6 +1161,17 @@ static func _battle_damage_calc(duel, recv_p: int, atk_p: int, atk_z: int, def_p
 	return 0
 
 
+## Union monster `union_id` equipada al monstruo `p:z` (usa los enlaces de equipo del estado).
+static func union_equipped_to(duel, p: int, z: int, union_id: int) -> bool:
+	var links: Dictionary = state(duel).get("equip_links", {})
+	for ek in links.keys():
+		var link: Dictionary = links[ek]
+		if int(link.get("card_id", 0)) == union_id \
+				and int(link.get("target_p", -1)) == (p & 1) and int(link.get("target_z", -1)) == z:
+			return true
+	return false
+
+
 static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	p &= 1
 	var idx = zone_idx(duel, p, z)

@@ -2053,6 +2053,8 @@ static func on_continuous_enforce(duel) -> void:
 				zf["indest_battle"] = true
 			if cid == 2993: # Guardian Kay'est: no le afectan los efectos de Magia
 				zf["spell_immune"] = true
+			if CustomDuelOps.union_equipped_to(duel, pl, z, 2989): # Metallizing Parasite - Lunatite: el monstruo equipado no recibe Magias del rival
+				zf["spell_immune"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
