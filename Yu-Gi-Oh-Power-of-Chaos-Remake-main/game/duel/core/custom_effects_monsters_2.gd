@@ -1223,6 +1223,12 @@ static func on_standby_tick(duel, turn_p: int) -> void:
 	turn_p &= 1
 	var opp = 1 - turn_p
 	var t = CustomDuelOps.turn_number(duel)
+	# Armor Exe (2895): also during the OPPONENT's Standby Phase its controller removes a Spell Counter or it is destroyed.
+	if not CustomDuelOps.is_skill_drain_active(duel):
+		for az in 5:
+			if CustomDuelOps.zone_idx(duel, opp, az) != 0 and CustomDuelOps.is_face_up(duel, opp, az) and CustomDuelOps.zone_id(duel, opp, az) == 2895:
+				if not CustomDuelOps.remove_spell_counters(duel, opp, 1):
+					CustomDuelOps.destroy_zone(duel, opp, az)
 	for z in 5:
 		if CustomDuelOps.zone_idx(duel, turn_p, z) == 0 or not CustomDuelOps.is_face_up(duel, turn_p, z):
 			continue

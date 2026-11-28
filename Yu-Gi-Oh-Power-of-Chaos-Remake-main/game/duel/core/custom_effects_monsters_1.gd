@@ -1877,8 +1877,15 @@ static func on_standby_tick(duel, turn_p: int) -> void:
 					sl = CustomDuelOps.LOC_HAND
 				if si >= 0:
 					_evolve_optional(duel, turn_p, z, 2510, 2511)
-			2573: # Exodia Necross +500 ATK
+			2573: # Exodia Necross: +500 ATK; destroy unless all 5 Forbidden One pieces are in the GY (Standby Phase only)
 				CustomDuelOps.add_stat_mod(duel, turn_p, z, 500, 0, false)
+				var necross_ok := true
+				for fid in CustomDuelOps.FORBIDDEN_ONE_IDS:
+					if CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_GRAVE, fid) < 0:
+						necross_ok = false
+						break
+				if not necross_ok:
+					CustomDuelOps.destroy_zone(duel, turn_p, z)
 			2636: # Silent Magician LV4 with 5 counters -> LV8
 				if CustomDuelOps.get_counter(duel, turn_p, z, "spell") >= 5 and int(CustomDuelOps.zflags(duel, turn_p, z).get("lv4_ready_turn", t)) < t:
 					var si = CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_DECK, 2637)
@@ -2049,15 +2056,6 @@ static func on_continuous_enforce(duel) -> void:
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
-			if cid == 2573: # Exodia Necross requires all 5 Forbidden One in GY
-				var ok = true
-				for fid in CustomDuelOps.FORBIDDEN_ONE_IDS:
-					if CustomDuelOps.find_pile_index_by_id(duel, pl, CustomDuelOps.LOC_GRAVE, fid) < 0:
-						ok = false
-						break
-				if not ok:
-					CustomDuelOps.destroy_zone(duel, pl, z)
-					continue
 			if cid == 2602 and not has_field:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
