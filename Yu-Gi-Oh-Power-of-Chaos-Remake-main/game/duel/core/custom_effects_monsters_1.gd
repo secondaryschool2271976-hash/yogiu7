@@ -1244,14 +1244,16 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 		return
 
 	match cid:
-		2501: # Ra LP -> 100 ATK boost on Normal/Tribute Summon
+		2501: # Ra LP -> 100 ATK boost on Normal/Tribute Summon (opcional: "you can")
 			if kind == "normal" or kind == "tribute":
 				var cur_lp = CustomDuelOps.get_lp(duel, p)
 				if cur_lp > 100:
 					var pay = cur_lp - 100
-					CustomDuelOps.set_lp(duel, p, 100)
-					CustomDuelOps.record_lp_paid(duel, p, pay)
-					CustomDuelOps.add_stat_mod(duel, p, z, pay, pay, false)
+					var ra_pay := func() -> void:
+						CustomDuelOps.set_lp(duel, p, 100)
+						CustomDuelOps.record_lp_paid(duel, p, pay)
+						CustomDuelOps.add_stat_mod(duel, p, z, pay, pay, false)
+					CustomDuelOps.optional_effect(duel, p, 2501, ra_pay)
 		2503: # Sphere Mode: shift to owner at next turn EP
 			CustomDuelOps.schedule_delayed(duel, t + 1, CustomDuelOps.PHASE_EP, p, 2503, "return_sphere", {"z": z, "orig_p": 1 - p})
 		2506: # Amulet Dragon: banish Spells from GYs +100 each
@@ -1999,6 +2001,15 @@ static func on_continuous_enforce(duel) -> void:
 				continue
 			var cid = CustomDuelOps.zone_id(duel, pl, z)
 			var zf = CustomDuelOps.zflags(duel, pl, z)
+			# Protecciones continuas de las cartas del mazo del usuario.
+			if cid == 2618: # Moremarshmallon: con Shining Sarcophagus no puede ser destruido en batalla
+				zf["indest_battle"] = _has_shining_sarc(duel, pl)
+			if cid == 2633: # Sengenjin Wakes: no puede ser destruido por efectos de monstruo
+				zf["indest_monster_effect"] = true
+			if cid == 2634: # Shield of the Millennium Dynasty: no puede ser destruido por Magia/Trampa
+				zf["indest_st_effect"] = true
+			if cid == 2500 or cid == 2503: # Obelisk / Sphere Mode: el rival no puede elegirlos como objetivo
+				zf["untargetable"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
