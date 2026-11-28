@@ -1,0 +1,28 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_card_effects.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_duel_ops.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_monsters_1.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_monsters_2.gd"
+          git commit -m "Joey: summon after the queued GY send finishes (level-ups, Black Dragon's Chick); drop zone-reuse hack"
+          git push
