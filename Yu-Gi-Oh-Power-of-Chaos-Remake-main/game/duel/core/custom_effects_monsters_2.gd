@@ -309,7 +309,7 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 				var mp: int = CustomDuelOps.phase(duel)
 				if CustomDuelOps.turn_player(duel) != p or (mp != CustomDuelOps.PHASE_M1 and mp != CustomDuelOps.PHASE_M2):
 					return false
-				return CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 3143) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3143) >= 0
+				return CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 3144) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 3144) >= 0
 			return false
 		2823: # Gravekeeper's Watcher (hand negate opp discard effect)
 			return ev == "chain_negate" and loc == CustomDuelOps.LOC_HAND and bool(ctx.get("opp_discards", false)) and int(ctx.get("chain_p", -1)) == opp
@@ -447,7 +447,7 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				if mt_g >= 0:
 					CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, mt_g)
 				for mt_loc in [CustomDuelOps.LOC_DECK, CustomDuelOps.LOC_GRAVE]:
-					var mt_f: int = CustomDuelOps.find_pile_index_by_id(duel, p, mt_loc, 3143)
+					var mt_f: int = CustomDuelOps.find_pile_index_by_id(duel, p, mt_loc, 3144)
 					if mt_f >= 0:
 						CustomDuelOps.add_from_pile_to_hand(duel, p, mt_loc, mt_f)
 						break

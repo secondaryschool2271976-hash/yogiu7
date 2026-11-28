@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143,
 ]
 
 
@@ -87,6 +87,18 @@ static func _dragon_lords_target(duel, p: int) -> int:
 	return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _i): return CustomDuelOps.is_monster(d, idx) and CustomDuelOps.monster_race(d, idx) == 1 and (CustomDuelOps.monster_level(d, idx) == 7 or CustomDuelOps.monster_level(d, idx) == 8))
 
 
+## Dark Factory of Mass Production (3143): indices de pila de 2 Monstruos Normales distintos del Cementerio
+## (o [] si no hay dos). Se eligen los dos antes de mover nada porque los indices cambian al mover.
+static func _factory_targets(duel, p: int) -> Array:
+	var fa: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _i): return CustomDuelOps.is_normal_monster(d, idx))
+	if fa < 0:
+		return []
+	var fb: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, i): return CustomDuelOps.is_normal_monster(d, idx) and i != fa)
+	if fb < 0:
+		return []
+	return [fa, fb]
+
+
 static func handles(cid: int) -> bool:
 	return cid in IDS or cid == 1532
 
@@ -147,6 +159,8 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 			return CustomDuelOps.can_hopt(duel, p, 3134) and _red_stone_cost(duel, p) >= 0 and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_DECK) >= 2
 		3135: # Inferno Fire Blast
 			return _inferno_target(duel, p) >= 0
+		3143: # Dark Factory of Mass Production
+			return not CustomDuelOps.is_necrovalley_active(duel) and _factory_targets(duel, p).size() == 2
 		3137: # Return of the Dragon Lords
 			return not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0 and _dragon_lords_target(duel, p) >= 0
 		3132: # Red-Eyes Insight
@@ -408,6 +422,14 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				if CustomDuelOps.zone_idx(duel, p, if_zz) != 0 and CustomDuelOps.raw_id(duel, CustomDuelOps.zone_idx(duel, p, if_zz)) in CustomDuelOps.NATIVE_RED_EYES:
 					CustomDuelOps.zflags(duel, p, if_zz)["cannot_atk_turn"] = t
 			CustomDuelOps.pflags(duel, p)["inferno_fire_blast_turn"] = t
+			return true
+		3143: # Dark Factory of Mass Production: add 2 Normal Monsters from the GY to the hand
+			if not CustomDuelOps.is_necrovalley_active(duel):
+				var df_t: Array = _factory_targets(duel, p)
+				if df_t.size() == 2:
+					# El indice mayor primero: mover uno desplaza los posteriores.
+					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_GRAVE, maxi(int(df_t[0]), int(df_t[1])))
+					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_GRAVE, mini(int(df_t[0]), int(df_t[1])))
 			return true
 		3137: # Return of the Dragon Lords (the GY replacement effect is not implemented)
 			var dl_i: int = _dragon_lords_target(duel, p)
