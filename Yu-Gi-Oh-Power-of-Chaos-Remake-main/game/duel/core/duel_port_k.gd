@@ -615,6 +615,8 @@ func _k_fusion_pick(e: int) -> int:
 	if idx == 0:
 		return 0x7d
 	var valid := f5640f0(idx) != 0
+	if not valid and ready != 0:
+		valid = _k_fusion_swap_material(p, idx, location == 0)
 	var substitute := f563b40(effect_card_id(idx)) != 0
 	var v := m.u32(0xa16104)
 	if substitute:
@@ -641,7 +643,34 @@ func _k_fusion_pick(e: int) -> int:
 			_k_fusion_set_cursor(m.u8(0xa16106) & 3)
 			return 100
 		_k_fusion_set_cursor(((v >> 18) & 3) - 1)
+	elif ready != 0:
+		# Toque no valido: se vuelve a mostrar el mensaje de seleccion en vez de ignorarlo en silencio.
+		var nn := m.u8(0xa16106) & 3
+		f5417e0(0x5c if nn == 2 else 0x5d)
 	return 0x7d
+
+
+## Fusiones con receta propia (EXTRA_FUSION_RECIPES): acepta cualquier carta que cumpla el requisito de un
+## hueco aun sin consumir, aunque no sea la que el motor eligio solo, y la pone en la lista de materiales.
+func _k_fusion_swap_material(_p: int, idx: int, on_field: bool) -> bool:
+	if idx == 0 or cards == null:
+		return false
+	var fusion: int = m.u16(0xa16104) & 0xfff
+	var mats: Array[int] = ExtraCardEffects.fusion_materials(cards.id_of(fusion) & 0xffff)
+	var n: int = m.u8(0xa16106) & 3
+	if mats.size() != n or n < 2:
+		return false
+	var raw: int = cards.id_of(idx & 0xfff) & 0xffff
+	var first_ctx: int = m.u16(0xa16108 + (n - 1) * 2)
+	for i in range(n):
+		if m.u16(0xa16108 + i * 2) == 0:
+			continue
+		var spec: int = mats[n - 1 - i]
+		var sm: int = ExtraCardEffects.spec_match(cards, idx, spec, on_field, first_ctx if i != n - 1 else 0)
+		if sm == 1 or (sm < 0 and raw == spec):
+			m.set_u16(0xa16108 + i * 2, idx & 0xfff)
+			return true
+	return false
 
 
 ## FUN_00564e20: muestra indicador de navegación para ubicaciones del campo/mano.
