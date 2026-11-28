@@ -277,6 +277,10 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 	CustomEffectsMonsters2.on_summon_or_flip(duel, p, z, cid, norm_kind)
 	if norm_kind in ["flip_summon", "flipped"] and cid in [2713, 2716, 2739, 2751, 2765, 2788, 2819, 2823, 2832, 2850, 2982, 3107, 3120]:
 		resolve_chain_link(duel, p, cid, CustomDuelOps.LOC_FIELD_MONSTER, z, {"event": norm_kind})
+	# Stumbling (3119): cualquier monstruo que sea Invocado pasa a Posicion de Defensa boca arriba.
+	if z >= 0 and z < 5 and norm_kind in ["normal", "special", "tribute", "flip_summon"] \
+			and (CustomDuelOps.has_faceup_id(duel, 0, 3119) or CustomDuelOps.has_faceup_id(duel, 1, 3119)):
+		CustomDuelOps.change_position(duel, p & 1, z, 1, 1)
 	on_continuous_enforce(duel)
 	check_and_apply_win(duel)
 	if handles(cid):
