@@ -123,7 +123,7 @@ func effect_card_id(index: int) -> int:
 	return cards.effect_id_of(f4022e0(index) & 0xffff)
 
 
-## FUN_00402460: indice del id. Soporta cartas nativas (0..3999) y ampliacion 1400.
+## FUN_00402460: indice del id. Soporta las cartas del juego original.
 func f402460(card_id: int) -> int:
 	return cards.index_of(card_id)
 

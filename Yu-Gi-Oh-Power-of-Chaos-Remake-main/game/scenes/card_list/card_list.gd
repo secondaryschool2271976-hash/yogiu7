@@ -187,7 +187,7 @@ func _load_sort_key() -> void:
 
 # --- lista (0x45e3a0, 0x45ddb0) --------------------------------------------------------------
 
-## Muestra todas las cartas unificadas (1400: 771 originales + 629 adicionales).
+## Muestra las cartas del juego original (771).
 func _mask(_all: bool) -> int:
 	return CardDB.ALL_PACK_BITS
 

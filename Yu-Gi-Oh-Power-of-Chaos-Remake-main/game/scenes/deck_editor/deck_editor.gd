@@ -433,7 +433,7 @@ func _filter_group(filter: String) -> int:
 	return CardDB.Group.RITUAL
 
 
-## Orden alfabetico dependiente del idioma para todas las cartas (~1400).
+## Orden alfabetico dependiente del idioma para todas las cartas (~771).
 func _native_sort_key(card: Dictionary, criterion: String) -> int:
 	var index := int(card.get("index", 0))
 	var kind := int(card.get("type_id", 0))
