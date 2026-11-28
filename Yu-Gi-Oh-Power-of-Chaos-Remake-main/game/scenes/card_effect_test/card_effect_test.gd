@@ -17,15 +17,15 @@ const ST_MAX := 5
 const HAND_MAX := 5
 const KINDS := ["hand", "field", "st", "grave"]
 
-const C_BG := Color(0.92, 0.96, 1.0)
-const C_TEXT := Color(0.12, 0.16, 0.28)
-const C_PLAYER := Color(0.16, 0.46, 0.92)
-const C_OPP := Color(0.93, 0.36, 0.30)
-const C_ADD := Color(0.14, 0.70, 0.42)
-const C_GY := Color(0.62, 0.42, 0.88)
+const C_BG := Color(0.88, 0.93, 0.99)
+const C_TEXT := Color(0.07, 0.10, 0.22)
+const C_PLAYER := Color(0.10, 0.34, 0.76)
+const C_OPP := Color(0.78, 0.20, 0.18)
+const C_ADD := Color(0.05, 0.50, 0.30)
+const C_GY := Color(0.45, 0.27, 0.74)
 const C_HAND := Color(1.0, 0.72, 0.18)
 const C_CARD := Color(1.0, 1.0, 1.0)
-const C_BAR := Color(0.80, 0.88, 1.0)
+const C_BAR := Color(0.70, 0.80, 0.95)
 
 var _scroll: ScrollContainer
 var _list_box: VBoxContainer
@@ -65,6 +65,8 @@ func _flat(color: Color, radius := 12) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = color
 	s.set_corner_radius_all(radius)
+	s.border_color = color.darkened(0.28)
+	s.set_border_width_all(2)
 	s.content_margin_left = 12
 	s.content_margin_right = 12
 	s.content_margin_top = 8
@@ -174,7 +176,7 @@ func _build() -> void:
 	search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	search.text_direction = Control.TEXT_DIRECTION_RTL if _rtl else Control.TEXT_DIRECTION_AUTO
 	search.add_theme_color_override("font_color", C_TEXT)
-	search.add_theme_color_override("font_placeholder_color", Color(0.45, 0.5, 0.6))
+	search.add_theme_color_override("font_placeholder_color", Color(0.35, 0.40, 0.52))
 	search.add_theme_stylebox_override("normal", _flat(C_CARD))
 	search.add_theme_stylebox_override("focus", _flat(Color(1, 1, 0.92)))
 	col.add_child(search)
@@ -232,7 +234,7 @@ func _build() -> void:
 	var back := Button.new()
 	back.text = _txt("Back", "رجوع", "Volver")
 	back.custom_minimum_size = Vector2(130, 56)
-	_color_button(back, Color(0.45, 0.52, 0.68), 19)
+	_color_button(back, Color(0.33, 0.40, 0.56), 19)
 	back.pressed.connect(func() -> void: Game.open_launcher())
 	row.add_child(back)
 
@@ -461,7 +463,7 @@ func _update_slots() -> void:
 				if kind == "grave":
 					chip_color = C_GY
 				elif kind == "hand":
-					chip_color = Color(0.80, 0.55, 0.05)
+					chip_color = Color(0.68, 0.42, 0.02)
 				_color_button(chip, chip_color, 14)
 				_tap(chip, _remove_card.bind(s, kind, i))
 				flow.add_child(chip)
@@ -556,7 +558,7 @@ func _open_deck_picker(side: int) -> void:
 	var close := Button.new()
 	close.text = _txt("Back", "رجوع", "Volver")
 	close.custom_minimum_size = Vector2(0, 56)
-	_color_button(close, Color(0.45, 0.52, 0.68), 19)
+	_color_button(close, Color(0.33, 0.40, 0.56), 19)
 	_tap(close, _close_deck_picker)
 	page.add_child(close)
 
