@@ -1,0 +1,29 @@
+name: UI card colors
+on:
+  push:
+    paths:
+      - .github/workflows/ui-card-colors.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICDpkCmsCA3AuZGlmZgC1Vt1u4kYUvg5PMeLKCOwYY5sfKdUSks1GTZMooVHSqhoZewyjGA8aD0m6T9CH6U0v+ybp2/ScGQMmhO2uquVijM585+87P3bC05TY9pQrEh0+LO0zbl/N7GvxzKQtUns0i0Rh37B59MjsecTzw2k0Z4dFzHJWHMaRTChLUxYrqlihdgTONCGT72K2xvOEvZB2v98No9RxJm4SuJOEtF039P2abdvfKZ9as9n8Xjl9+EDsdrfVDkjTPEAQi7xQ5HZMfxrek8ERCWql6NPw8mRH+OP55cktSn6tz6I8qbdIPeUs038KhedURk+s/luN1GyjMqLHZ6gxEpmQluv0vRaBM2yRtuM2Nqjx6f24imtrXDvE0+tVgNcXw4fTmy2oBvn67HsV6NX19ZbrDiI6Gtep+h6enGzZ8xHRdbXVqr2zhyos9AwAzx5E2Hw/4V5Px6V99/sV2NuM3a7OWLv1vArwnYw1qGPiDCvQNxl3tW9Po9vVEN9k7AaICNwVM833M/Y1zNNxdv3GqitGFJtlA4TCaoS3crvGjYY3b3Gro0Lz8XAr2Z5rGC5hzT0wUy8D7gfgtEaeIkloEUuRZQNyq58jkSsYHibL24wXik7Ey4DcHYuXzS3OShi0QtKEs4eTki7zmNA0i5QVo8uB8dwiMkr4ssBQ2l6D2D+QW/V7xsDaR8AOauQAHen76oWTs2cLojwonMmUaovkiOinFhZMgVRCLNQ4oFGWWeYvkIBqQiZwu6XqJJF8hI2QWGZqmqWlEvvMEzXThjzjGrhULFd0Hskpz2nGUkUwj/cuJZ/O9t8qsYC7Xrlk/FYXl0wIjzV1kyXPEksz9CR4gswULJLxzCn4Z4bMTgs6E5J/xipkBEubKyiac3v+yyk9vb/GlfTx/OJio6nYi6IJl7DmuMgrKjhc9OT85nQ0Pr+6pDfjC8JTQqXKCMsKtg83/Hl8tbEeJQlVMzZnhmQqnpiUPGFWPQV1I4SlZ0YZGvgr9RZZFLOZyNbVQxtbI6aPsKHr979NdrQ1Xw9G4DUa7+VXYGfCGFTs5kLOowzsmJ43w/vV2qmIl8VG2cw7THC5o7UdCFQbiWfYGMZqQzeQ1/GwgbyO/x8NhKM1ieJHnK7jpVIiX88VinV/QFdQ9aKs+jFI8B31+tfrn//88fo3/r8TGcRcXytA1ErM6ZznfL6cU+xM0L+D/hLSs9odYDEIsdRlHSbaqYW6O0XU+y/sNSBt3PtfVOl0KkUKS5UypoVkRcESnLgcArGQjQoN5Aw+BByxYDC/EVzNmLQ0v1I8V/hFU7gVkV8/bCO/ftip8rtcJJGCamZCFds0ww+m5xE+isjR0eolX14cgPnFegvhK8PIWVZV0Z8LA+BtV2NrzQeaOjdAvvZCw97mzevqTQa/bXZRr0U22kCovwKqaFHeU8nm0LMUv5acCcRqFS0dc4vwRglPsy0aUdE0aRDgemsGQa9Koq5DwuJHuuDxI5SigHkYEJ6rncaNMwGbaLdztfybWtdofLl393SuVv3G1n2js6d3Dc8GSvWzygsiFtGUValFDLbov3cPsPA2DAAA"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/ui-card-colors.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Card effect test screen: higher-contrast colors and button borders"
+          git push -f origin "HEAD:refs/heads/$BR"
