@@ -799,9 +799,9 @@ static func coin_toss(duel, p := 0) -> int:
 		r = duel.rng.rand() & 1
 	else:
 		r = randi() & 1
-	# Second Coin Toss (if player controls 2921, could flip again favorably, handled when helpful)
-	if has_faceup_id(duel, p, 2921) and r == 0 and can_opt(duel, p, 2921, 0):
-		mark_opt(duel, p, 2921, 0)
+	# Second Coin Toss (2726): una vez por turno se puede repetir el lanzamiento.
+	if has_faceup_id(duel, p, 2726) and r == 0 and can_opt(duel, p, 2726, 0):
+		mark_opt(duel, p, 2726, 0)
 		if duel.rng != null:
 			r = duel.rng.rand() & 1
 		else:
@@ -1117,6 +1117,11 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	# Armityle the Chaos Phantasm (2513, 2514): no puede ser destruido en batalla.
 	if by_battle and raw_id(duel, idx) in [2513, 2514]:
 		return false
+	# Non-Spellcasting Area (3004): los Monstruos Normales boca arriba no reciben efectos de Magia.
+	if not by_battle and z < 5 and is_face_up(duel, p, z) and is_normal_monster(duel, idx) \
+			and str(state(duel).get("effect_source", "")) == "spell" \
+			and (has_faceup_id(duel, 0, 3004) or has_faceup_id(duel, 1, 3004)):
+		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
 	# Sengenjin Wakes (2633): no puede ser destruido por efectos de monstruo.
@@ -1233,6 +1238,10 @@ static func bounce_zone(duel, p: int, z: int) -> bool:
 	else:
 		duel.f54e420(p, z, 0)
 	clear_zone_state(duel, p, z)
+	# Spring of Rebirth (2784): su controlador gana 500 cada vez que un monstruo vuelve a la mano.
+	for pl in 2:
+		if has_faceup_id(duel, pl, 2784):
+			heal(duel, pl, 500)
 	return true
 
 
