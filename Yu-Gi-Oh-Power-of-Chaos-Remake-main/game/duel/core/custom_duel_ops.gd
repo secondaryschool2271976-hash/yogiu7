@@ -207,6 +207,7 @@ static func damage(duel, p: int, amount: int, is_battle := false) -> int:
 		duel.f5784e0(p, mini(amount, 0xffff))
 	else:
 		duel.f54ef90(p, mini(amount, 0xffff))
+	_guardian_slime_after_damage(duel, p)
 	return amount
 
 
@@ -227,7 +228,29 @@ static func battle_damage(duel, p: int, amount: int) -> int:
 		duel.f5784a0(p, mini(amount, 0xffff))
 	else:
 		duel.f54ef90(p, mini(amount, 0xffff))
+	_guardian_slime_after_damage(duel, p)
 	return amount
+
+
+## Guardian Slime (2588): al recibir dano de batalla o de efecto puede Invocarse a si mismo
+## desde la mano (una vez por turno, ranura 2 para no compartir limite con sus otros efectos).
+static func _guardian_slime_after_damage(duel, p: int) -> void:
+	p &= 1
+	if not can_opt(duel, p, 2588, 2):
+		return
+	if free_monster_zone(duel, p) < 0:
+		return
+	if find_pile_index_by_id(duel, p, LOC_HAND, 2588) < 0:
+		return
+	var body := func() -> void:
+		if not can_opt(duel, p, 2588, 2):
+			return
+		var hi := find_pile_index_by_id(duel, p, LOC_HAND, 2588)
+		if hi < 0 or free_monster_zone(duel, p) < 0:
+			return
+		mark_opt(duel, p, 2588, 2)
+		special_summon_from_pile(duel, p, LOC_HAND, hi, p, true, false)
+	optional_effect(duel, p, 2588, body)
 
 
 static func heal(duel, p: int, amount: int) -> int:
@@ -1072,6 +1095,14 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 		return false
 	if not by_battle and bool(zf.get("indest_effect", false)):
 		return false
+	# Sengenjin Wakes (2633): no puede ser destruido por efectos de monstruo.
+	if not by_battle and str(state(duel).get("effect_source", "")) not in ["spell", "trap"] \
+			and bool(zf.get("indest_monster_effect", false)):
+		return false
+	# Shield of the Millennium Dynasty (2634): no puede ser destruido por efectos de Magia/Trampa.
+	if not by_battle and str(state(duel).get("effect_source", "")) in ["spell", "trap"] \
+			and bool(zf.get("indest_st_effect", false)):
+		return false
 	# Blaze Cannon (2517) y el Ra revivido por Ancient Chant: el monstruo no puede ser afectado
 	# por otras cartas ese turno, asi que no lo destruye ningun efecto.
 	if not by_battle and int(zf.get("unaffected_until_turn", -1)) >= turn_number(duel):
@@ -1551,7 +1582,9 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 			if idx == 0:
 				continue
 			# Mayakashi Metamorphosis (2605): el monstruo elegido no puede ser objetivo ese turno.
-			if pl != (owner_p & 1) and int(zflags(duel, pl, z).get("untargetable_until_turn", -1)) >= tn:
+			# Obelisk (2500) y Sphere Mode (2503): el rival no puede elegirlos como objetivo de efectos.
+			var zf_t := zflags(duel, pl, z)
+			if pl != (owner_p & 1) and (int(zf_t.get("untargetable_until_turn", -1)) >= tn or bool(zf_t.get("untargetable", false))):
 				continue
 			# Metalsilver Armor (2924): contra su controlador solo se puede elegir el monstruo equipado.
 			if pl != (owner_p & 1) and z < 5:
