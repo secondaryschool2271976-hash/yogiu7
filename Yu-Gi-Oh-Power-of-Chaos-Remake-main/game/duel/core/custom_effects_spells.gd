@@ -585,8 +585,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					if CustomDuelOps.zone_idx(duel, opp, zz) != 0 and CustomDuelOps.is_face_up(duel, opp, zz):
 						CustomDuelOps.destroy_zone(duel, opp, zz)
 			return true
-		2599, 3112: # Magical Mallet / Reload: baraja cualquier numero de cartas de la mano y roba esa cantidad (Reload: toda la mano).
-			# Sin selector de cantidad se baraja la mano entera, que es una eleccion legal.
+		2599: # Magical Mallet: el jugador local elige una a una que cartas de SU mano baraja (Si/No); sin pantalla, toda la mano.
+			_mallet_ask(duel, p, 0, [])
+			return true
+		3112: # Reload: toda la mano.
 			var n = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
 			var shuf = 0
 			for _k in n:
@@ -1616,3 +1618,39 @@ static func _resolve_ritual_spell(duel, p: int, cid: int) -> void:
 				CustomDuelOps.tribute_zone(duel, p, zz)
 		if tributed >= need_lv:
 			CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, ri, p)
+
+
+## Magical Mallet: pregunta por cada carta de la mano del activador si se baraja. `chosen` guarda las posiciones elegidas.
+static func _mallet_ask(duel, p: int, k: int, chosen: Array) -> void:
+	var n: int = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND)
+	if k >= n:
+		_mallet_finish(duel, p, chosen)
+		return
+	var cname: String = CustomDuelOps.card_name(duel, CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, k)))
+	var text: String = CustomDuelOps.lang_text(
+		"Magical Mallet (%d/%d)\nهل تخلط %s في الدك؟" % [k + 1, n, cname],
+		"Magical Mallet (%d/%d)\n¿Barajar %s en el Deck?" % [k + 1, n, cname],
+		"Magical Mallet (%d/%d)\nShuffle %s into the Deck?" % [k + 1, n, cname])
+	var yes := func() -> void:
+		var c2: Array = chosen.duplicate()
+		c2.append(k)
+		_mallet_ask(duel, p, k + 1, c2)
+	var no := func() -> void:
+		_mallet_ask(duel, p, k + 1, chosen)
+	if not CustomDuelOps.ask_optional(duel, p, text, yes, no):
+		# Sin dialogo posible (CPU, online, headless): se baraja el resto de la mano.
+		var rest: Array = chosen.duplicate()
+		for j in range(k, n):
+			rest.append(j)
+		_mallet_finish(duel, p, rest)
+
+
+static func _mallet_finish(duel, p: int, chosen: Array) -> void:
+	chosen.sort()
+	chosen.reverse()
+	var shuf: int = 0
+	for pos in chosen:
+		CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, int(pos), p, CustomDuelOps.LOC_DECK)
+		shuf += 1
+	CustomDuelOps.shuffle_deck(duel, p)
+	CustomDuelOps.draw(duel, p, shuf)
