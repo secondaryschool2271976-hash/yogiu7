@@ -203,6 +203,8 @@ static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := 
 	var handled = false
 	# Etiqueta de origen: destroy_zone la lee para las inmunidades a Magia/Trampa.
 	var st_src = CustomDuelOps.state(duel)
+	# Quien resuelve: destroy_zone lo lee para las inmunidades "del rival".
+	st_src["effect_source_p"] = p
 	if CustomEffectsTraps.handles(cid):
 		st_src["effect_source"] = "trap"
 		st_src["effect_targeted"] = false
@@ -228,6 +230,7 @@ static func resolve_chain_link(duel, p: int, cid: int, loc: int, z: int, ctx := 
 		on_continuous_enforce(duel)
 		check_and_apply_win(duel)
 		CustomDuelOps.sync_visuals(duel)
+	st_src["effect_source_p"] = -1
 	return handled
 
 

@@ -2010,6 +2010,10 @@ static func on_continuous_enforce(duel) -> void:
 				zf["indest_st_effect"] = true
 			if cid == 2500 or cid == 2503: # Obelisk / Sphere Mode: el rival no puede elegirlos como objetivo
 				zf["untargetable"] = true
+			if cid == 2660: # Unstoppable Exodia Incarnate: no puede ser destruido por efectos del rival
+				zf["indest_opp_effect"] = true
+			if cid == 2554: # Egyptian God Slime: no puede ser destruido en batalla
+				zf["indest_battle"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
