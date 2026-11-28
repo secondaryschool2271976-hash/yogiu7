@@ -71,6 +71,37 @@ Missing: the card returning to the Deck instead of the Graveyard.
 Why: where a resolved Spell goes is decided by the original engine after the custom effect returns; the
 custom layer cannot redirect that destination.
 
+### 2930 Kaiser Colosseum
+Text: "If there is 1 or more monster(s) on the field of the controller of this card, his/her opponent
+cannot place a monster on the field if his/her number of monsters would exceed the number of monsters
+on the field of this card's controller."
+Done: nothing. Why: placing a monster is done by the original engine, which has no hook to refuse a
+Summon based on the current monster counts. The custom layer can only act after a monster has landed.
+
+### 2949 Kishido Spirit
+Text: "Monsters on your side of the field cannot be destroyed in a battle if the monsters' ATK are equal."
+Done: nothing. Why: the destruction itself is reachable, but only the identity of the card being
+destroyed is passed in. The ATK of the monster it fought is not carried into the destruction, so the
+equal-ATK condition cannot be evaluated there.
+
+### 2956 Continuous Destruction Punch
+Text: "If the DEF of the attacked Defense Position monster on your side of the field is higher than the
+ATK of the attacking monster on your opponent's side of the field: Destroy the attacking monster at the
+end of the Damage Step."
+Done: nothing. Why: same as Kishido Spirit - the end of the Damage Step is handled by the original
+engine and both monsters' stats are not available where the custom layer can act.
+
+### 3051 Precious Cards from Beyond
+Text: "When you Tribute Summon a monster using 2 or more Tributes: Draw 2 cards."
+Done: nothing. Why: nothing in the custom layer records how many monsters a Tribute Summon used. The
+summon arrives as a single "tribute" event, so "2 or more" cannot be told apart from a single Tribute.
+
+### 2753 Convulsion of Nature
+Text: "As long as this card remains face-up on the field, both players must turn their respective Decks
+upside down and proceed with the current Duel."
+Done: nothing. Why: this only changes how the Deck is displayed. Deck order and drawing are handled by
+the original engine and there is no presentation hook for it.
+
 ## Fixed during this audit
 
 | Card | What was wrong |
@@ -88,13 +119,23 @@ custom layer cannot redirect that destination.
 | 2603 Marshmallon | could be destroyed by battle |
 | 2618 Moremarshmallon | the Shining Sarcophagus battle protection was never applied |
 | 2619 Mound of the Bound Creator | Level 10+ monsters were neither protected nor untargetable |
+| 2632 Sengenjin | its "always treated as a Millennium card" line was ignored by Millennium support |
 | 2633 Sengenjin Wakes | could be destroyed by monster effects |
 | 2634 Shield of the Millennium Dynasty | could be destroyed by Spell/Trap effects |
 | 2651 Spirit Reaper | could be destroyed by battle |
 | 2660 The Unstoppable Exodia Incarnate | no protection from the opponent's card effects |
 | 2676 Tyrant Burst Dragon | the equipped monster got no ATK/DEF and no extra attacks |
 | 2680 Wedju Temple | the destroyed-Millennium-monster replacement effect was missing |
+| 2690, 2692, 2914, 2915, 2939, 2941, 2947, 2959, 2974, 2975, 2989 (Union monsters) | the equipped monster died instead of the Union card |
+| 2726 Second Coin Toss | the coin-toss code checked the wrong card id, so it never triggered |
 | 2729 Fusion Sword Murasame Blade | could be destroyed by card effects while equipped |
+| 2745 Dragon's Rage | was a no-op; Dragon monsters now get piercing while it is up |
 | 2756 Heart of Clear Water | no protection for the equipped monster, and no self-destruct at 1300 ATK |
+| 2784 Spring of Rebirth | no LP gain when a monster returned to the hand |
 | 2788 Spiritual Energy Settle Machine | Spirit monsters still returned to the hand |
+| 2880 Dark Room of Nightmare | was a no-op; the extra 300 damage now applies |
 | 2993 Guardian Kay'est | was not unaffected by Spell effects |
+| 3004 Non-Spellcasting Area | Normal Monsters were still destroyed by Spell effects |
+| 3076 Morale Boost | no LP gain on equipping and no damage when the Equip Spell left |
+| 3119 Stumbling | was a no-op; Summoned monsters now go to Defense Position |
+| 3120 Heart of the Underdog | no extra draw for a Normal Monster drawn in the Draw Phase |
