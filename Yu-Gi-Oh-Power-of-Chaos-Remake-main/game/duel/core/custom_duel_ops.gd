@@ -452,6 +452,12 @@ static func monster_level(duel, idx: int) -> int:
 	if t >= 0x15:
 		return 0
 	var lvl: int = (prop_of(duel, idx) >> 25) & 0xf
+	# Demotion (2964): el monstruo equipado baja 2 Niveles.
+	for dk in state(duel)["equip_links"].keys():
+		var dlink: Dictionary = state(duel)["equip_links"][dk]
+		if int(dlink.get("card_id", 0)) == 2964 and int(dlink.get("target_p", -1)) >= 0 \
+				and zone_idx(duel, int(dlink.get("target_p", -1)), int(dlink.get("target_z", -1))) == idx:
+			return maxi(1, lvl - 2)
 	# Cost Down (3010): los monstruos en la mano bajan 2 niveles durante ese turno.
 	var cd_t := turn_number(duel)
 	for cdp in 2:
@@ -1107,6 +1113,24 @@ static func negate_attack(duel, effect_p: int, atk_p: int, atk_z: int) -> bool:
 ## (def_z < 0 = direct attack). Mirrors the engine's own rule: ATK vs ATK, ATK vs DEF only with
 ## piercing. Used to decide whether Nutrient Z can be activated.
 static func battle_damage_to(duel, recv_p: int, atk_p: int, atk_z: int, def_p: int, def_z: int) -> int:
+	var amount: int = _battle_damage_calc(duel, recv_p, atk_p, atk_z, def_p, def_z)
+	# Rod of the Mind's Eye (3079): el dano de batalla del monstruo equipado pasa a ser 1000.
+	if amount > 0 and equipped_with(duel, atk_p, atk_z, 3079):
+		return 1000
+	return amount
+
+
+## Verdadero si el monstruo en p/z lleva equipada la carta cid.
+static func equipped_with(duel, p: int, z: int, cid: int) -> bool:
+	for ek in state(duel)["equip_links"].keys():
+		var link: Dictionary = state(duel)["equip_links"][ek]
+		if int(link.get("card_id", 0)) == cid \
+				and int(link.get("target_p", -1)) == (p & 1) and int(link.get("target_z", -1)) == z:
+			return true
+	return false
+
+
+static func _battle_damage_calc(duel, recv_p: int, atk_p: int, atk_z: int, def_p: int, def_z: int) -> int:
 	if atk_z < 0 or atk_z >= 5 or zone_idx(duel, atk_p, atk_z) == 0:
 		return 0
 	var atk: int = eff_atk(duel, atk_p, atk_z)
