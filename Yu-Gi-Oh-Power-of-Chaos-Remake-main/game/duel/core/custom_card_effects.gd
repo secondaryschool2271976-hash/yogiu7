@@ -536,6 +536,10 @@ static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
 	# Inferno Fire Blast (3135): "Red-Eyes B. Dragon" cannot attack the turn it was activated.
 	if id in CustomDuelOps.NATIVE_RED_EYES and int(CustomDuelOps.pflags(duel, p & 1).get("inferno_fire_blast_turn", -1)) == CustomDuelOps.turn_number(duel):
 		return false
+	# Diffusion Wave-Motion (2977): solo el monstruo elegido puede atacar ese turno.
+	var solo = CustomDuelOps.pflags(duel, p & 1).get("only_attacker_zone_turn", null)
+	if solo is Array and solo.size() >= 2 and int(solo[0]) == CustomDuelOps.turn_number(duel) and int(solo[1]) != z:
+		return false
 	return CustomEffectsMonsters1.can_attack(duel, p, z, id) and CustomEffectsMonsters2.can_attack(duel, p, z, id)
 
 
@@ -552,6 +556,11 @@ static func can_attack_target(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 		if int(CustomDuelOps.pflags(duel, 0).get("cannot_attack_facedown_turn", -1)) == t \
 				or int(CustomDuelOps.pflags(duel, 1).get("cannot_attack_facedown_turn", -1)) == t:
 			return false
+	# Staunch Defender (3075): los monstruos del rival deben atacar al monstruo elegido ese turno.
+	var forced = CustomDuelOps.pflags(duel, atk_p & 1).get("must_attack_zone_turn", null)
+	if forced is Array and forced.size() >= 2 and int(forced[0]) == t \
+			and (def_p & 1) != (atk_p & 1) and int(forced[1]) != def_z:
+		return false
 	if (atk_p & 1) != (def_p & 1) and CustomDuelOps.has_faceup_id(duel, def_p, 2604) \
 			and CustomDuelOps.zone_id(duel, def_p, def_z) != 2603:
 		for z in 5:
