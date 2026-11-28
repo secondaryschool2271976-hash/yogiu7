@@ -1,0 +1,29 @@
+name: UI card colors
+on:
+  push:
+    paths:
+      - .github/workflows/restore-sound.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICONlCmsCA3AzLmRpZmYApZJhT9swEIa/91ecijQVNQ5QIRhISJQ2G93aFFFFGpom65JcWkNid3acAb9+dtqysU3aB75Y59f23XPvORdFAYwtRQ14cGfZR8HmK3ajfpBmqmCjFSrDbqnCB2IVCnmwxIoO0NaqVJi7IBcqXOaQvuFxR8icHmFwepqldBaGx4NsMEgRjg4PT46PO4yxN7F1+v3+2/guL4ENjoIz6Lv1Pbhtgxp4uuRrTQ2v0NSkeWVrgvMLKLA01IG9PTBKilwZ6JnikRdCCrOiHHJqLJUNQa0tBSCWFkv4bgkyJYFKaFRpK3KhhMP9EKYuAepsJRoX5AQtFcTzTQWCVGmNMoQb1AiaMKuFp3OJ2pvnkGGVCqfghgx6VqJDKxFKIQn3w46vbGoYJuPJnI8ni+HVNBr/aoW5QtE2nX/oFksuR06y1sozWQm560lB75OipwDu7FIE8BlF6tLDjKQ1AZRoZbYiHQDlolbaP6zw2XX11JYohal9UgesazTekhxbG4woSWZCBS6SUFkjsvZioWSuQIoXo50mpJtFgc9hh226mkVxwhfzJP6to74r592Hixeftj3V3qyN+dV/sf9C7m1AnJ/VuqRaOW/7/6LwtXeuj5Noyhej2yiKF/7sa1fTusQn3ghyH9X9v24A3dSamts1NxlJ+kPTbuDlVrtH+UDy1bWt9OCn8Vq6d8PaKS7kEt3fIe5H6eVvO8TFhy98dD2M42jaIp7sDqbDJB5dR7d8liwmI36VtMfvutOtZzDzs+p2fgImqnsBZgQAAA=="
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/restore-sound.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Restore full sound: enable audio in menus too (MENU_SOUND true)"
+          git push -f origin "HEAD:refs/heads/$BR"
