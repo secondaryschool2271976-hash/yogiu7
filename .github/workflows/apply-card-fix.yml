@@ -1,0 +1,27 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64: "H4sIAL2BCmsC/61Ye2/bNhD/O/4UtwQobFhy/I5jzEPTxO0KpO2QFQOKbVBpibJZS6JKUnmt22ffkaLsWFacNGkERJTEe//ueOeAhSG47pwpIIefMvcNcz8s3N/4FRUuD93TBeHSvaAxWVI3Jiw5nJOYHgYZjQ59Luihn0nFY88nIvBoGFJfydY8gNmP41VjSUCvgYxmPTIKWq3jUe+oO+tAp90e9vs113V/pOa1ZrP5Q7V/+RLcbn/kHEFT37p9wDdSEcV8CLPEh4SLmESeEmyWKeoJ+jVjgsY0UXWfBWNgiWqA+4u+j2uwJ6jKRAJupwZ4NQ8O4KPIKEgGNIIv2ZwEXMDn9DPyhTSjAYW3ySVHrQCX73jA4b0RCAmDUx6ZLzFPpBIZl0AWXBCImYz5GCICqeApI0bMObkk8IZHNIa6REItT6vC4auWT/X2XNRK0lSm1GckajjwjkURTRKWxXCSLBdwg2okcDKfCyol00tBczn1Syogd6arnSndLJFZmnKhaNCKg0YLzlFTdFAmtaSYoAp4j/BloD9wheGQ+Aw+2pVFiiSQEjSL+/pBoKJGEE99FNyqNSuigX5Z0qCuo+tAug7CjPNoXGvuXSKbNBzDGfMVMiHiBiZwapQ+Q5oPqWylYUTmsmABL6DTsITK8Nsi0M70kiyeUWGo9HYbbdxeT8PWnKr6vk+ShCtPZjGGzcsSxRA8uGnfQVA0GjCZgALEQAWNNc6SlolqTX2hY8qxOqyKFSgSzxhF3eKUBXgvw6wIPr6QgUGHjlTJ3XbPg/6+44cHvfxoNz3ofrw2UhV5eoXGOeMNjR0oEtZB9Pl2JSOutg1i4T22N/TXwt6QRJJi0uPuXNlpXlje6YSlQnZaC5IEEZW6VDR0eSgo79l+vwVGeaN3rnJjh9huSayucb3hsTOEZm80dDqdco3DCBCliL/0AupHRFArlailV/hOr2/tOqDh6r1e6/eoj04elLiVObc8oR4L7jK1/KwViAQTvFyJin3G+g0H5q4vMt3o/fh0N6w3Ut4yeGzeo855/hq6HNExubYGYAi2stdsBAzLNmHIhFQr0g3KnwpKgzpL9Wclxd9Q7N21lQXXZmdlgK7L7tmO0j243QmgVQwNbCxiKoK5W0j3aUI09oeDjsb+8KjndLpl7G/hrgD27bpowHii47EuEJWq68DeblZ0q+/3FbYqmGMbsciw0RIhFz6FE8MX6t3hcNgYw/4Nz7QhmMjRDeRC4YqpBXTy5gGPbLVg0jQE+6112qDPnnpI5rTfnzBI9qh8wX1302VFtiNbVnR/6RTYewS1TgcH2nmm7cwJmw+3lfX/AE/XkOpe6zX2hvAqIlJBvdfpDXRwLmjgTm+w5XnVgjNB5jzZhxwfRajUgkJ+gCq4ItjmYUAuie6nLLK0ISX93p98fPvH1LuYnnnTT9PfV7565PnLcoU9dAj1ZlrhZ6M0eOasolee7iO96MkzyiYPO5vQsNsOO71Wq+/3wpEfPns2KUl58kxS4mNmkVFb1yp9G+lSZWpUODhq9wftelGa9PFul8bCrSlE/8VELuHbBNrXfrudv1s1DKfYuNv6anqOAnB1SaPQdBuCXHkLpwSC8w+n3q8n789yDRz4599GWdrIpB4KWqJm8LMW3+kbcG5L3mzmreg8wSzDFxP4DxngMLVHI2SaLghOMgjOnpF7AK/1M7avM6JIFJExKEHilKBU5BWTOSNm/MHMlNQMPpcUxbGABDCAuiDYG5MGDJzVjAVDnXMrAybGgMH4OeD+wumN+ZeHOnsKuCt4WHD7XTIMRwjuYHjc82f954C7SspTwF3Fx4C7NzLgxttdcBMyO16DWw+VFYDOwYKHTdvGZ90plNG8MUdtQjqRDkIkoxa3kmIBnkXUsG1W58cOlNryh3MXTq7r4T9/hm+wYv/NDq7mR4H/Aa/ICrfUEQAA"
+        run: |
+          set -e
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_card_effects.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/duel_port_l.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/joey/joey_port_u.gd"
+          git commit -m "Summon lock (Lava Golem, Ankh, Non Aggression) and Thunderforce one-attacker hooks"
+          git push
