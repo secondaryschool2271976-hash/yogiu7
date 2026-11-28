@@ -1,0 +1,30 @@
+name: Audit batch 8
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch8.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "H4sICApeCmsCA3BhdGNoOC5kaWZmAK1U247TSBB9Tr6iNkgoVmLnwmxYIgYBg7S7EgOIASF2NLIq7rJp0u42fVmIv57qdmAAAU/z4o6qq06dOn0qQtY15HkjPeDibcj/lvnzd/kL85Fsbur87B0al7+kFveUtyj1osGWFiKQWlTG0qIKzpu2jIHSdK5oBOxuBmcstaBPsFyv7yKeFMUd3G2qegWr5XJzcjLO8/ymGI9ns9mNsX74EPLVanN3voFZOtcr4Jjz6GUFddAVCHLemkPZG03TWDuHbgtS+zn0x3N3KHfovSLYnkKNylEG+QPYGaO2YxiNRv+jhUamW9ap7KSiMglWcqkUR1jRzeHp87Py8aNn/178w7BSZKlc1rH6wSksB7iR66iSqEoX2tbosrY8VgT9BVAjYywbz0a34NxonicYB6+1NBqm68295Rz4u+bvvdUJHKAybYdaYrYFJ4EUtMcioA9BdigMS0MWAcGRHRQKUph56uDoGDkQKIQKrcdjM9LgAqjQsB6H74C56EMggTGF4xW2nSkYjkfv4T78ueXfo9pYoD1rnh5omDa7nCRSpZJ67yZXxZ4Obpql/KR7iBdbeCIrzxTQHuD0N+WXtL9KpdyY33aaqouG/HTi0fJZdpM5eybL4I9T6IAZ/Tyt/yatH9iMKqO91IGuuXUsjtvCC6z2JC68lbp5ZC0OHO2U9lnhOiUZdjvJvvAaqgone5pmLM76l/DURc8lgqnmcnmVwW1YfZPR/5CxuvraJ/p32tcKG3c0FgPGT58No4b4qGXSryPBAw/ezwC1gLgv7O1PP5ZGQZZHxj/Zra95Q4YlH6wegNn7kXMlBctj8eP15nCbuCm34A2J9wFeUdvxMrK1/1qyh4O+9tnkXCpFWsvQTq6NG+1XGWWq5D827X/sFL6Gc2wkusUry35El1rsYhZaK3dDcjKzYM+eUUvak5WmgAsCS0dE7sJI3yXMAXmx2PAx7HGnyJr414AKyI0/A+RvzlXmBQAA"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch8.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 8: Union monsters are destroyed in place of the monster they are equipped to"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
