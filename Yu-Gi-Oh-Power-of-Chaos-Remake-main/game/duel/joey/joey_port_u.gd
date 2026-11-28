@@ -238,6 +238,8 @@ func f5aab90(p: int, card: int) -> int:
 			normal = 0
 		if not CustomCardEffects.can_normal_summon(self, p, raw_ns, true):
 			settable = 0
+	if CustomCardEffects.normal_locked(self, p):
+		return result
 	return result | settable | normal
 
 

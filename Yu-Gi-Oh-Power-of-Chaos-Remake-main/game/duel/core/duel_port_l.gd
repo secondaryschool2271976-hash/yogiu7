@@ -280,6 +280,8 @@ func f570450(p: int, hand: int, index: int) -> int:
 					mask |= 0xc00
 				if CustomCardEffects.can_activate(self, p, raw_h, CustomDuelOps.LOC_HAND, hand, {}):
 					mask |= 8
+			if kind <= 0x14 and CustomCardEffects.normal_locked(self, p):
+				mask &= ~0x11
 	elif phase == 3:
 		# Fase de batalla: trampa 0xf, magia que no sea de velocidad 5 (rapida) 5, monstruo 6.
 		if kind == 0x15:

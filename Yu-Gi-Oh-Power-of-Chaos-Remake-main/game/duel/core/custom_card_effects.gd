@@ -248,7 +248,24 @@ static func normal_tribute_requirement(cid: int) -> int:
 	return -1
 
 
+## True si el jugador `p` no puede Invocar de Modo Normal ni Colocar monstruos ahora mismo: la propia
+## Lava Golem (solo el turno que se la Invoca de Modo Especial), Millennium Ankh y Non Aggression Area
+## (ver custom-cards-unsupported.md). Los menus de mano de los dos motores lo consultan para ocultar la
+## opcion.
+static func normal_locked(duel, p: int) -> bool:
+	var pf: Dictionary = CustomDuelOps.pflags(duel, p & 1)
+	var t: int = CustomDuelOps.turn_number(duel)
+	return int(pf.get("cannot_summon_until_turn", -1)) == t or int(pf.get("cannot_normal_summon_turn", -1)) == t
+
+
+## Millennium Ankh / Non Aggression Area tambien impiden Invocar de Modo Especial desde la mano.
+static func special_locked(duel, p: int) -> bool:
+	return int(CustomDuelOps.pflags(duel, p & 1).get("cannot_summon_until_turn", -1)) == CustomDuelOps.turn_number(duel)
+
+
 static func can_special_summon(duel, p: int, cid: int, loc: int, slot: int) -> bool:
+	if special_locked(duel, p):
+		return false
 	if CustomEffectsMonsters1.handles(cid):
 		return CustomEffectsMonsters1.can_special_summon(duel, p, cid, loc, slot)
 	if CustomEffectsMonsters2.handles(cid):
@@ -369,6 +386,11 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 	var cid = CustomDuelOps.zone_id(duel, atk_p, atk_z)
 	if not can_attack(duel, atk_p, atk_z, cid):
 		return false
+	var pf_decl: Dictionary = CustomDuelOps.pflags(duel, atk_p & 1)
+	var t_decl: int = CustomDuelOps.turn_number(duel)
+	if int(pf_decl.get("max_attackers_turn", -1)) == t_decl and int(pf_decl.get("first_attacker_turn", -1)) != t_decl:
+		pf_decl["first_attacker_turn"] = t_decl
+		pf_decl["first_attacker_idx"] = CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z)
 	if not CustomEffectsMonsters1.on_attack_declare(duel, atk_p, atk_z, def_p, def_z):
 		return false
 	if not CustomEffectsMonsters2.on_attack_declare(duel, atk_p, atk_z, def_p, def_z):
@@ -650,6 +672,12 @@ static func can_attack(duel, p: int, z: int, cid := -1) -> bool:
 	if bool(zf.get("cannot_attack", false)):
 		return false
 	if int(zf.get("cannot_attack_turn", -1)) == CustomDuelOps.turn_number(duel):
+		return false
+	# Thunderforce Attack (2666): "you can only attack with 1 monster this turn".
+	var pf_atk: Dictionary = CustomDuelOps.pflags(duel, p & 1)
+	var t_atk: int = CustomDuelOps.turn_number(duel)
+	if int(pf_atk.get("max_attackers_turn", -1)) == t_atk and int(pf_atk.get("first_attacker_turn", -1)) == t_atk \
+			and int(pf_atk.get("first_attacker_idx", 0)) != CustomDuelOps.zone_idx(duel, p & 1, z):
 		return false
 	# Inferno Fire Blast (3135): "Red-Eyes B. Dragon" cannot attack the turn it was activated.
 	if id in CustomDuelOps.NATIVE_RED_EYES and int(CustomDuelOps.pflags(duel, p & 1).get("inferno_fire_blast_turn", -1)) == CustomDuelOps.turn_number(duel):
