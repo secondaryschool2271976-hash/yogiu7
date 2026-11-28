@@ -1,0 +1,26 @@
+name: Apply card fix
+on:
+  push:
+    paths:
+      - .github/workflows/apply-card-fix.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        env:
+          PATCH_B64_0: "H4sIAJ7MCmsC/+1Y/2/aRhT/OfwVb6k0wcAEA4EENVXbBDXTsmZKpknTNJ0O3zOcYvvo+ZxA/vq9O9sEE9a0abpUU4USG3z3ed8+9z7nEzIMwfOm0gDf+zPz3knvfOb9pm5Qeyr0jmdcpd4FxvwKvZjLZG/KY9wTGUZ7gdK4F2SpUTELuBYMwxADk7anAiZPh1WTicAFDIadYTc4bLcPQz70OwH4nc6g3695nveUnteazeaTev/6NXh+t9caQNNeuvtAv6SGGxlAmCUBTDIZCWYhWGAWdQvYAhyBTEwLlJmhLu5nPBHutgHeKziRgZEq4Xo5qsHODk39a5fHKkvM7t9wBMfOmxMCO5+n7Qk3JkImeMynyIwqrMxbwO3fbQsEXT0fZAj1SRjxaQo/Qr8BPxxBBzBKEcRtw9qhAfwWXsK+s5qbNVpOMoMszeJYJSicAxOlonrVi1sHXNjODTfaUzT1+wgtCDlZbTRqTWcTr+HoCHaLAAIeBbsj+2jnBRxT5kBzmWIKZiZTuCHCqBuoa+SpSqCz8HsN0HI6I4qHBjXk2QCBqdFqmQK3AEgVECiAklwATzC00CphxUh6qrMkbUGqaDwXZA5LsHx+ClQuBJpHvq4mTZbFqF0wmlMinIFrTp4Ixs0V4XOqrM0YJc7lpx23s4N6Z8F9vx/0oUnpgp/A7zaoLAd5WdZBBIYPgIgOeFtAbLjVih9tQFv/NL9xxCNgh2s5nralYCpcGfIHpbuDqrudRRiGq5tw0+3PwhbdahTbsIkta2l1AdIMCqs+p4F+w/1yFxi8gk5OpZzM5VIpq8cSdeMIbXSGa+PUTYKazd0jB7z27G7yQ89lsVhW7mwdVbCn4gVGeaBl6V1YYlugRZa/lUALdz4pUMjDLFc/Tdu963b2a2G32mdMphM2j/gStaNQYwMn785lN5RJoGKZTAlZPI0YFt2f5Yv9C9VwE6yQww72cSgO2m30B71gMHgqObxn7kv18B6gFcSe3zqEpvu/oYYBTxgnZbvmBkuVKvQvkKK4i1RQ3LHb8qFZjEpNtAzRaFmQqwh9j7kJZg7BPuz5w+4IXsApakX6QZqJmpjHg6uat7OaW7Jug51sutx1S4vs1slsrmDrK8EqacN10nm+Bq0UbhlZsH2ldR9DlVYTOzRGJhtsH5+Nfx2///3NGTsdX5yzn08uHU510FyS44GN9E76qyPOzo/Z6Zv3Jw3bJ9ziLNKw1iHwuo7XLteN/30Gcpr0LE2I6smUNgJhThgPLjCMiNSk8hd8+fyUYbTpUCzMUuI+mWIRXmN0F+UD+Xz+gj+F/65cg6Et1zjCGBPDI6pTMON6im6rWkaXG+MBZvMqH9aBDhyQoKqf8jhG7bpWv98aQtP9/0pdiyz3Vo3pLddakmm4x6+8V1Gdgoj2rluoZTcT60VR83kB31/BX8ppwqPnZ291EYYakdE7QEotmd3Su8BadVb71eqUYKZUiixf4LR7fGh9t1zN6oKYJRZUjLQxgiID1Ql2fyFFMfCxfaeMpSB1gfXyCPpucKLMxgSZMlyQWtryXpWpKCe23L6oyAX1n8dn4mR8/Mu3kon1qBrP2oq+k/E7GStkzLvm/l1Tjnhq1lvy44N+d/Hmj/F/GzWVM1E65tHHSpnH3PNtzBcovPESU7icSy1Nfpo16FodzC9fSQi7B0OXc6uBGMFbnNFrjztvOVFqmyT+yzvd/VahMbiudonc3oHbO1youdvonckQHy2N5RvzZif6gg3pEfif358e00m/Gd9tUQ79gS3KiUw5kdZu6qo7OZ4yniwZfsjknNHeMZQYidUrv53vinoqhcCEKIxRRGpw5Vjc3e/bM1l78TubNP7ojnSDz+40lq72zXLryt1oNQ5kahddDejTrNjdqNIILo0mHlcXCNdLZ9Qqmz3R+QSOUneubzlD3SKQW4+FViJJ6kyfbbnasqG+lx577JeUp322xPag9Nb2sv1R7R+M86Q2ihgAAA=="
+        run: |
+          set -e
+          printf %s "$PATCH_B64_0" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_card_effects.gd"
+          git add "Yu-Gi-Oh-Power-of-Chaos-Remake-main/game/duel/core/custom_effects_traps.gd"
+          git commit -m "Raise battle-destroyed traps from the Core damage_calc window (Hero Signal, Counterattack, Reflector Ray, Rope of Life)"
+          git push
