@@ -760,7 +760,8 @@ func enqueue(e: Dictionary, duel: Duel) -> void:
 					# contador el ataque llegaba 8 ticks tarde en sus cotejos de duelo completo (29/30-10-2026).
 					if e.get("native_battle", false) or game in ["yugi", "kaiba"]:
 						d["native_attack_counter"] = clampi(int(_battle["counter"]), 0, 128)
-					d["p"] = _attack_player if _attack_player >= 0 else p
+					# Joey nativo: el atacante es el jugador del propio evento, no el ultimo de fase 3.
+					d["p"] = p if e.get("native_battle", false) else (_attack_player if _attack_player >= 0 else p)
 					d["mode"] = "attack"
 					d["from_pos"] = zone(p, args[0])
 					var target_player := int(args[2]) - 1 if args[2] > 0 else 1 - p
