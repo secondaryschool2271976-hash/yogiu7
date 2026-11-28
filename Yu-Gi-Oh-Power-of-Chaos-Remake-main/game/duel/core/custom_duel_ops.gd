@@ -350,6 +350,20 @@ static func clear_zone_state(duel, p: int, z: int) -> void:
 	for ek in st["equip_links"].keys():
 		var link: Dictionary = st["equip_links"][ek]
 		if (int(link.get("target_p", -1)) == (p & 1) and int(link.get("target_z", -1)) == z) or ek == k:
+			# Battle-Scarred (3077): la Trampa y el monstruo que eligio se destruyen mutuamente.
+			if int(link.get("card_id", 0)) == 3077:
+				var bs_parts: PackedStringArray = str(ek).split(":")
+				var bs_eq_p: int = (int(bs_parts[0]) & 1) if bs_parts.size() >= 1 else -1
+				var bs_eq_z: int = int(bs_parts[1]) if bs_parts.size() >= 2 else -1
+				var bs_tp: int = int(link.get("target_p", -1))
+				var bs_tz: int = int(link.get("target_z", -1))
+				st["equip_links"].erase(ek)
+				if ek == k:
+					if bs_tz >= 0 and zone_idx(duel, bs_tp, bs_tz) != 0:
+						destroy_zone(duel, bs_tp, bs_tz)
+				elif bs_eq_z >= 0 and zone_idx(duel, bs_eq_p, bs_eq_z) != 0:
+					destroy_zone(duel, bs_eq_p, bs_eq_z)
+				continue
 			# Morale Boost (3076): al salir del campo una Magia de Equipo, su controlador recibe 1000.
 			if ek == k and bool(link.get("equip_spell", false)):
 				var eq_parts: PackedStringArray = str(ek).split(":")
