@@ -498,9 +498,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.zflags(duel, p, rz)["blaze_cannon_turn"] = t
 			return true
 		2520: # Book of Moon
-			var tgt = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz))
-			if not tgt.is_empty():
-				CustomDuelOps.change_position(duel, tgt["p"], tgt["z"], 1, 0)
+			var moon_run := func(tgt) -> void:
+				CustomDuelOps.change_position(duel, int(tgt["p"]), int(tgt["z"]), 1, 0)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true, moon_run)
 			return true
 		2522: # Brain Control
 			if CustomDuelOps.pay_lp(duel, p, 800):
@@ -972,9 +972,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.shuffle_deck(duel, p)
 			return true
 		2830: # Book of Taiyou
-			var tgt = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and not CustomDuelOps.is_face_up(d, pl, zz), true, false)
-			if not tgt.is_empty():
-				CustomDuelOps.change_position(duel, tgt["p"], tgt["z"], 0, 1)
+			var taiyou_run := func(tgt) -> void:
+				CustomDuelOps.change_position(duel, int(tgt["p"]), int(tgt["z"]), 0, 1)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and not CustomDuelOps.is_face_up(d, pl, zz), true, false, taiyou_run)
 			return true
 		2831: # Question
 			var bottom_idx = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, 0)
@@ -1478,33 +1478,81 @@ static func _consume_materials_anywhere(duel, p: int, ids: Array, banish_them: b
 	return true
 
 
+## Miracle Fusion: Fusion Summon 1 "Elemental HERO" Fusion Monster from the Extra Deck, banishing the Fusion
+## Materials listed on it from the field or the GY. Devuelve las fuentes de los materiales de la receta `fid`
+## como [[true si es campo, zona o indice de Cementerio], ...], o [] si no se puede. Primero se usan los del
+## Cementerio (para no perder monstruos del campo).
+static func _miracle_sources(duel, p: int, fid: int) -> Array:
+	var recipe: Array = ExtraCardEffects.EXTRA_FUSION_RECIPES.get(fid, [])
+	if recipe.is_empty() or not (fid in CustomDuelOps.ELEMENTAL_HERO_IDS):
+		return []
+	var out: Array = []
+	var used_gy: Array = []
+	var used_z: Array = []
+	var first_idx: int = 0
+	for spec: int in recipe:
+		var found: Array = []
+		for gi in range(CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE) - 1, -1, -1):
+			var gx: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, gi)
+			if not (gi in used_gy) and _miracle_match(duel, gx, spec, false, first_idx):
+				found = [false, gi, gx]
+				break
+		if found.is_empty():
+			for zz in 5:
+				var zx: int = CustomDuelOps.zone_idx(duel, p, zz)
+				if zx != 0 and not (zz in used_z) and CustomDuelOps.is_face_up(duel, p, zz) and _miracle_match(duel, zx, spec, true, first_idx):
+					found = [true, zz, zx]
+					break
+		if found.is_empty():
+			return []
+		if found[0]:
+			used_z.append(found[1])
+		else:
+			used_gy.append(found[1])
+		if first_idx == 0:
+			first_idx = int(found[2])
+		out.append(found)
+	return out
+
+
+static func _miracle_match(duel, ix: int, spec: int, on_field: bool, first_ix: int) -> bool:
+	var sm: int = ExtraCardEffects.spec_match(duel.cards, ix, spec, on_field, first_ix)
+	if sm >= 0:
+		return sm == 1
+	return CustomDuelOps.raw_id(duel, ix) == spec
+
+
 static func _can_miracle_fusion(duel, p: int) -> bool:
 	for fi in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_FUSION):
-		var fid = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_FUSION, fi))
-		if fid in CustomDuelOps.HERO_IDS:
-			if _count_hero_materials(duel, p) >= 2:
-				return true
+		var fid: int = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_FUSION, fi))
+		if not _miracle_sources(duel, p, fid).is_empty():
+			return true
 	return false
 
 
 static func _resolve_miracle_fusion(duel, p: int) -> void:
-	for fi in CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_FUSION):
-		var fid = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_FUSION, fi))
-		if fid in CustomDuelOps.HERO_IDS:
-			var used = 0
-			for zz in 5:
-				if used < 2 and CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.zone_id(duel, p, zz) in CustomDuelOps.ELEMENTAL_HERO_IDS:
-					CustomDuelOps.banish_zone(duel, p, zz)
-					used += 1
-			var gi = CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_GRAVE) - 1
-			while used < 2 and gi >= 0:
-				if CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_GRAVE, gi)) in CustomDuelOps.ELEMENTAL_HERO_IDS:
-					CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
-					used += 1
-				gi -= 1
-			if used >= 2:
-				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, fi, p)
-			return
+	var fi: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_FUSION, func(d, idx, _i): return not _miracle_sources(d, p, CustomDuelOps.raw_id(d, idx)).is_empty())
+	if fi < 0:
+		return
+	var fid: int = CustomDuelOps.raw_id(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_FUSION, fi))
+	var srcs: Array = _miracle_sources(duel, p, fid)
+	if srcs.is_empty():
+		return
+	# Campo primero (las zonas no se mueven), luego Cementerio de mayor a menor indice (no cambia los demas).
+	for src: Array in srcs:
+		if src[0]:
+			CustomDuelOps.banish_zone(duel, p, int(src[1]))
+	var gys: Array = []
+	for src: Array in srcs:
+		if not src[0]:
+			gys.append(int(src[1]))
+	gys.sort()
+	gys.reverse()
+	for gi: int in gys:
+		CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
+	var sfi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_FUSION, fid)
+	if sfi >= 0:
+		CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, sfi, p)
 
 
 static func _count_hero_materials(duel, p: int) -> int:

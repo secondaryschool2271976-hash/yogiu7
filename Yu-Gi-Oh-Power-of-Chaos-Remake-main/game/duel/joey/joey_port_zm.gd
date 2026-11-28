@@ -58,8 +58,13 @@ func f591a10(player: int, card_id: int, exclude_a: int, exclude_b: int) -> int:
 				if not hand and f56c460(player, slot) != 0: continue
 				if f56b440(index, JoeyMem.ident(entry)) != 0: continue
 				var matches := false
+				var sm := -1
+				if not substitute:
+					sm = ExtraCardEffects.spec_match(cards, index, card_id, not hand, (f591ca0(player, exclude_a) & 0xfff) if (exclude_a & 0xffff) != 0xffff else 0)
 				if substitute:
 					matches = f568580(index) != 0
+				elif sm >= 0:
+					matches = sm == 1
 				elif card_id >= 2500:
 					matches = (cards.id_of(index) & 0xffff) == card_id
 				else:

@@ -168,7 +168,8 @@ func f563c20(p: int, card_id: int, ex1: int, ex2: int) -> int:
 		var ix := m.u16(0xa1195c + q + z * 0x94) & 0xfff
 		if ix != 0:
 			var raw_id := cards.id_of(ix) & 0xffff
-			var matched := (raw_id == cid) if cid >= 2500 else ((effect_card_id(ix) & 0xffff) == cid or (effect_card_id(ix) & 0xffff) == cid + 0x7d0 or raw_id == cid or raw_id == cid + 0x7d0)
+			var sm := ExtraCardEffects.spec_match(cards, ix, cid, true, (f563df0(p, e1) & 0xfff) if e1 != 0xffff else 0)
+			var matched := (sm == 1) if sm >= 0 else ((raw_id == cid) if cid >= 2500 else ((effect_card_id(ix) & 0xffff) == cid or (effect_card_id(ix) & 0xffff) == cid + 0x7d0 or raw_id == cid or raw_id == cid + 0x7d0))
 			if matched:
 				var r := z + 0x4000
 				if e1 != r and e2 != r:
@@ -177,7 +178,8 @@ func f563c20(p: int, card_id: int, ex1: int, ex2: int) -> int:
 	while i < m.u8(0xa11946 + q):
 		var ix := m.u16(0xa11fb8 + q + i * 4) & 0xfff
 		var raw_id := cards.id_of(ix) & 0xffff
-		var matched := (raw_id == cid) if cid >= 2500 else ((effect_card_id(ix) & 0xffff) == cid or (effect_card_id(ix) & 0xffff) == cid + 0x7d0 or raw_id == cid or raw_id == cid + 0x7d0)
+		var sm := ExtraCardEffects.spec_match(cards, ix, cid, false, (f563df0(p, e1) & 0xfff) if e1 != 0xffff else 0)
+		var matched := (sm == 1) if sm >= 0 else ((raw_id == cid) if cid >= 2500 else ((effect_card_id(ix) & 0xffff) == cid or (effect_card_id(ix) & 0xffff) == cid + 0x7d0 or raw_id == cid or raw_id == cid + 0x7d0))
 		if matched:
 			var r := i + 0x8000
 			if e1 != r and e2 != r:
@@ -825,6 +827,9 @@ func f563b70(a: int, b: int) -> int:
 		var norm_b := (raw_b - 2000) if (raw_b >= 2000 and raw_b < 2500) else raw_b
 		if raw_b in extra_mats or norm_b in extra_mats:
 			return 1
+		for spec: int in extra_mats:
+			if spec >= 2561 and ExtraCardEffects.spec_match(cards, b & 0xfff, 9001 if spec == 9003 else spec, true, 0) == 1:
+				return 1
 		return 1 if f563b40(effect_card_id(b) & 0xffff) != 0 else 0
 	var u1 := effect_card_id(a) & 0xffff
 	var u2 := effect_card_id(b) & 0xffff

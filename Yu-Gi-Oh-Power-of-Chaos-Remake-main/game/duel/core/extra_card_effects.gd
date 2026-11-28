@@ -21,9 +21,12 @@ const EXTRA_FUSION_RECIPES := {
 	2545: [34, 808], # Dark Paladin (Dark Magician + Buster Blader)
 	2552: [3129, 379], # Dragon Master Knight (Black Luster Soldier + Blue-Eyes Ultimate Dragon)
 	2559: [2555, 2557], # Elemental HERO Flame Wingman (Avian + Burstinatrix)
+	2560: [9001, 9003], # Elemental HERO Flame Wingman - Infernal Rage (2 "Elemental HERO" with different Attributes)
+	2564: [2561, 9002], # Elemental HERO Neos Knight (Neos + 1 Warrior)
 	2565: [2559, 2566], # Elemental HERO Shining Flare Wingman (Flame Wingman + Sparkman)
 	2567: [2555, 2566, 2556], # Elemental HERO Tempest (Avian + Sparkman + Bubbleman)
 	2568: [2566, 2558], # Elemental HERO Thunder Giant (Sparkman + Clayman)
+	2569: [9001, 9003], # Elemental HERO Thunder Giant - Voltic Thunder (2 "Elemental HERO" with different Attributes)
 	2620: [0, 0, 0], # Neo Blue-Eyes Ultimate Dragon (3x Blue-Eyes White Dragon)
 	2687: [2686, 2690], # XY-Dragon Cannon (X-Head Cannon + Y-Dragon Head)
 	2688: [2686, 2690, 2692], # XYZ-Dragon Cannon (X + Y + Z)
@@ -36,6 +39,33 @@ const EXTRA_FUSION_RECIPES := {
 	2881: [2651, 2854], # Reaper on the Nightmare (Spirit Reaper + Nightmare Horse)
 	3000: [34, 14], # Dark Flare Knight (Dark Magician + Flame Swordsman)
 }
+
+## Materiales genericos de las recetas de fusion (ids falsos, no son cartas):
+## 9001 = cualquier "Elemental HERO"; 9002 = cualquier monstruo Guerrero; 9003 = "Elemental HERO" con Atributo
+## distinto del primer material. Ademas "Elemental HERO Neos" (2561) acepta a Neos Alius cuando esta en el campo
+## (su nombre pasa a ser Neos mientras esta en el campo, no en la mano).
+const SPEC_HERO := 9001
+const SPEC_WARRIOR := 9002
+const SPEC_HERO_DIFF_ATTR := 9003
+
+
+## 1/0 si la carta `ix` cumple el material `spec`; -1 si `spec` es un id normal (lo resuelve el codigo original).
+## `first_ix` es la carta ya elegida como primer material (0 si no hay).
+static func spec_match(cards, ix: int, spec: int, on_field: bool, first_ix: int) -> int:
+	var raw_id: int = cards.id_of(ix & 0xfff) & 0xffff
+	var prop: int = cards.prop(ix & 0xfff)
+	if spec == 2561:
+		return 1 if raw_id == 2561 or (raw_id == 2562 and on_field) else 0
+	if spec == SPEC_WARRIOR:
+		return 1 if ((prop >> 20) & 0x1f) == 15 else 0
+	if spec == SPEC_HERO or spec == SPEC_HERO_DIFF_ATTR:
+		if not (raw_id in HERO_IDS):
+			return 0
+		if spec == SPEC_HERO_DIFF_ATTR and first_ix != 0:
+			return 1 if ((prop >> 29) & 7) != ((cards.prop(first_ix & 0xfff) >> 29) & 7) else 0
+		return 1
+	return -1
+
 
 static var _in_avatar_calc := false
 
