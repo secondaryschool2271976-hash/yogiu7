@@ -649,6 +649,8 @@ func _mount_card_pack_reader(reader: ZIPReader) -> void:
 
 
 func _read_card_pack_bytes(stem: String, entry: String) -> PackedByteArray:
+	if entry == "" and _private_art_data().has(stem):
+		return _private_art_data()[stem]
 	if _card_pack_file != null and _card_pack_direct_entries.has(stem):
 		var rec: Dictionary = _card_pack_direct_entries[stem]
 		var data_off := int(rec["data_off"])
@@ -671,6 +673,35 @@ func _read_card_pack_bytes(stem: String, entry: String) -> PackedByteArray:
 	return PackedByteArray()
 
 
+## Private art overlay: an optional small ZIP (private_cards.zip) in the storage folder.
+## Its images win over the bundled pack and the embedded art, so art that must not live
+## in the public repo can be supplied by the user. Entries are read fully into memory.
+var _private_art: Dictionary = {}
+var _private_art_loaded := false
+
+
+func _private_art_data() -> Dictionary:
+	if _private_art_loaded:
+		return _private_art
+	_private_art_loaded = true
+	if Paths.storage_dir.is_empty():
+		return _private_art
+	var path := Paths.storage_dir.path_join("private_cards.zip")
+	if not FileAccess.file_exists(path):
+		return _private_art
+	var reader := ZIPReader.new()
+	if reader.open(path) != OK:
+		return _private_art
+	for entry: String in reader.get_files():
+		if entry.ends_with("/"):
+			continue
+		var stem := entry.get_file().get_basename().to_lower()
+		if stem != "" and not _private_art.has(stem):
+			_private_art[stem] = reader.read_file(entry)
+	reader.close()
+	return _private_art
+
+
 func _card_pack_lookup(rel_path: String) -> Dictionary:
 	var norm := rel_path.replace("\\", "/").to_lower()
 	var is_mini := false
@@ -681,6 +712,8 @@ func _card_pack_lookup(rel_path: String) -> Dictionary:
 	else:
 		return {}
 	var stem := norm.get_file().get_basename().to_lower()
+	if stem != "card_ura" and _private_art_data().has(stem):
+		return {"stem": stem, "entry": "", "mini": is_mini, "private": true}
 	if stem != "card_ura" and is_instance_valid(LauncherSettings) and LauncherSettings.card_style == "classic":
 		if resolve(rel_path) != "":
 			return {}
