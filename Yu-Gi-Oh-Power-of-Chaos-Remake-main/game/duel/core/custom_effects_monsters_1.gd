@@ -2001,6 +2001,13 @@ static func on_continuous_enforce(duel) -> void:
 	# Mound of the Bound Creator (2619): los monstruos de Nivel 10 o mas no pueden ser objetivo
 	# ni destruidos por efectos de carta.
 	var mound_bound: bool = CustomDuelOps.has_faceup_id(duel, 0, 2619) or CustomDuelOps.has_faceup_id(duel, 1, 2619)
+	# Fallen Paradise (2576): las Bestias Sagradas de su controlador no pueden ser objetivo del rival
+	# ni destruidas por sus efectos mientras esta boca arriba.
+	var paradise_p := -1
+	if CustomDuelOps.has_faceup_id(duel, 0, 2576):
+		paradise_p = 0
+	elif CustomDuelOps.has_faceup_id(duel, 1, 2576):
+		paradise_p = 1
 	var has_field = CustomDuelOps.zone_idx(duel, 0, 10) != 0 and CustomDuelOps.is_face_up(duel, 0, 10) \
 		or CustomDuelOps.zone_idx(duel, 1, 10) != 0 and CustomDuelOps.is_face_up(duel, 1, 10)
 	for pl in 2:
@@ -2032,6 +2039,13 @@ static func on_continuous_enforce(duel) -> void:
 			if mound_bound and CustomDuelOps.monster_level(duel, CustomDuelOps.zone_idx(duel, pl, z)) >= 10:
 				zf["indest_effect"] = true
 				zf["untargetable"] = true
+			if paradise_p == pl and cid in CustomDuelOps.SACRED_BEAST_IDS:
+				zf["indest_opp_effect"] = true
+				zf["untargetable"] = true
+			if cid == 2601: # Maiden of the Millennium Moon: la batalla no la destruye (ni al rival que la combate)
+				zf["indest_battle"] = true
+			if cid == 2993: # Guardian Kay'est: no le afectan los efectos de Magia
+				zf["spell_immune"] = true
 			if cid in [2667, 2669, 2670, 2671, 2672] and not has_toon_w:
 				CustomDuelOps.destroy_zone(duel, pl, z)
 				continue
