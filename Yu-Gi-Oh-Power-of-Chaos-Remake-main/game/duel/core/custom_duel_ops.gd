@@ -253,6 +253,26 @@ static func _guardian_slime_after_damage(duel, p: int) -> void:
 	optional_effect(duel, p, 2588, body)
 
 
+## Egyptian God Slime (2554): zona del God Slime boca arriba que controla `p`, o -1.
+static func _god_slime_zone(duel, p: int) -> int:
+	p &= 1
+	for z in 5:
+		var idx = zone_idx(duel, p, z)
+		if idx != 0 and raw_id(duel, idx) == 2554 and is_face_up(duel, p, z):
+			return z
+	return -1
+
+
+## Wedju Temple (2680) boca arriba en la Zona de Magias/Trampas de `p`.
+static func _has_wedju_temple(duel, p: int) -> bool:
+	p &= 1
+	for z in range(5, 10):
+		var idx = zone_idx(duel, p, z)
+		if idx != 0 and raw_id(duel, idx) == 2680 and is_face_up(duel, p, z):
+			return true
+	return false
+
+
 static func heal(duel, p: int, amount: int) -> int:
 	p &= 1
 	if amount <= 0:
@@ -1103,6 +1123,10 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	if not by_battle and str(state(duel).get("effect_source", "")) in ["spell", "trap"] \
 			and bool(zf.get("indest_st_effect", false)):
 		return false
+	# Unstoppable Exodia Incarnate (2660): no puede ser destruido por efectos del rival.
+	if not by_battle and bool(zf.get("indest_opp_effect", false)) \
+			and int(state(duel).get("effect_source_p", -1)) == 1 - p:
+		return false
 	# Blaze Cannon (2517) y el Ra revivido por Ancient Chant: el monstruo no puede ser afectado
 	# por otras cartas ese turno, asi que no lo destruye ningun efecto.
 	if not by_battle and int(zf.get("unaffected_until_turn", -1)) >= turn_number(duel):
@@ -1138,6 +1162,10 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 			if gi >= 0:
 				special_summon_from_pile(duel, dp, LOC_BANISH, gi, dp)
 	var cid = raw_id(duel, idx)
+	# Wedju Temple (2680): un monstruo "Millennium" destruido se coloca en la Zona de Magias/Trampas
+	# boca arriba en lugar del Cementerio. Se recoloca desde el Cementerio, asi que el tablero final es
+	# el correcto (la carta no se queda en el Cementerio).
+	var wedju_place: bool = z < 5 and cid in MILLENNIUM_IDS and _has_wedju_temple(duel, p) and free_st_zone(duel, p) >= 0
 	if is_joey(duel):
 		var info: int = duel.m.local(0x14)
 		duel.m.set_u16(info, idx)
@@ -1148,6 +1176,10 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	clear_zone_state(duel, p, z)
 	state(duel)["destroyed_this_turn"][p].append(cid)
 	state(duel)["sent_gy_this_turn"][p].append(cid)
+	if wedju_place:
+		var wi: int = find_pile_index_by_id(duel, p, LOC_GRAVE, cid)
+		if wi >= 0 and free_st_zone(duel, p) >= 0:
+			set_st_from_pile(duel, p, LOC_GRAVE, wi, p, true)
 	return true
 
 
@@ -1590,6 +1622,11 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 			if pl != (owner_p & 1) and z < 5:
 				var armor_z := metalsilver_target_zone(duel, pl)
 				if armor_z >= 0 and z != armor_z:
+					continue
+			# Egyptian God Slime (2554): el rival solo puede elegir ese monstruo.
+			if pl != (owner_p & 1) and z < 5:
+				var slime_z := _god_slime_zone(duel, pl)
+				if slime_z >= 0 and z != slime_z:
 					continue
 			if filter.call(duel, pl, z, idx):
 				var score = 0

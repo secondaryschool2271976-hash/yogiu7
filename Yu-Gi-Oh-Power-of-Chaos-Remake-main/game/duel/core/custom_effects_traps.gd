@@ -235,14 +235,14 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			if rs_i >= 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, rs_i, p)
 			return true
-		2521: # Bottomless Trap Hole
+		2521: # Bottomless Trap Hole: primero destruye, luego destierra (asi dispara los "cuando es destruido").
 			var sz := int(ctx.get("summon_z", -1))
 			if sz >= 0 and sz < 5 and CustomDuelOps.zone_idx(duel, opp, sz) != 0 and CustomDuelOps.eff_atk(duel, opp, sz) >= 1500:
-				CustomDuelOps.banish_zone(duel, opp, sz)
+				_bottomless(duel, opp, sz)
 				return true
 			var tgt = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.eff_atk(d, pl, zz) >= 1500)
 			if not tgt.is_empty():
-				CustomDuelOps.banish_zone(duel, opp, tgt["z"])
+				_bottomless(duel, opp, tgt["z"])
 			return true
 		2529: # Compulsory Evacuation Device
 			var tgt = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5)
@@ -1062,6 +1062,18 @@ static func _has_any_equip_on_field(duel) -> bool:
 			if idx != 0 and CustomDuelOps.is_face_up(duel, pl, zz) and CustomDuelOps.csub(duel, idx) == 3:
 				return true
 	return not CustomDuelOps.state(duel)["equip_links"].is_empty()
+
+
+## Bottomless Trap Hole (2521): destruye el monstruo y despues lo destierra desde el Cementerio.
+static func _bottomless(duel, p: int, z: int) -> void:
+	var idx = CustomDuelOps.zone_idx(duel, p, z)
+	if idx == 0:
+		return
+	var cid: int = CustomDuelOps.raw_id(duel, idx)
+	CustomDuelOps.destroy_zone(duel, p, z)
+	var gi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, cid)
+	if gi >= 0:
+		CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
 
 
 static func _count_pile_spells(duel, p: int, loc: int) -> int:
