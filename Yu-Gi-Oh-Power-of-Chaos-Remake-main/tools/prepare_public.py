@@ -45,8 +45,6 @@ def allowed(relative: Path) -> bool:
         return True
     if path == "game/share_smoke.gd":
         return False
-    if path.startswith("game/tests/duel_harness/"):
-        return relative.suffix in {".gd", ".tscn", ".json", ".md"}
     if path.startswith("game/"):
         if any(part in {".godot", "assets", "tests", "artifacts", "temp", "scenarios"} for part in relative.parts):
             return False

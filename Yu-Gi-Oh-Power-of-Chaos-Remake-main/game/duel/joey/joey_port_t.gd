@@ -248,7 +248,6 @@ func f5a1f30(p: int) -> int:
 	match m.u8(_JT_STEP):
 		0:
 			f5a0e30()
-			CustomCardEffects.on_attack_declare(self, p, _jt_atk(), other, -1 if (m.u32(_JT_B) & 4) != 0 else _jt_def())
 		1:
 			if f5699c0(0x602) != 0:
 				f579790(p, f402460(0x602), (JoeyMem.ident(m.u32(JoeyMem.zone(p, _jt_atk()))) & 0xff) << 8 | 3)
@@ -366,10 +365,6 @@ func f5a2990(p: int) -> int:
 			var dmg_b := m.u32(b + 12)
 			f578540(m.u8(a) >> 6 & 1 ^ p, dmg_a, b, a)
 			f578540(m.u8(b) >> 6 & 1 ^ other, dmg_b, a, b)
-			if dmg_a > 0:
-				CustomCardEffects.on_battle_damage(self, other, _jt_def(), m.u8(a) >> 6 & 1 ^ p, dmg_a)
-			if dmg_b > 0:
-				CustomCardEffects.on_battle_damage(self, p, _jt_atk(), m.u8(b) >> 6 & 1 ^ other, dmg_b)
 			f579890()
 		2: f59d090()
 		10: f5bcf40(other, 0x39)
@@ -666,15 +661,6 @@ func f5a31a0(p: int) -> int:
 						f5747e0(p, f402460(0x52f), (_jt_atk() << 8 | p & 0xff) & 0x7ff, arg)
 					elif card == 0x53c:
 						f579790(p, f402460(0x53c), (JoeyMem.ident(m.u32(dst)) & 0xff) << 8 | 3)
-			if dead_a:
-				var atk_raw: int = cards.id_of(m.u16(a + 2) & 0xfff) & 0xffff
-				if atk_raw > 0:
-					CustomCardEffects.on_destroyed(self, p, atk_raw, true, false)
-			if dead_b and (m.u32(_JT_B) & 4) == 0:
-				var def_raw: int = cards.id_of(m.u16(b + 2) & 0xfff) & 0xffff
-				if def_raw > 0:
-					CustomCardEffects.on_destroyed(self, other, def_raw, true, false)
-			CustomCardEffects.on_battle_end(self, p, za, other, -1 if (m.u32(_JT_B) & 4) != 0 else zb, dead_a, dead_b)
 		1:
 			f579810()
 			fa = m.u16(a)
@@ -819,7 +805,6 @@ func f5b8210(announce: int) -> int:
 	var atk_before := CustomDuelOps.eff_atk(self, attacker, _jt_atk())
 	var def_a_before := 0 if is_direct else CustomDuelOps.eff_atk(self, defender, _jt_def())
 	var def_d_before := 0 if is_direct else CustomDuelOps.eff_def(self, defender, _jt_def())
-	CustomCardEffects.on_damage_calc(self, attacker, _jt_atk(), defender, -1 if is_direct else _jt_def(), is_direct)
 	var atk_after := CustomDuelOps.eff_atk(self, attacker, _jt_atk())
 	if atk_after != atk_before:
 		m.set_u32(a + 4, maxi(0, _s32(m.u32(a + 4)) + atk_after - atk_before))
@@ -844,7 +829,7 @@ func f5b8210(announce: int) -> int:
 				m.set_u8(b, m.u8(b) | 0x10)
 				m.set_u32(b + 12, damage)
 			else:
-				if (blocked_a == 0 and (effect_card_id(m.u16(a + 2)) == 0x53d or CustomCardEffects.has_pierce(self, attacker, _jt_atk()))) or f56d8d0(attacker, _jt_atk(), 0x521, attacker) != 0 or f56d8d0(attacker, _jt_atk(), 0x604, attacker) != 0:
+				if (blocked_a == 0 and (effect_card_id(m.u16(a + 2)) == 0x53d)) or f56d8d0(attacker, _jt_atk(), 0x521, attacker) != 0 or f56d8d0(attacker, _jt_atk(), 0x604, attacker) != 0:
 					m.set_u32(b + 12, damage)
 					m.set_u16(b, int(attacker == defender) << 6 | m.u16(b) & 0xffbf)
 				if f56d8d0(attacker, _jt_atk(), 0x521, 1 - attacker) != 0 or f56d8d0(attacker, _jt_atk(), 0x604, 1 - attacker) != 0:
@@ -866,11 +851,6 @@ func f5b8210(announce: int) -> int:
 		if m.u32(0xa56430 + attacker * 0xd44) & 0x400000:
 			m.set_u16(a, m.u16(a) & 0xffef)
 			m.set_u32(a + 12, 0)
-	# Dimension Fusion Destruction (2548): no battle damage to the summoner of the marked monster.
-	if CustomCardEffects.battle_damage_blocked(self, attacker, _jt_atk()):
-		m.set_u32(a + 12, 0)
-	if (m.u32(_JT_B) & 4) == 0 and CustomCardEffects.battle_damage_blocked(self, defender, _jt_def()):
-		m.set_u32(b + 12, 0)
 	if f56b220(0x14d) != 0:
 		if m.u32(b + 12) != 0 and _s32(f5699a0(m.u8(b) >> 6 & 1 ^ defender, 0x58f)) > 0:
 			m.set_u32(b + 12, 0)

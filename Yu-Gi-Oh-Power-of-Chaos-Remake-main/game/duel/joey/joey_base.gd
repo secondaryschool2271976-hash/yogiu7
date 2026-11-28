@@ -446,7 +446,7 @@ func f5bfeb0(a: int, b: int, seed: int) -> int:
 			m.set_u16(JoeyMem.MODE, m.u16(JoeyMem.MODE) | 6)
 	m.set_u16(JoeyMem.MODE + 2, 0)
 	f5b9e50()
-	CustomCardEffects.on_duel_reset(self)
+	CustomDuelOps.reset_duel(self)
 	if m.u32(GAME_KIND) == 4 and f479b30() != 0:
 		m.set_u16(JoeyMem.MODE, m.u16(JoeyMem.MODE) ^ 1)
 	return 0

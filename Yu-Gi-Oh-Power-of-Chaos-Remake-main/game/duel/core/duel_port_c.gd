@@ -780,9 +780,6 @@ func f546470(p: int, z: int, out: int) -> int:
 		0x5ee:
 			if p != (m.u8(0xa133f2) & 1) and (m.u8(0xa133f2) & 0xe) == 6:
 				l50 += 300
-	var extra_bonuses := ExtraCardEffects.compute_stat_bonuses_core(self, p, z, out, zone)
-	l50 += extra_bonuses.x
-	l4c += extra_bonuses.y
 	if (m.u8(out + 2) & 0x1f) == 0xd:
 		l50 += f543130(p, 0x4e4, 1) * 500
 		l4c += f543130(p, 0x4e4, 1) * 500
@@ -863,7 +860,6 @@ func f546470(p: int, z: int, out: int) -> int:
 		var t := m.u32(out + 4)
 		m.set_u32(out + 4, m.u32(out + 8))
 		m.set_u32(out + 8, t)
-	ExtraCardEffects.apply_post_modifiers_core(self, p, z, out, zone)
 	return 0
 
 

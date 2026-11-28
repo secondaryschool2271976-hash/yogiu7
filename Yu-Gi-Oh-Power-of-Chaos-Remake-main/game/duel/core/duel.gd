@@ -246,7 +246,7 @@ func f53b6f0() -> int:
 	m.clear(0xa15c00, 0x574)
 	m.clear(0xa15740, 0x490)
 	m.clear(0xa114c0, 0x150)
-	CustomCardEffects.on_duel_reset(self)
+	CustomDuelOps.reset_duel(self)
 	return 0
 
 
@@ -304,11 +304,9 @@ func frame() -> bool:
 			return false
 		_place_scenario_field()
 		var active := f53dbf0() == 0
-		CustomCardEffects.on_phase_tick(self, m.u8(0xa133f2) & 1, (m.u8(0xa133f2) >> 1) & 7)
 		return active
 	var busy := exec_commands()
 	f53d730(0)
-	CustomCardEffects.on_phase_tick(self, m.u8(0xa133f2) & 1, (m.u8(0xa133f2) >> 1) & 7)
 	return busy
 
 
@@ -317,9 +315,4 @@ func frame() -> bool:
 ## (menos uno).
 func winner() -> int:
 	f53d730(1)
-	var w := (m.u16(0xa133f2) & 0x60) >> 5
-	if w == 0:
-		var cw := CustomCardEffects.check_win(self)
-		if cw >= 0:
-			return cw + 1
-	return w
+	return (m.u16(0xa133f2) & 0x60) >> 5

@@ -196,8 +196,6 @@ func _jc_attack_eval(p: int, z: int, check: int, off: int, index: int, shield: i
 			var slot := (0xa563f1 + (at + (p & 1) * 0x6a2) * 2) & 0xffffffff
 			if m.u8(slot) != JoeyMem.ident(m.u32(_JC_ZONES + off)):
 				return -1
-	if not CustomCardEffects.can_attack(self, p, z):
-		return -1
 	if check == 0:
 		return 1
 	if shield == 0:
@@ -252,8 +250,6 @@ func f56bd80(p: int, z: int, q: int, w: int) -> int:
 	var target := m.u32(_JC_ZONES + target_off) & 0xfff
 	if target == 0:
 		return 0
-	if not CustomCardEffects.can_attack_target(self, p, z, q, w):
-		return 0
 	if (effect_card_id(target) & 0xffff) == 0x52e and f56b220(0x14d) != 0 \
 			and (m.u8(0xa55d7a + target_off) & 2) != 0 \
 			and f56b440(target, JoeyMem.ident(m.u32(_JC_ZONES + target_off))) == 0:
@@ -295,8 +291,6 @@ func f56bfd0(p: int, z: int) -> int:
 			return int(f56a780(1 - p) == 0)
 		0x32c:
 			return f56a810(1 - p)
-	if CustomCardEffects.can_direct_attack(self, p, z):
-		return 1
 	return 0
 
 

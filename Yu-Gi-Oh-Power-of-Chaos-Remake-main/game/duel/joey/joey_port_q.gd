@@ -393,7 +393,7 @@ func f598d70() -> int:
 
 ## Joey FUN_00598ed0: posicion del id de la carta idx en la tabla fija 5ed060, o -1.
 func f598ed0(idx: int) -> int:
-	ExtraCardEffects.sync_ritual_table_joey(self, idx)
+	CustomDuelOps.sync_ritual_table_joey(self, idx)
 	if m.u32(_JQ_ID_TABLE) & 0x3ffe000 == 0:
 		return 0xffffffff
 	var at := _JQ_ID_TABLE
@@ -417,7 +417,7 @@ func f598f30(p: int, k: int) -> int:
 	var i := 0
 	while i < m.u8(pl + JoeyMem.P_HAND_N):
 		var at := pl + JoeyMem.P_HAND + i * 4
-		if ExtraCardEffects.matches_ritual_monster_joey(self, m.u16(at) & 0xfff, req_id):
+		if CustomDuelOps.matches_ritual_monster_joey(self, m.u16(at) & 0xfff, req_id):
 			if f56b440(m.u32(at) & 0xfff, 0xffffffff) == 0:
 				return 1
 		i = (i + 1) & 0xffff

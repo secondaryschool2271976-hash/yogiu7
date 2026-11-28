@@ -60,7 +60,7 @@ func _zi_effect(card: int, p: int, z: int, bits: int) -> int:
 
 
 func f5a0800(card: int, p: int, z: int) -> int:
-	if f402690(card) != 0 and (f568030(card & 0xffff) != 0 or CustomCardEffects.handles(cards.id_of(card & 0xffff) & 0xffff)):
+	if f402690(card) != 0 and f568030(card & 0xffff) != 0:
 		return _zi_effect(card, p, z, 0x1000)
 	return 0
 
@@ -143,7 +143,7 @@ func f5a02a0(card: int, p: int, hand: int) -> int:
 			else:
 				f45e240(13)
 				actions = f5aae00(p, card)
-			if (f5682d0(card & 0xffff) != 0 or CustomCardEffects.handles(cards.id_of(card & 0xffff) & 0xffff)) and f57edd0(p, hand, card & 0xffff) != 0:
+			if f5682d0(card & 0xffff) != 0 and f57edd0(p, hand, card & 0xffff) != 0:
 				actions |= 8
 	elif phase == 3:
 		if kind == 21:
@@ -183,11 +183,11 @@ func f5a08f0(card: int, p: int, z: int) -> int:
 				valid = f57ed20(p, z + 5, card & 0xffff)
 			else:
 				f45e240(1)
-		elif f402690(card) == 0 and (f568030(card & 0xffff) != 0 or CustomCardEffects.handles(cards.id_of(card & 0xffff) & 0xffff)):
+		elif f402690(card) == 0 and f568030(card & 0xffff) != 0:
 			valid = _zi_effect(card, p, z + 5, 0x1000)
 	elif kind == 22:
 		if flags & 2:
-			if f402690(card) == 0 and (f568030(card & 0xffff) != 0 or CustomCardEffects.handles(cards.id_of(card & 0xffff) & 0xffff)):
+			if f402690(card) == 0 and f568030(card & 0xffff) != 0:
 				f45e240(4)
 				valid = f57ec70(p, z + 5, card & 0xffff)
 		else:

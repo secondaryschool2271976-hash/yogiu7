@@ -80,7 +80,7 @@ func f56b5f0(e: int) -> int:
 			var req_id := m.u32(0x5aa9f0 + row * 4) & 0x1fff if row >= 0 else 0
 			for hand in m.u8(DuelMem.pl(p) + 2):
 				var a := DuelMem.pl(p) + 0x674 + hand * 4
-				if ExtraCardEffects.matches_ritual_monster_core(self, m.u16(a) & 0xfff, req_id):
+				if CustomDuelOps.matches_ritual_monster_core(self, m.u16(a) & 0xfff, req_id):
 					f541cb0(0xa15fe8, a)
 					issue(m.u16(e + 2) << 15 | 0xc2, m.u16(a), m.u16(a + 2), 0)
 					m.set_u32(0xa0fb18, hand)
@@ -270,16 +270,6 @@ func f570450(p: int, hand: int, index: int) -> int:
 					mask |= 8
 			elif id == 0x1a8 and f551c40(p, index, 11) != 0:
 				mask |= 8
-			var raw_h := cards.id_of(index) & 0xffff
-			if CustomCardEffects.handles(raw_h):
-				if not CustomCardEffects.can_normal_summon(self, p, raw_h, false):
-					mask &= ~0x1
-				if not CustomCardEffects.can_normal_summon(self, p, raw_h, true):
-					mask &= ~0x10
-				if f56e660(0) != 0 and CustomCardEffects.can_special_summon(self, p, raw_h, CustomDuelOps.LOC_HAND, hand):
-					mask |= 0xc00
-				if CustomCardEffects.can_activate(self, p, raw_h, CustomDuelOps.LOC_HAND, hand, {}):
-					mask |= 8
 	elif phase == 3:
 		# Fase de batalla: trampa 0xf, magia que no sea de velocidad 5 (rapida) 5, monstruo 6.
 		if kind == 0x15:
@@ -590,7 +580,7 @@ func f56ac80(p: int, row: int) -> int:
 	var a := DuelMem.pl(p & 1)
 	var req_id := m.u32(0x5aa9f0 + row * 4) & 0x1fff
 	for i in m.u8(a + 2):
-		if ExtraCardEffects.matches_ritual_monster_core(self, m.u16(a + 0x674 + i * 4) & 0xfff, req_id):
+		if CustomDuelOps.matches_ritual_monster_core(self, m.u16(a + 0x674 + i * 4) & 0xfff, req_id):
 			return 1
 	return 0
 
@@ -621,7 +611,7 @@ func f56aef0() -> int:
 
 ## FUN_0056ac20: fila de ritual por el id del monstruo.
 func f56ac20(index: int) -> int:
-	ExtraCardEffects.sync_ritual_table_core(self, index)
+	CustomDuelOps.sync_ritual_table_core(self, index)
 	var row := 0
 	var id := effect_card_id(index)
 	while (m.u32(0x5aa9f0 + row * 4) & 0x3ffe000) != 0:
@@ -656,7 +646,7 @@ func f56af00(p: int, location: int, chosen: int) -> int:
 		index = m.u16(DuelMem.pl(p & 1) + 0x674 + chosen * 4) & 0xfff
 		if f543360(m.u8(current + 2) & 1) < 0:
 			return 0
-		if ExtraCardEffects.matches_ritual_monster_core(self, index, ritual) and f545060(p, ritual) < 2:
+		if CustomDuelOps.matches_ritual_monster_core(self, index, ritual) and f545060(p, ritual) < 2:
 			return 0
 	if ((f401a20(index) >> 20) & 0x1f) > 0x14:
 		return 0
@@ -670,7 +660,7 @@ func f56af00(p: int, location: int, chosen: int) -> int:
 		if location == 0xb and chosen == i:
 			continue
 		var candidate := m.u16(a + 0x674 + i * 4) & 0xfff
-		if ExtraCardEffects.matches_ritual_monster_core(self, candidate, ritual):
+		if CustomDuelOps.matches_ritual_monster_core(self, candidate, ritual):
 			ritual = -1
 		else:
 			levels.append(_l_level(candidate))
@@ -687,7 +677,7 @@ func f56b490(e: int) -> int:
 	var p := m.u8(e + 2) & 1
 	if f56e660(p) == 0:
 		return 0
-	ExtraCardEffects.sync_ritual_table_core(self, m.u16(e), p)
+	CustomDuelOps.sync_ritual_table_core(self, m.u16(e), p)
 	var row := 0
 	while (m.u32(0x5aa9f0 + row * 4) & 0x1fff) != 0:
 		var rule := m.u32(0x5aa9f0 + row * 4)
@@ -790,8 +780,6 @@ func f56e530() -> int:
 
 ## FUN_0056e540: busqueda binaria exacta del ID en la tabla de efectos (entradas de 24 bytes).
 func f56e540(index: int) -> int:
-	if CustomCardEffects.overrides(cards.id_of(index) & 0xffff):
-		return -1
 	var id := cards.effect_id_of(effect_card_id(index) & 0xffff)
 	var low := 0
 	var high := 0x1ad
@@ -905,8 +893,6 @@ func f56e600(p: int) -> int:
 func f569500(p: int, index: int, kind: int) -> int:
 	if p != 0:
 		return 1
-	if CustomCardEffects.handles(cards.id_of(index) & 0xffff):
-		return 1
 	var id := effect_card_id(index)
 	match kind:
 		1: return int((m.u8(0xa133f2) & 1) != 0 and ctype(index) == 0x15)
@@ -936,7 +922,7 @@ func f5691b0(entry: int, p: int, z: int) -> int:
 	var index := m.u16(a) & 0xfff
 	if index == 0 or ctype(index) < 0x15:
 		return 0
-	if effect_card_id(index) not in [0x594, 0x3f9, 0x52c, 0x5fc] and not CustomCardEffects.handles(cards.id_of(index) & 0xffff) and (flags & 2) != 0:
+	if effect_card_id(index) not in [0x594, 0x3f9, 0x52c, 0x5fc] and (flags & 2) != 0:
 		return 0
 	if p == 0:
 		f4437a0(4)  # FUN_004437a0: ayuda del original.
@@ -1317,14 +1303,6 @@ func f56e6e0(mode: int, alternate: int) -> int:
 	match state:
 		0:
 			var id := effect_card_id(index)
-			# Nomi y semi-nomi (p. ej. Armed Dragon LV10 White): el motor no tiene invocacion
-			# normal para la carta, asi que no se abre la pregunta de sacrificios.
-			var raw_card: int = cards.id_of(index) & 0xffff
-			if alternate == 0 and CustomCardEffects.handles(raw_card) \
-					and not CustomCardEffects.can_normal_summon(self, p, raw_card, false) \
-					and not CustomCardEffects.can_normal_summon(self, p, raw_card, true):
-				_l_action_end()
-				return 0
 			var special := {0x4e9: 0x50, 0x175: 0x1e, 0x34d: 0x28, 0x5ea: 0x32, 0x5eb: 0x3c,
 					0x5ec: 0x46, 0x5ed: 0x46, 0x5ee: 0x46, 0x5ef: 0x46}
 			if special.has(id):
@@ -1350,9 +1328,8 @@ func f56e6e0(mode: int, alternate: int) -> int:
 				_l_summon_done(mode, true, f543360(p), 0)
 				return 0
 			# 0x56e92f: el nivel se calcula con el u32 de 0xa13404 en ESI.
-			var custom_tribs: int = CustomCardEffects.normal_tribute_requirement(cards.id_of(index) & 0xffff)
 			var level := f4457d0(m.u32(0xa13404))
-			if custom_tribs == 0 or (custom_tribs < 0 and level <= 4):
+			if level <= 4:
 				_l_summon_done(mode, alternate != 0, f543360(p), 0)
 				if effect_card_id(index) == 0x5f0 and ((m.u32(0xa13408) >> 2) & 15) in [10, 11]:
 					var other := 1 - p
@@ -1360,7 +1337,7 @@ func f56e6e0(mode: int, alternate: int) -> int:
 						f53baa0(((((m.u32(0xa1340e) & 0xffffff1c) << 7) | ((m.u32(0xa13410) >> 8) & 0x1f) | 0xe40) << 16) | index, 0)
 						_l_action_end()
 				return 0
-			if custom_tribs == 1 or (custom_tribs < 0 and level <= 6):
+			if level <= 6:
 				_l_tribute_question(0x5ad288, 10)
 				return 0
 			_l_tribute_question(0x5ad28c, 1)

@@ -39,15 +39,6 @@ func f59ff00(kind: int) -> int:
 	return 0
 
 func f59ff50(a: int, b: int, c: int) -> int:
-	if c == 14:
-		var gy_cnt: int = CustomDuelOps.pile_count(self, b & 1, CustomDuelOps.LOC_GRAVE)
-		for gi in range(gy_cnt):
-			var g_idx: int = CustomDuelOps.pile_idx(self, b & 1, CustomDuelOps.LOC_GRAVE, gi)
-			var g_cid: int = cards.id_of(g_idx) & 0xffff
-			if g_cid in [2507, 2625, 2650, 2653, 2658, 3138, 3139] and CustomCardEffects.can_activate(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
-				CustomCardEffects.resolve_chain_link(self, b & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi})
-				_jw_clear_window()
-				return 0
 	var entry := f59ff90(a, b, c)
 	if entry != 0:
 		f5ba490(entry, 0, 0)
@@ -55,13 +46,6 @@ func f59ff50(a: int, b: int, c: int) -> int:
 	return 0
 
 func f59ff90(_unused: int, p: int, kind: int) -> int:
-	if kind == 14:
-		var gy_cnt: int = CustomDuelOps.pile_count(self, p & 1, CustomDuelOps.LOC_GRAVE)
-		for gi in range(gy_cnt):
-			var g_idx: int = CustomDuelOps.pile_idx(self, p & 1, CustomDuelOps.LOC_GRAVE, gi)
-			var g_cid: int = cards.id_of(g_idx) & 0xffff
-			if g_cid in [2507, 2625, 2650, 2653, 2658, 3138, 3139] and CustomCardEffects.can_activate(self, p & 1, g_cid, CustomDuelOps.LOC_GRAVE, -1, {"pile_i": gi}):
-				return (g_idx & 0xffff) | ((p & 1) << 31) | 0x5f0000
 	for i in range(_s32(m.u32(0x5efa64))):
 		var at := 0x5efa44 + i * 6
 		if kind == m.u16(at + 2):
@@ -127,11 +111,6 @@ func f5b8c60() -> int:
 				11:
 					if f4025d0(card) & 0xffff > 20:
 						f59fd60(1, 0, 0)
-						return 0
-					var raw_hand_id: int = cards.id_of(card & 0xfff) & 0xffff
-					if CustomCardEffects.handles(raw_hand_id) and CustomCardEffects.can_activate(self, p, raw_hand_id, CustomDuelOps.LOC_HAND, z, {"pile_i": z}):
-						CustomCardEffects.resolve_chain_link(self, p, raw_hand_id, CustomDuelOps.LOC_HAND, z, {"pile_i": z})
-						_jw_clear_window()
 						return 0
 					var id := s16(effect_card_id(card))
 					if id == 0x47:
@@ -615,18 +594,8 @@ func f5bb720() -> int:
 			m.set_u32(0xa55c88, 0x800000 | m.u16(0xa55c88))
 		5:
 			var entry_idx := m.u16(at)
-			var raw_id := cards.id_of(entry_idx) & 0xffff
 			var effect := _s32(f59dbe0(entry_idx))
 			if effect < 0 or m.u32(0x5ed0ac + effect * 24) == 0:
-				if effect < 0 and CustomCardEffects.handles(raw_id) and (m.u16(at + 4) & 4) == 0:
-					var cref: int = m.u16(at + 2)
-					var cp: int = ((cref >> 14) & 1) ^ (cref & 1)
-					var cz: int = (cref >> 1) & 31
-					var cloc: int = CustomDuelOps.LOC_FIELD_MONSTER if cz < 5 else (CustomDuelOps.LOC_FIELD_ST if cz < 10 else (CustomDuelOps.LOC_FIELD_SPELL if cz == 10 else (CustomDuelOps.LOC_HAND if cz == 11 else CustomDuelOps.LOC_GRAVE)))
-					var cctx: Dictionary = CustomCardEffects.build_joey_ctx(self, at, prev, 1 if cz == 11 else 0)
-					cctx["chain_entry"] = at
-					cctx["prev_entry"] = prev
-					CustomCardEffects.resolve_chain_link(self, cp, raw_id, cloc, cz if cz <= 10 else -1, cctx)
 				m.set_u32(0xa58260, m.u32(0xa58260) | 0x100000)
 				_jw_state(0xa55c88, 0xf0, 14)
 				return 1

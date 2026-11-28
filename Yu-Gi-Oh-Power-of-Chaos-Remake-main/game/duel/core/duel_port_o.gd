@@ -113,8 +113,6 @@ func f57e540(attacker: int, out: int) -> int:
 	for target in range(5):
 		if (m.u32(0xa1195c + target * 0x94) & 0xfff) == 0:
 			continue
-		if not CustomCardEffects.can_attack_target(self, 1, attacker, 0, target):
-			continue
 		f57e440(attacker, target, scratch)
 		if (m.u32(scratch) & 8) == 0:
 			continue
