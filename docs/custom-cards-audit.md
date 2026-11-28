@@ -4,6 +4,11 @@ Scope: the 643 custom cards added to the game (ids 2500-3142, card text from `ga
 Each card's text is compared against the code that implements it (`game/duel/core/custom_effects_*.gd`,
 `custom_card_effects.gd`, `custom_duel_ops.gd`, `extra_card_effects.gd`).
 
+Coverage: 620 of the 643 cards have code that handles them. The other 23 are monsters with flavour text and
+no effect (Opticlops, Luster Dragon #2, Lizard Soldier and so on). Every effect family was swept against the
+card text: summon and flip triggers, ignition effects, Standby and End Phase ticks, battle damage and
+destruction, protection, Union and equip clauses, and the state flags each card sets.
+
 This file lists the cards that could **not** be brought fully in line with their printed text, and why.
 Cards that were wrong and are now fixed are listed at the end for reference.
 
@@ -27,12 +32,6 @@ random card from their hand."
 Done: the battle protection and the discard. Missing: destroying itself after being targeted.
 Why: the game marks that an effect was targeted (`effect_targeted`) but not which card was targeted, and
 the mark is cleared when the chain link resolves. There is no per-card record to check afterwards.
-
-### 3038 Kaiser Glider
-Text: "Cannot be destroyed by battle with a monster that has the same ATK. If this card is destroyed and
-sent to the GY: Target 1 monster on the field; return that target to the hand."
-Done: the return-to-hand effect. Missing: the battle protection against an equal-ATK attacker.
-Why: destruction is resolved from the defending side only, without the attacking monster's ATK in scope.
 
 ### 2589 Hamon, Lord of Striking Thunder / 2702 Marauding Captain / 2993 Guardian Kay'est
 Text: restrictions on which monsters the opponent may **attack** (Hamon in Defense Position: only it can
@@ -77,19 +76,6 @@ cannot place a monster on the field if his/her number of monsters would exceed t
 on the field of this card's controller."
 Done: nothing. Why: placing a monster is done by the original engine, which has no hook to refuse a
 Summon based on the current monster counts. The custom layer can only act after a monster has landed.
-
-### 2949 Kishido Spirit
-Text: "Monsters on your side of the field cannot be destroyed in a battle if the monsters' ATK are equal."
-Done: nothing. Why: the destruction itself is reachable, but only the identity of the card being
-destroyed is passed in. The ATK of the monster it fought is not carried into the destruction, so the
-equal-ATK condition cannot be evaluated there.
-
-### 2956 Continuous Destruction Punch
-Text: "If the DEF of the attacked Defense Position monster on your side of the field is higher than the
-ATK of the attacking monster on your opponent's side of the field: Destroy the attacking monster at the
-end of the Damage Step."
-Done: nothing. Why: same as Kishido Spirit - the end of the Damage Step is handled by the original
-engine and both monsters' stats are not available where the custom layer can act.
 
 ### 3051 Precious Cards from Beyond
 Text: "When you Tribute Summon a monster using 2 or more Tributes: Draw 2 cards."
@@ -161,7 +147,7 @@ defect to miss. Every flag below was checked against the whole repository, not j
 | can_activate_set_turn | 2626 Reactor Slime | the Set card may be activated that turn | needs an engine hook |
 | maharaghi_scry_turn | 2735 Maharaghi | look at the top card before the next draw | fixed |
 | blaze_cannon_turn | 2517 Blaze Cannon | the extra effects granted to Ra for the turn | fixed |
-| reborn_ra_turn | 2610 Millennium Revelation | Special Summon Ra with Monster Reborn that turn | open |
+| reborn_ra_turn | 2610 Millennium Revelation | Special Summon Ra with Monster Reborn that turn | needs an engine hook (Monster Reborn is a native card) |
 | capsule_card_id | 2809 Different Dimension Capsule | the banished card returns later | verified redundant: the card id travels in the scheduled effect |
 | pharaoh_treasure_armed | 2856 Pharaoh's Treasure | recognise the drawn copy | fixed |
 | name_is_dmg | 2543 Dark Magician Girl the Magician's Apprentice | the name becomes "Dark Magician Girl" | verified redundant: 2543 is already in the Dark Magician id list (see the note below) |
@@ -209,6 +195,8 @@ Note on 2543: because its id sits in the Dark Magician list unconditionally, the
 | 2941 Zombie Tiger | the equipped monster's battle kill did not make the opponent discard |
 | 2959 Koitsu | the equipped monster got no piercing damage |
 | 2974 Kiryu | no way to Tribute it for a direct attack with the equipped monster |
+| 2949 Kishido Spirit | no protection at all for your monsters in an equal-ATK battle |
+| 2956 Continuous Destruction Punch | the attacking monster was never destroyed for attacking a bigger defender |
 | 2885 Dark Dust Spirit | set its return-to-hand flag but nothing ever read it, so it stayed on the field |
 | 3077 Battle-Scarred | the opponent never paid the Archfiend's Standby cost, and the trap and its monster did not destroy each other |
 | 2914 Des Dendle | the equipped monster made no Wicked Plant Token when it destroyed a monster in battle |
@@ -241,6 +229,5 @@ These cards need the player to pick between named options (not a card on the fie
 | --- | --- |
 | 2750 Ominous Fortunetelling | The Standby Phase call of Monster, Spell or Trap is rolled at random instead of being chosen. The 700 damage on a correct call is applied normally. |
 | 2984 Spellbook Organization | There is no way to reorder the top 3 cards, so they stay in the order they were in. |
-| 3105 Spatial Collapse | The 5-card limit is checked when it is activated but never enforced afterwards, because the engine decides where cards are placed. |
 
 A multi-option prompt in the custom layer would close this. Until then, treat the call as a coin flip rather than a decision.
