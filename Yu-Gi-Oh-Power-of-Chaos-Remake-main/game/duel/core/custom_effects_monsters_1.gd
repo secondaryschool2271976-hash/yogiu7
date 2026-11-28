@@ -159,6 +159,21 @@ static func can_special_summon(duel, p: int, cid: int, loc: int, _slot: int) -> 
 	return false
 
 
+static func _evening_finish(duel, p: int, cid: int, loc: int, slot: int, attr: int) -> int:
+	if _count_attr_in_gy(duel, p, 1) <= 0 or _count_attr_in_gy(duel, p, 1) != _count_attr_in_gy(duel, p, 2):
+		return -1
+	while true:
+		var gi: int = _find_attr_in_gy(duel, p, attr)
+		if gi < 0:
+			break
+		CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
+	var z: int = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
+	if z >= 0:
+		CustomDuelOps.zflags(duel, p, z)["evening_banished_attr"] = attr
+		on_summon_or_flip(duel, p, z, cid, "special")
+	return z
+
+
 static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 	p &= 1
 	var opp = 1 - p
@@ -211,19 +226,19 @@ static func special_summon(duel, p: int, cid: int, loc: int, slot: int) -> int:
 				on_summon_or_flip(duel, p, z, cid, "special")
 			return z
 		2516: # BLS Envoy Evening Twilight
-			var attr = 1
-			if _count_attr_in_gy(duel, p, 1) > 0:
-				attr = 1
-			while true:
-				var gi = _find_attr_in_gy(duel, p, attr)
-				if gi < 0:
-					break
-				CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
-			var z = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
-			if z >= 0:
-				CustomDuelOps.zflags(duel, p, z)["evening_banished_attr"] = attr
-				on_summon_or_flip(duel, p, z, cid, "special")
-			return z
+			# Coste: desterrar TODOS los LUZ o TODOS los OSCURIDAD del Cementerio (misma cantidad de
+			# cada uno). Con jugador local elige (Si = LUZ, No = OSCURIDAD); sin el, LUZ como antes.
+			var ask_text: String = CustomDuelOps.lang_text(
+				"اختر العنصر المستبعد من المقبرة للاستدعاء الخاص.\nنعم = كل وحوش الضوء، لا = كل وحوش الظلام.",
+				"Elige que desterrar del Cementerio para la Invocacion Especial.\nSi = todos los de LUZ, No = todos los de OSCURIDAD.",
+				"Choose what to banish from your GY for the Special Summon.\nYes = all LIGHT, No = all DARK.")
+			var yes_light := func() -> void:
+				_evening_finish(duel, p, cid, loc, slot, 1)
+			var no_dark := func() -> void:
+				_evening_finish(duel, p, cid, loc, slot, 2)
+			if CustomDuelOps.ask_optional(duel, p, ask_text, yes_light, no_dark):
+				return -1
+			return _evening_finish(duel, p, cid, loc, slot, 1)
 		2518:
 			CustomDuelOps.tribute_zone(duel, p, CustomDuelOps.find_zone_of_id(duel, p, CustomDuelOps.NATIVE_BEUD, true))
 			var z = CustomDuelOps.special_summon_from_pile(duel, p, loc, slot, p, true, false)
@@ -1248,7 +1263,7 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				CustomDuelOps.pflags(duel, p)["skip_bp_turn"] = t
 				var battr := int(zf.get("evening_banished_attr", 1))
 				if battr == 1:
-					var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
+					var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5 and not (_pl == p and zz == z), true, true)
 					if not pick.is_empty():
 						CustomDuelOps.banish_zone(duel, int(pick["p"]), int(pick["z"]))
 				elif CustomDuelOps.pile_count(duel, opp, CustomDuelOps.LOC_HAND) > 0:
