@@ -1252,6 +1252,10 @@ static func on_standby_tick(duel, turn_p: int) -> void:
 				pass # Pandemonium waives Standby LP cost
 			elif CustomDuelOps.can_pay_lp(duel, turn_p, cost):
 				CustomDuelOps.pay_lp(duel, turn_p, cost)
+				# Battle-Scarred (3077): el rival paga la misma cantidad por ese monstruo.
+				if CustomDuelOps.has_faceup_id(duel, opp, 3077) and CustomDuelOps.union_equipped_to(duel, turn_p, z, 3077):
+					if CustomDuelOps.can_pay_lp(duel, opp, cost):
+						CustomDuelOps.pay_lp(duel, opp, cost)
 			else:
 				CustomDuelOps.destroy_zone(duel, turn_p, z)
 				continue
@@ -1294,6 +1298,12 @@ static func on_end_phase(duel, turn_p: int) -> void:
 			if cid == 3034 and int(zf.get("mirage_banish_turn", -1)) == t:
 				CustomDuelOps.banish_zone(duel, pl, z)
 				continue
+			# Spirit monsters return to the hand on the End Phase of the turn they were Normal Summoned or
+			# flipped face-up; Spiritual Energy Settle Machine (2788) keeps them on the field.
+			if cid in [2885] and int(zf.get("spirit_return_turn", -1)) == t:
+				if not CustomDuelOps.has_faceup_id(duel, pl, 2788):
+					CustomDuelOps.bounce_zone(duel, pl, z)
+					continue
 			if pl == turn_p:
 				if cid == 3070: # Berserk Dragon: -500 ATK
 					CustomDuelOps.add_stat_mod(duel, pl, z, -500, 0, false)

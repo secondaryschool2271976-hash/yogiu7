@@ -209,6 +209,8 @@ Note on 2543: because its id sits in the Dark Magician list unconditionally, the
 | 2941 Zombie Tiger | the equipped monster's battle kill did not make the opponent discard |
 | 2959 Koitsu | the equipped monster got no piercing damage |
 | 2974 Kiryu | no way to Tribute it for a direct attack with the equipped monster |
+| 2885 Dark Dust Spirit | set its return-to-hand flag but nothing ever read it, so it stayed on the field |
+| 3077 Battle-Scarred | the opponent never paid the Archfiend's Standby cost, and the trap and its monster did not destroy each other |
 | 2914 Des Dendle | the equipped monster made no Wicked Plant Token when it destroyed a monster in battle |
 | 2947 Burning Beast | no face-up Spell/Trap was destroyed when the equipped monster dealt battle damage |
 | 2975 Freezing Beast | no face-down Spell/Trap was destroyed when the equipped monster dealt battle damage |
