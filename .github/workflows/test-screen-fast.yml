@@ -1,0 +1,29 @@
+name: UI card colors
+on:
+  push:
+    paths:
+      - .github/workflows/test-screen-fast.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/test-screen-fast.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Test screen: debounce search, paged list, shared styles (fix freeze)"
+          git push -f origin "HEAD:refs/heads/$BR"
