@@ -10,7 +10,7 @@ extends Control
 ## cementerio. Tocar una carta anadida la quita.
 ## Todo va dentro de un ScrollContainer y los botones de empezar/volver viven en una barra fija.
 
-const MAX_RESULTS := 150
+const MAX_RESULTS := 30  # filas por pagina; el boton "mas" agrega otras 30
 ## Solo se listan las cartas personalizadas (ids >= 2500); los monstruos normales originales no aportan nada al probar efectos.
 const CUSTOM_MIN_ID := 2500
 const ROW_HEIGHT := 52
@@ -46,6 +46,12 @@ var _tab_buttons: Array = []
 var _slots_box: VBoxContainer
 var _rtl := false
 var _last_press := {}
+var _index: Array = []  # [id, texto normalizado], se construye una sola vez
+var _style_cache := {}
+var _search_timer: Timer
+var _pending_query := ""
+var _shown_limit := MAX_RESULTS
+var _more_btn: Button
 ## Colocacion elegida para lo que se anade al campo: 0 ataque, 1 defensa, 11 boca abajo (monstruos);
 ## en magia/trampa, false = boca abajo y true = boca arriba. Se guarda en paralelo a _field / _st.
 var _mon_pos := 0
@@ -71,7 +77,12 @@ func _txt(eng: String, ara: String, spa: String) -> String:
 
 
 func _flat(color: Color, radius := 12) -> StyleBoxFlat:
+	# Los estilos se comparten entre botones: crear 4 por boton por pulsacion de tecla colgaba el movil.
+	var ckey := "%s|%d" % [str(color), radius]
+	if _style_cache.has(ckey):
+		return _style_cache[ckey]
 	var s := StyleBoxFlat.new()
+	_style_cache[ckey] = s
 	s.bg_color = color
 	s.set_corner_radius_all(radius)
 	s.border_color = color.darkened(0.28)
@@ -187,7 +198,12 @@ func _build() -> void:
 
 	var search := LineEdit.new()
 	search.placeholder_text = _txt("Search a card by name", "ابحث بالاسم أو برقم البطاقة", "Busca una carta por nombre")
-	search.text_changed.connect(_refresh)
+	search.text_changed.connect(_on_search_changed)
+	_search_timer = Timer.new()
+	_search_timer.one_shot = true
+	_search_timer.wait_time = 0.35
+	_search_timer.timeout.connect(func() -> void: _refresh(_pending_query))
+	add_child(_search_timer)
 	search.custom_minimum_size = Vector2(0, 50)
 	search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	search.text_direction = Control.TEXT_DIRECTION_RTL if _rtl else Control.TEXT_DIRECTION_AUTO
@@ -717,20 +733,53 @@ func _card_matches(card: Dictionary, q: String) -> bool:
 	return false
 
 
-func _refresh(query: String) -> void:
+func _on_search_changed(query: String) -> void:
+	_pending_query = query
+	_search_timer.start()
+
+
+func _build_index() -> void:
+	if not _index.is_empty():
+		return
+	for card: Dictionary in CardDB.cards:
+		var cid := int(card.get("internal_id", 0))
+		if cid < CUSTOM_MIN_ID:
+			continue
+		var names: Dictionary = card.get("names", {})
+		var parts: Array = []
+		for key in ["ara", "eng", "spa"]:
+			parts.append(_norm(str(names.get(key, ""))))
+		_index.append([cid, "\n".join(parts), _card_name(card)])
+	_index.sort_custom(func(a: Array, b: Array) -> bool: return int(a[0]) < int(b[0]))
+
+
+func _refresh(query: String, limit := MAX_RESULTS) -> void:
+	_build_index()
 	_list_clear()
+	_more_btn = null
+	_shown_limit = limit
 	var q := _norm(query.strip_edges())
 	var shown := 0
-	for card: Dictionary in CardDB.cards:
-		if int(card.get("internal_id", 0)) < CUSTOM_MIN_ID:
+	var total := 0
+	var is_id := q.is_valid_int()
+	for entry: Array in _index:
+		var cid := int(entry[0])
+		if q != "" and not ((is_id and cid == int(q)) or str(entry[1]).contains(q)):
 			continue
-		if not _card_matches(card, q):
-			continue
-		_list_add("%s  ·  #%d" % [_card_name(card), int(card.get("internal_id", 0))], int(card.get("internal_id", 0)))
-		shown += 1
-		if shown >= MAX_RESULTS:
-			break
-	_status.text = _txt("%d cards" % shown, "%d بطاقة" % shown, "%d cartas" % shown)
+		total += 1
+		if shown < limit:
+			_list_add("%s  ·  #%d" % [str(entry[2]), cid], cid)
+			shown += 1
+	if total > shown:
+		_more_btn = Button.new()
+		_more_btn.text = _txt("Show more (%d left)" % (total - shown), "عرض المزيد (باقي %d)" % (total - shown), "Mostrar más (faltan %d)" % (total - shown))
+		_more_btn.custom_minimum_size = Vector2(0, ROW_HEIGHT)
+		_color_button(_more_btn, Color(0.33, 0.40, 0.56), 18)
+		var qq := query
+		var lim := limit + MAX_RESULTS
+		_tap(_more_btn, func() -> void: _refresh(qq, lim))
+		_list_box.add_child(_more_btn)
+	_status.text = _txt("%d cards" % total, "%d بطاقة" % total, "%d cartas" % total)
 
 
 func _on_start() -> void:
