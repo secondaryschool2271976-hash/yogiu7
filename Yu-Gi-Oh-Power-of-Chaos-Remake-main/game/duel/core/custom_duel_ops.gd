@@ -1612,6 +1612,37 @@ static func choose_zone(duel, owner_p: int, filter: Callable, prefer_highest := 
 	return best
 
 
+## Igual que choose_zone, pero el jugador local elige el objetivo (Si = este, No = el siguiente; el
+## ultimo se toma solo) y `on_pick` recibe el Dictionary {p, z, idx}. El orden de candidatos es el del
+## elegidor automatico, asi que sin jugador local (CPU, red, repeticion) o con un solo candidato se
+## usa el mejor como antes. Sin candidatos no se llama a `on_pick`.
+static func choose_zone_then(duel, owner_p: int, filter: Callable, prefer_highest: bool, target_opp: bool, on_pick: Callable) -> void:
+	var cands: Array = []
+	var excluded: Array = []
+	while cands.size() < 11:
+		var ex: Array = excluded
+		var wrapped := func(d, pl, z, idx) -> bool:
+			return not ([pl, z] in ex) and bool(filter.call(d, pl, z, idx))
+		var c: Dictionary = choose_zone(duel, owner_p, wrapped, prefer_highest, target_opp)
+		if c.is_empty():
+			break
+		cands.append(c)
+		excluded.append([int(c["p"]), int(c["z"])])
+	if cands.is_empty():
+		return
+	if cands.size() >= 2:
+		var labels: Array = []
+		for c in cands:
+			var side_ar: String = "ملعبك" if int(c["p"]) == (owner_p & 1) else "الخصم"
+			var side_es: String = "tuyo" if int(c["p"]) == (owner_p & 1) else "del rival"
+			var side_en: String = "yours" if int(c["p"]) == (owner_p & 1) else "opponent's"
+			labels.append(lang_text("%s (%s)" % [card_name(duel, raw_id(duel, int(c["idx"]))), side_ar], "%s (%s)" % [card_name(duel, raw_id(duel, int(c["idx"]))), side_es], "%s (%s)" % [card_name(duel, raw_id(duel, int(c["idx"]))), side_en]))
+		var title: String = lang_text("اختر الهدف", "Elige el objetivo", "Choose the target")
+		if ask_pick(duel, owner_p, title, labels, cands, on_pick):
+			return
+	on_pick.call(cands[0])
+
+
 ## Pregunta Si/No al jugador local para un efecto opcional ("puedes"). Si se puede preguntar
 ## (duelo normal Yugi/Kaiba, turno del jugador 0, con ventana) devuelve true y `on_yes` se
 ## ejecuta SOLO si contesta Si (el motor queda en espera mientras el cuadro esta abierto).

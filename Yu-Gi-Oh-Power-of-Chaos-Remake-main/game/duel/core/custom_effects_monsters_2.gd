@@ -469,9 +469,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 		2899: # Magical Marionette
 			if CustomDuelOps.get_counter(duel, p, z, "spell") >= 2:
 				CustomDuelOps.add_counter(duel, p, z, "spell", -2)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run471 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true, pick_run471)
 		2911: # Union Rider
 			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == opp and zz < 5 and CustomDuelOps.raw_id(d, idx) in CustomDuelOps.UNION_IDS, true, true)
 			var eq_z = CustomDuelOps.free_st_zone(duel, p)
@@ -507,9 +507,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			var pred_rb = func(d, pl, zz, idx):
 				var lv = CustomDuelOps.monster_level(d, idx)
 				return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and (lv == r1 or lv == r2)
-			var pick = CustomDuelOps.choose_zone(duel, p, pred_rb, true, true)
-			if not pick.is_empty():
+			var pick_run509 := func(pick) -> void:
 				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, p, pred_rb, true, true, pick_run509)
 		2936, 2970: # Skilled White / Dark Magician
 			CustomDuelOps.tribute_zone(duel, p, z)
 			var targets = [CustomDuelOps.NATIVE_BUSTER_BLADER] if cid == 2936 else CustomDuelOps.NATIVE_DARK_MAGICIAN
@@ -579,9 +579,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				lis.sort()
 				CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, lis[lis.size() - 1])
 				CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, lis[lis.size() - 2])
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_atk(d, pl, zz) > my_atk, true, true)
-				if not pick.is_empty():
+				var pick_run581 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_atk(d, pl, zz) > my_atk, true, true, pick_run581)
 		3122: # Levia-Dragon - Daedalus
 			var uz = CustomDuelOps.find_zone_of_id(duel, p, CustomDuelOps.NATIVE_UMI, true)
 			if uz < 0: uz = CustomDuelOps.find_zone_of_id(duel, p, 2697, true)
@@ -631,16 +631,16 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.damage(duel, 1, 6000 if r0 == 6 else r0 * 500, false)
 		2805: # Jowls of Dark Demise FLIP
 			if kind == "flip_summon" or kind == "flipped":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run633 := func(pick) -> void:
 					var nz = CustomDuelOps.change_control(duel, opp, int(pick["z"]), p, true)
 					if nz >= 0:
 						CustomDuelOps.zflags(duel, p, nz)["direct_atk_turn"] = t
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run633)
 		2812: # Swarm of Scarabs: Flip Summon destroy 1 monster
 			if kind == "flip_summon":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run640 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run640)
 		2814: # Royal Keeper: flipped -> +300 ATK/DEF until EP
 			if kind == "flip_summon" or kind == "flipped":
 				CustomDuelOps.add_stat_mod(duel, p, z, 300, 300, true)
@@ -668,9 +668,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, di, p, true, false)
 		2826: # Gravekeeper's Guard FLIP: bounce 1 opp monster
 			if kind == "flip_summon" or kind == "flipped":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run670 := func(pick) -> void:
 					CustomDuelOps.bounce_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run670)
 		2833: # Fushioh Richie flipped: SS 1 Zombie from GY
 			if (kind == "flip_summon" or kind == "flipped") and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				var gi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 2, true)
@@ -683,9 +683,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 						CustomDuelOps.bounce_zone(duel, opp, zz)
 		2839: # Swarm of Locusts Flip Summon -> destroy 1 opp S/T
 			if kind == "flip_summon":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz >= 5, true, true)
-				if not pick.is_empty():
+				var pick_run685 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz >= 5, true, true, pick_run685)
 		2842: # Poison Mummy FLIP: 500 dmg
 			if kind == "flip_summon" or kind == "flipped":
 				CustomDuelOps.damage(duel, opp, 500, false)
@@ -715,9 +715,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 						CustomDuelOps.destroy_zone(duel, pl, zz)
 			zf["spirit_return_turn"] = t
 		2886: # Dark Jeroid: -800 ATK to 1 face-up monster
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-			if not pick.is_empty():
+			var pick_run717 := func(pick) -> void:
 				CustomDuelOps.add_stat_mod(duel, int(pick["p"]), int(pick["z"]), -800, 0, false)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true, pick_run717)
 		2898: # Magical Plant Mandragola FLIP: +1 Spell Counter on each eligible card
 			if kind == "flip_summon" or kind == "flipped":
 				for pl in 2:
@@ -731,13 +731,13 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					if pick.is_empty():
 						break
 					CustomDuelOps.bounce_zone(duel, opp, int(pick["z"]))
-				var my_pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5, false, false)
-				if not my_pick.is_empty():
+				var my_pick_run733 := func(my_pick) -> void:
 					CustomDuelOps.bounce_zone(duel, p, int(my_pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5, false, false, my_pick_run733)
 		2903: # Apprentice Magician: Summoned -> +1 Spell Counter
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.zone_id(d, pl, zz) in [2524, 2636, 2899, 2927, 2936, 2962, 2970, 3046], false, false)
-			if not pick.is_empty():
+			var pick_run737 := func(pick) -> void:
 				CustomDuelOps.add_counter(duel, int(pick["p"]), int(pick["z"]), "spell", 1)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.zone_id(d, pl, zz) in [2524, 2636, 2899, 2927, 2936, 2962, 2970, 3046], false, false, pick_run737)
 		2905: # Decayed Commander: Normal -> SS Zombie Tiger from hand
 			if kind == "normal" and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2941) >= 0:
@@ -757,9 +757,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_DECK, top_i, p, CustomDuelOps.LOC_GRAVE)
 		2933: # Old Vindictive Magician FLIP: destroy 1 opp monster
 			if kind == "flip_summon" or kind == "flipped":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run759 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run759)
 		2937: # Vampiric Orchis: Normal -> SS Des Dendle from hand
 			if kind == "normal" and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				if CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_HAND, 2914) >= 0:
@@ -780,9 +780,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 							break
 						CustomDuelOps.banish_from_pile(duel, pl, CustomDuelOps.LOC_GRAVE, gi)
 		3025: # Cyber Raider: Summoned -> destroy 1 Equip
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz >= 5 and zz < 10 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.ctype(d, idx) == 0x16 and CustomDuelOps.csub(d, idx) == 1, true, true)
-			if not pick.is_empty():
+			var pick_run782 := func(pick) -> void:
 				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return zz >= 5 and zz < 10 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.ctype(d, idx) == 0x16 and CustomDuelOps.csub(d, idx) == 1, true, true, pick_run782)
 		3059: # Iron Blacksmith Kotetsu FLIP: add 1 Equip Spell from Deck
 			if kind == "flip_summon" or kind == "flipped":
 				var ei = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.is_spell(d, idx) and CustomDuelOps.csub(d, idx) == 1, true)
@@ -825,9 +825,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 			CustomDuelOps.heal(duel, p, 1000)
 		3098: # Crimson Ninja FLIP: destroy 1 Trap on field
 			if kind == "flip_summon" or kind == "flipped":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, _pl, zz, idx): return zz >= 5 and CustomDuelOps.is_trap(d, idx), false, true)
-				if not pick.is_empty():
+				var pick_run827 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(d, _pl, zz, idx): return zz >= 5 and CustomDuelOps.is_trap(d, idx), false, true, pick_run827)
 		3116: # Sacred Crane: SS -> draw 1
 			if kind == "special":
 				CustomDuelOps.draw(duel, p, 1)
@@ -1067,9 +1067,9 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 						alt_summon.call()
 		2803: # Newdoria
 			if by_battle:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run1069 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true, pick_run1069)
 		2844: # Birdface: efecto opcional ("puedes")
 			if by_battle:
 				var hi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, CustomDuelOps.NATIVE_HARPIE_LADY)
@@ -1080,9 +1080,9 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 						birdface_take.call()
 		2850: # Yomi Ship
 			if by_battle:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run1082 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run1082)
 		2866: # Helpoemer: at end of opp BP discard 1 random
 			if by_battle:
 				CustomDuelOps.schedule_delayed(duel, CustomDuelOps.turn_number(duel), CustomDuelOps.PHASE_M2, p, 2866, "helpoemer_discard", {})
@@ -1096,9 +1096,9 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 					turtle_summon.call()
 		2877: # Kryuel: coin toss destroy 1 opp monster
 			if by_battle and CustomDuelOps.coin_toss(duel, p) == 1:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run1098 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run1098)
 		2903: # Apprentice Magician: SS Lv<=2 Spellcaster FD DEF
 			if by_battle and CustomDuelOps.free_monster_zone(duel, p) >= 0:
 				var si = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.monster_race(d, idx) == 18 and CustomDuelOps.monster_level(d, idx) <= 2, true)
@@ -1129,9 +1129,9 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 					if not CustomDuelOps.ask_optional(duel, p, CustomDuelOps.effect_prompt(duel, 3001), agido_summon):
 						agido_summon.call()
 		3038: # Kaiser Glider: bounce 1 monster
-			var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
-			if not pick.is_empty():
+			var pick_run1131 := func(pick) -> void:
 				CustomDuelOps.bounce_zone(duel, int(pick["p"]), int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true, pick_run1131)
 		3064: # Keldo: shuffle 2 from opp GY into Deck
 			if by_battle and not CustomDuelOps.is_necrovalley_active(duel):
 				for _i in 2:

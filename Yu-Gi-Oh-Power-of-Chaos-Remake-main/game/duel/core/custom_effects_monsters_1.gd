@@ -674,9 +674,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.zflags(duel, p, z)["cannot_atk_turn"] = t
 		2501: # Ra pay 1000 LP destroy 1
 			if CustomDuelOps.pay_lp(duel, p, 1000):
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return zz < 5 and not (pl == p and zz == z), true, true)
-				if not pick.is_empty():
+				var pick_run676 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return zz < 5 and not (pl == p and zz == z), true, true, pick_run676)
 		2503: # Sphere Mode -> Tribute to SS Ra (4000/4000)
 			var controller = p
 			CustomDuelOps.tribute_zone(duel, controller, z)
@@ -691,9 +691,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.set_stat_val(duel, controller, rz, 4000, 4000, false)
 		2504: # Immortal Phoenix pay 1000 LP send 1 monster to GY
 			if CustomDuelOps.pay_lp(duel, p, 1000):
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return zz < 5 and not (pl == p and zz == z), true, true)
-				if not pick.is_empty():
+				var pick_run693 := func(pick) -> void:
 					CustomDuelOps.send_zone_to_gy(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return zz < 5 and not (pl == p and zz == z), true, true, pick_run693)
 		2508: # Armed Dragon LV10 send 1 card -> destroy all face-up opp
 			if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0:
 				var ad_after := func() -> void:
@@ -706,9 +706,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			if hi >= 0:
 				var satk = CustomDuelOps.base_atk(duel, CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_HAND, hi))
 				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_HAND, hi, p, CustomDuelOps.LOC_GRAVE)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_atk(d, pl, zz) <= satk, true, true)
-				if not pick.is_empty():
+				var pick_run708 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_atk(d, pl, zz) <= satk, true, true, pick_run708)
 		2512: # Armed Dragon LV7 send 1 monster -> destroy all opp monsters w/ ATK <= sent
 			var hi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.is_monster(d, idx), true)
 			if hi >= 0:
@@ -737,15 +737,15 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				zf["beud_uses_turn"] = t
 				zf["beud_uses_count"] = 0
 			zf["beud_uses_count"] = int(zf.get("beud_uses_count", 0)) + 1
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and ((zz < 5 and t in CustomDuelOps.zflags(d, pl, zz).get("ss_turn_hist", [])) or not CustomDuelOps.is_face_up(d, pl, zz)), true, true)
-			if not pick.is_empty():
+			var pick_run739 := func(pick) -> void:
 				CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return pl == opp and ((zz < 5 and t in CustomDuelOps.zflags(d, pl, zz).get("ss_turn_hist", [])) or not CustomDuelOps.is_face_up(d, pl, zz)), true, true, pick_run739)
 		2524: # Breaker remove 1 spell counter -> destroy 1 S/T
 			if CustomDuelOps.get_counter(duel, p, z, "spell") >= 1:
 				CustomDuelOps.add_counter(duel, p, z, "spell", -1)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz >= 5, true, true)
-				if not pick.is_empty():
+				var pick_run745 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, _pl, zz, _idx): return zz >= 5, true, true, pick_run745)
 		2525, 2594, 2595:
 			if loc == CustomDuelOps.LOC_HAND:
 				CustomDuelOps.mark_hopt(duel, p, cid)
@@ -789,9 +789,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.discard_hand_slot(duel, p, hi, 1)
 					dest = 1
 			for _k in dest:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run791 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run791)
 		2527: # Chaos Emperor Dragon
 			CustomDuelOps.mark_opt(duel, p, 2527, z)
 			if CustomDuelOps.pay_lp(duel, p, 1000):
@@ -841,9 +841,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				var destroy_neg = cid not in [2635, 2638, 2639, 2643, 2660, 2741, 2772]
 				CustomDuelOps.negate_chain_entry(duel, target_entry, destroy_neg)
 			if cid == 2546:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, _zz, _idx): return pl == opp, true, true)
-				if not pick.is_empty():
+				var pick_run843 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, _zz, _idx): return pl == opp, true, true, pick_run843)
 		2560: # Infernal Rage Tribute -> SS E-HERO <= Lv7
 			CustomDuelOps.mark_hopt(duel, p, 2560)
 			CustomDuelOps.tribute_zone(duel, p, z)
@@ -851,10 +851,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			if ei >= 0:
 				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, ei, p, true, false)
 		2567: # Tempest send 1 other card -> battle protect
-			var pick_cost = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz != z, false, false)
-			if not pick_cost.is_empty():
+			var pick_cost_run853 := func(pick_cost) -> void:
 				CustomDuelOps.send_zone_to_gy(duel, p, int(pick_cost["z"]))
 				CustomDuelOps.zflags(duel, p, z)["indest_battle"] = true
+			CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz != z, false, false, pick_cost_run853)
 		2568: # Thunder Giant discard 1 destroy < ATK
 			CustomDuelOps.mark_opt(duel, p, 2568, z)
 			var my_atk = CustomDuelOps.eff_atk(duel, p, z)
@@ -871,9 +871,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi, p, true, false)
 		2572: # Exiled Force
 			CustomDuelOps.tribute_zone(duel, p, z)
-			var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
-			if not pick.is_empty():
+			var pick_run873 := func(pick) -> void:
 				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true, pick_run873)
 		2578, 2586, 2601, 2633, 2634: # Millennium hand <-> S/T
 			CustomDuelOps.mark_hopt(duel, p, cid)
 			if loc == CustomDuelOps.LOC_HAND:
@@ -1001,11 +1001,11 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 						CustomDuelOps.add_stat_mod(duel, p, ez, tatk, tdef, false)
 		2624: # Raviel Tribute 1 -> gain ATK until EP
 			CustomDuelOps.mark_opt(duel, p, 2624, z)
-			var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5 and zz != z, false, false)
-			if not pick.is_empty():
+			var pick_run1003 := func(pick) -> void:
 				var gain = CustomDuelOps.base_atk(duel, int(pick["idx"]))
 				CustomDuelOps.tribute_zone(duel, p, int(pick["z"]))
 				CustomDuelOps.add_stat_mod(duel, p, z, gain, 0, true)
+			CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5 and zz != z, false, false, pick_run1003)
 		2625: # Raviel Shimmering Scraper
 			CustomDuelOps.mark_hopt(duel, p, 2625)
 			if loc == CustomDuelOps.LOC_HAND:
@@ -1018,12 +1018,12 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 						CustomDuelOps.add_stat_mod(duel, p, rz, cur, 0, true)
 						CustomDuelOps.zflags(duel, p, rz)["attack_all_turn"] = t
 			elif loc == CustomDuelOps.LOC_GRAVE:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5, false, false)
-				if not pick.is_empty():
+				var pick_run1020 := func(pick) -> void:
 					CustomDuelOps.tribute_zone(duel, p, int(pick["z"]))
 					var gi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_GRAVE, 2625)
 					if gi >= 0:
 						CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_GRAVE, gi)
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5, false, false, pick_run1020)
 		2626: # Reactor Slime
 			CustomDuelOps.mark_hopt(duel, p, 2626)
 			if CustomDuelOps.phase(duel) == CustomDuelOps.PHASE_BP:
@@ -1056,14 +1056,14 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			var hi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.SUN_GOD_IDS, false)
 			if hi >= 0:
 				CustomDuelOps.discard_hand_slot(duel, p, hi, 1)
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run1058 := func(pick) -> void:
 					CustomDuelOps.send_zone_to_gy(duel, opp, int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == opp and zz < 5, true, true, pick_run1058)
 		2667: # Toon Cannon Soldier
-			var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5, false, false)
-			if not pick.is_empty():
+			var pick_run1062 := func(pick) -> void:
 				CustomDuelOps.tribute_zone(duel, p, int(pick["z"]))
 				CustomDuelOps.damage(duel, opp, 500, false)
+			CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5, false, false, pick_run1062)
 		2676: # Tyrant Burst Dragon equip
 			var pick = CustomDuelOps.choose_zone(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5 and zz != z, true, false)
 			var eq_z = CustomDuelOps.free_st_zone(duel, p)
@@ -1080,9 +1080,9 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				CustomDuelOps.link_equip(duel, p, eq_z, p, tz)
 		2677: # Uria destroy 1 Set S/T
 			CustomDuelOps.mark_opt(duel, p, 2677, z)
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz >= 5 and zz < 10 and not CustomDuelOps.is_face_up(d, pl, zz), false, true)
-			if not pick.is_empty():
+			var pick_run1082 := func(pick) -> void:
 				CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return pl == opp and zz >= 5 and zz < 10 and not CustomDuelOps.is_face_up(d, pl, zz), false, true, pick_run1082)
 		2682: # Winged Kuriboh LV10 nuke
 			CustomDuelOps.tribute_zone(duel, p, z)
 			var total = 0
@@ -1184,14 +1184,14 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			if not wz.is_empty():
 				var my_atk = CustomDuelOps.eff_atk(duel, p, z)
 				CustomDuelOps.tribute_zone(duel, p, wz[0])
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_def(d, pl, zz) <= my_atk, true, true)
-				if not pick.is_empty():
+				var pick_run1186 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.eff_def(d, pl, zz) <= my_atk, true, true, pick_run1186)
 		2778: # Winged Minion
 			CustomDuelOps.tribute_zone(duel, p, z)
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.monster_race(d, idx) == 3, true, false)
-			if not pick.is_empty():
+			var pick_run1191 := func(pick) -> void:
 				CustomDuelOps.add_stat_mod(duel, int(pick["p"]), int(pick["z"]), 700, 700, false)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.monster_race(d, idx) == 3, true, false, pick_run1191)
 		2794: # Des Lacooda
 			CustomDuelOps.mark_opt(duel, p, 2794, z)
 			CustomDuelOps.change_position(duel, p, z, 1, 0)
@@ -1403,9 +1403,9 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				CustomDuelOps.optional_effect(duel, p, 2584, gx_run)
 		2587: # Granmarg: Tribute Summon destroy 1 Set card
 			if kind == "tribute":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return not CustomDuelOps.is_face_up(d, pl, zz), false, true)
-				if not pick.is_empty():
+				var pick_run1405 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return not CustomDuelOps.is_face_up(d, pl, zz), false, true, pick_run1405)
 		2617: # Mobius: Tribute Summon destroy up to 2 S/T
 			if kind == "tribute" and not CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz >= 5, true, true).is_empty():
 				var mob_run := func() -> void:
@@ -1425,14 +1425,14 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.damage(duel, opp, dmg, false)
 		2675: # Tsukuyomi: Normal/Flipped -> Book of Moon 1 monster
 			if kind != "special":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-				if not pick.is_empty():
+				var pick_run1427 := func(pick) -> void:
 					CustomDuelOps.change_position(duel, int(pick["p"]), int(pick["z"]), 1, 0)
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true, pick_run1427)
 		2693: # Zaborg: Tribute Summon destroy 1 monster
 			if kind == "tribute":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true)
-				if not pick.is_empty():
+				var pick_run1432 := func(pick) -> void:
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, _pl, zz, _idx): return zz < 5, true, true, pick_run1432)
 		2699: # Hunter with 7 Weapons: declare most common opp race (default Warrior/Dragon)
 			if kind == "normal" or kind == "tribute":
 				var best_r = 1
@@ -1451,30 +1451,30 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 					CustomDuelOps.optional_effect(duel, p, 2702, mc_run)
 		2728: # Shadow Tamer FLIP: control opp Fiend until EP
 			if kind == "flip_summon" or kind == "flipped":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == opp and zz < 5 and CustomDuelOps.monster_race(d, idx) == 3, true, true)
-				if not pick.is_empty():
+				var pick_run1453 := func(pick) -> void:
 					CustomDuelOps.change_control(duel, opp, int(pick["z"]), p, true)
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return pl == opp and zz < 5 and CustomDuelOps.monster_race(d, idx) == 3, true, true, pick_run1453)
 		2732: # Otohime: toggle opp monster battle pos
 			if kind != "special":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-				if not pick.is_empty():
+				var pick_run1458 := func(pick) -> void:
 					var cur_def = not CustomDuelOps.is_atk_pos(duel, opp, int(pick["z"]))
 					CustomDuelOps.change_position(duel, opp, int(pick["z"]), 0 if cur_def else 1, -1)
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true, pick_run1458)
 		2735: # Maharaghi: mark scry before next Draw Phase
 			if kind != "special":
 				CustomDuelOps.pflags(duel, p)["maharaghi_scry_turn"] = t + 1
 		2738: # Ryu-Kishin Clown: toggle 1 face-up monster pos
-			var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true)
-			if not pick.is_empty():
+			var pick_run1466 := func(pick) -> void:
 				var tz := int(pick["z"])
 				var tp := int(pick["p"])
 				var cur_def = not CustomDuelOps.is_atk_pos(duel, tp, tz)
 				CustomDuelOps.change_position(duel, tp, tz, 0 if cur_def else 1, -1)
+			CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, _idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz), true, true, pick_run1466)
 		2754: # Dragon Manipulator FLIP: control opp face-up Dragon until EP
 			if kind == "flip_summon" or kind == "flipped":
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.monster_race(d, idx) == 1, true, true)
-				if not pick.is_empty():
+				var pick_run1474 := func(pick) -> void:
 					CustomDuelOps.change_control(duel, opp, int(pick["z"]), p, true)
+				CustomDuelOps.choose_zone_then(duel, p, func(d, pl, zz, idx): return pl == opp and zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and CustomDuelOps.monster_race(d, idx) == 1, true, true, pick_run1474)
 		2770: # Fiber Jar FLIP: shuffle all hands/fields/GYs & draw 5 each
 			if kind == "flip_summon" or kind == "flipped":
 				for pl in 2:
@@ -1518,9 +1518,9 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, _def_p: int, _def_z:
 				CustomDuelOps.add_stat_mod(duel, def_p, _def_z, best_atk - tgt_atk, best_atk - tgt_atk, true)
 	match cid:
 		2509: # Armed Dragon LV10 White: start of Damage Step destroy 1 card
-			var pick = CustomDuelOps.choose_zone(duel, atk_p, func(_d, pl, _zz, _idx): return pl == 1 - atk_p, true, true)
-			if not pick.is_empty():
+			var pick_run1520 := func(pick) -> void:
 				CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
+			CustomDuelOps.choose_zone_then(duel, atk_p, func(_d, pl, _zz, _idx): return pl == 1 - atk_p, true, true, pick_run1520)
 		2537: # Cyber Dragon Zwei: +300 ATK during Damage Step
 			if _def_z >= 0:
 				CustomDuelOps.add_stat_mod(duel, atk_p, atk_z, 300, 0, true)

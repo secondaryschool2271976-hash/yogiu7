@@ -921,14 +921,12 @@ static func on_standby_tick(duel, tp: int) -> void:
 		if CustomDuelOps.has_faceup_id(duel, pl, 2927) and pl == tp: # Pitch-Black Power Stone
 			var pz = CustomDuelOps.find_zone_of_id(duel, pl, 2927, true)
 			if pz >= 0 and CustomDuelOps.get_counter(duel, pl, pz, "spell") > 0:
-				var tgt = CustomDuelOps.choose_zone(duel, pl, func(d, t_pl, t_z, t_idx): return t_pl == pl and CustomDuelOps.is_face_up(d, t_pl, t_z) and t_z != pz and CustomDuelOps.raw_id(d, t_idx) in [2524, 2636, 2898, 2899, 2936, 2962, 2970, 3046], true, false)
-				if not tgt.is_empty():
+				var tgt_run923 := func(tgt) -> void:
 					CustomDuelOps.add_counter(duel, pl, pz, "spell", -1)
 					CustomDuelOps.add_counter(duel, tgt["p"], tgt["z"], "spell", 1)
 					if CustomDuelOps.get_counter(duel, pl, pz, "spell") <= 0:
 						CustomDuelOps.destroy_zone(duel, pl, pz)
-
-
+				CustomDuelOps.choose_zone_then(duel, pl, func(d, t_pl, t_z, t_idx): return t_pl == pl and CustomDuelOps.is_face_up(d, t_pl, t_z) and t_z != pz and CustomDuelOps.raw_id(d, t_idx) in [2524, 2636, 2898, 2899, 2936, 2962, 2970, 3046], true, false, tgt_run923)
 static func on_end_phase(duel, tp: int) -> void:
 	for pl in 2:
 		if CustomDuelOps.has_faceup_id(duel, pl, 2867) and pl != tp: # Bottomless Shifting Sand
