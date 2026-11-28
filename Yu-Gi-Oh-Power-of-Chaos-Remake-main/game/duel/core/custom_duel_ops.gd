@@ -350,6 +350,13 @@ static func clear_zone_state(duel, p: int, z: int) -> void:
 	for ek in st["equip_links"].keys():
 		var link: Dictionary = st["equip_links"][ek]
 		if (int(link.get("target_p", -1)) == (p & 1) and int(link.get("target_z", -1)) == z) or ek == k:
+			# Morale Boost (3076): al salir del campo una Magia de Equipo, su controlador recibe 1000.
+			if ek == k and bool(link.get("equip_spell", false)):
+				var eq_parts: PackedStringArray = str(ek).split(":")
+				if eq_parts.size() >= 1:
+					var eq_owner := int(eq_parts[0]) & 1
+					if has_faceup_id(duel, eq_owner, 3076):
+						damage(duel, eq_owner, 1000)
 			st["equip_links"].erase(ek)
 
 
@@ -847,12 +854,28 @@ static func draw(duel, p: int, count: int) -> int:
 		declare_win(duel, 1 - p)
 		return 0
 	var actual = mini(count, deck_n)
+	var hand_before := pile_count(duel, p, LOC_HAND)
 	if is_joey(duel):
 		duel.f578b60(p, actual)
 	else:
 		duel.f54f470(p, actual)
 	if count > deck_n:
 		declare_win(duel, 1 - p)
+	# Heart of the Underdog (3120): si robas un Monstruo Normal en tu Draw Phase, roba 1 mas.
+	if actual > 0 and not bool(pflags(duel, p).get("underdog_busy", false)) \
+			and phase(duel) == PHASE_DP and turn_player(duel) == p \
+			and has_faceup_id(duel, p, 3120) and can_hopt(duel, p, 3120):
+		var hand_after := pile_count(duel, p, LOC_HAND)
+		var drew_normal := false
+		for i in range(hand_before, hand_after):
+			var hidx := pile_idx(duel, p, LOC_HAND, i)
+			if hidx != 0 and is_monster(duel, hidx) and is_normal_monster(duel, hidx):
+				drew_normal = true
+		if drew_normal:
+			mark_hopt(duel, p, 3120)
+			pflags(duel, p)["underdog_busy"] = true
+			draw(duel, p, 1)
+			pflags(duel, p)["underdog_busy"] = false
 	return actual
 
 
@@ -1628,7 +1651,11 @@ static func link_equip(duel, eq_p: int, eq_z: int, tgt_p: int, tgt_z: int) -> vo
 	eq_p &= 1
 	tgt_p &= 1
 	var cid = zone_id(duel, eq_p, eq_z)
-	state(duel)["equip_links"]["%d:%d" % [eq_p, eq_z]] = {"target_p": tgt_p, "target_z": tgt_z, "card_id": cid}
+	var is_equip_spell := is_spell(duel, zone_idx(duel, eq_p, eq_z))
+	state(duel)["equip_links"]["%d:%d" % [eq_p, eq_z]] = {"target_p": tgt_p, "target_z": tgt_z, "card_id": cid, "equip_spell": is_equip_spell}
+	# Morale Boost (3076): quien equipa una Magia de Equipo gana 1000 LP.
+	if is_equip_spell and has_faceup_id(duel, eq_p, 3076):
+		heal(duel, eq_p, 1000)
 	if not is_joey(duel):
 		var origin = ((eq_z & 0xff) << 8) | eq_p
 		var target = ((tgt_z & 0xff) << 8) | tgt_p
