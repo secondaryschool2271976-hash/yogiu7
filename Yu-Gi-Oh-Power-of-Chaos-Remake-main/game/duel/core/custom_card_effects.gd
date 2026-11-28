@@ -320,6 +320,7 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 static func on_phase_tick(duel, turn_p: int, ph: int) -> void:
 	if duel == null:
 		return
+	CustomDuelOps.run_after_queue(duel)
 	var st = CustomDuelOps.state(duel)
 	var t = CustomDuelOps.turn_number(duel)
 	var prev_t := int(st.get("last_turn_seen", -1))

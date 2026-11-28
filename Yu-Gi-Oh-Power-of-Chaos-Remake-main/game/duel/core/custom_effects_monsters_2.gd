@@ -410,9 +410,10 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 				_equip_monster_to(duel, p, loc, bmd_self, bmd_t)
 		3136: # Black Dragon's Chick
 			CustomDuelOps.send_zone_to_gy(duel, p, z)
-			var ch_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES)
-			if ch_i >= 0:
-				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, ch_i, p, true, false)
+			CustomDuelOps.after_queue(duel, func() -> void:
+				var ch_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_HAND, func(d, idx, _i): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.NATIVE_RED_EYES)
+				if ch_i >= 0:
+					CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_HAND, ch_i, p, true, false))
 		3138: # The Black Stone of Legend
 			CustomDuelOps.mark_hopt(duel, p, 3138)
 			if loc == CustomDuelOps.LOC_FIELD_MONSTER:

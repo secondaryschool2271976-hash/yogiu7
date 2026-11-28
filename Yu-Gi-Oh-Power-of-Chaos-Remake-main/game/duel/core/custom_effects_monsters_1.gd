@@ -1842,7 +1842,12 @@ static func _evolve_optional(duel, p: int, z: int, from_id: int, to_id: int) -> 
 			var si = CustomDuelOps.find_pile_index_by_id(duel, p, srcloc, to_id)
 			if si >= 0:
 				CustomDuelOps.send_zone_to_gy(duel, p, z)
-				CustomDuelOps.special_summon_from_pile(duel, p, srcloc, si, p, true, false)
+				# Joey: el traslado al Cementerio sigue encolado; invocar despues, con la zona ya libre.
+				var ev_loc: int = srcloc
+				CustomDuelOps.after_queue(duel, func() -> void:
+					var ev_i: int = CustomDuelOps.find_pile_index_by_id(duel, p, ev_loc, to_id)
+					if ev_i >= 0:
+						CustomDuelOps.special_summon_from_pile(duel, p, ev_loc, ev_i, p, true, false))
 				return
 	var from_name: String = CustomDuelOps.card_name(duel, from_id)
 	var to_name: String = CustomDuelOps.card_name(duel, to_id)
