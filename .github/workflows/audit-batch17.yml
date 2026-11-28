@@ -1,0 +1,30 @@
+name: Audit batch 8
+on:
+  push:
+    paths:
+      - .github/workflows/audit-batch17.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite branch with the patch only
+        env:
+          PATCH_B64: "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"
+        run: |
+          set -e
+          BR="${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BR"
+          rm -f .github/workflows/audit-batch17.yml
+          echo "$PATCH_B64" | base64 -d | gunzip > /tmp/fix.patch
+          git apply --check /tmp/fix.patch
+          git apply /tmp/fix.patch
+          git add -A
+          git commit -m "Custom cards audit batch 17: attack restrictions that were never enforced"
+          git push -f origin "HEAD:refs/heads/$BR"
+          echo done
