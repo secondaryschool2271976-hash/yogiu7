@@ -11,6 +11,8 @@ func _ready() -> void:
 	super._ready()
 	if _duel == null or _visual == null:
 		return
+	if _lan and Lan.is_online():
+		JoeyPresentationAdapter.online_dump_start(Lan.is_host)
 	# Evita cargar WAV durante los cambios de LP, el retrato y el cartel de resultado.
 	for track in ["m_furi", "m_yuri", "m_sum", "m_win", "m_lose"]:
 		Audio.preload_music("joey/voice/stream/%s.wav" % track)
@@ -128,7 +130,22 @@ func _input(event: InputEvent) -> void:
 	super._input(event)
 
 
+## Fin del duelo online: guarda el registro y lo copia al portapapeles para pegarlo en un chat.
+func _share_online_dump() -> void:
+	if not JoeyPresentationAdapter.online_dump_on:
+		return
+	JoeyPresentationAdapter.online_dump_flush(true)
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.clipboard_set(JoeyPresentationAdapter.online_dump_text())
+	JoeyPresentationAdapter.online_dump_on = false
+
+
+func _exit_tree() -> void:
+	_share_online_dump()
+
+
 func _start_result() -> void:
+	_share_online_dump()
 	if Game.joey_demo:
 		if _duel.winner() != 0: _leave_demo()
 		return

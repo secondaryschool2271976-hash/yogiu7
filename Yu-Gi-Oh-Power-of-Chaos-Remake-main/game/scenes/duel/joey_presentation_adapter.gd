@@ -551,7 +551,48 @@ func synchronize_view() -> void:
 	executed = recorded.size() - engine.m.u16(JoeyMem.QUEUE_COUNT)
 
 
+## Registro de depuracion de duelos online: ultimos eventos del adaptador (antes y despues
+## de girar los lados). Solo guarda tipo, jugador, zona y argumentos; sin datos personales.
+const ONLINE_DUMP_MAX := 200
+const ONLINE_DUMP_FILE := "user://online_events.txt"
+static var online_dump_on := false
+static var online_dump: PackedStringArray = PackedStringArray()
+static var _online_dump_flush_msec := 0
+
+
+static func online_dump_start(is_host: bool) -> void:
+	online_dump_on = true
+	online_dump = PackedStringArray()
+	online_dump.append("online event dump, host=%s" % str(is_host))
+
+
+static func online_dump_text() -> String:
+	return "\n".join(online_dump)
+
+
+static func online_dump_flush(force := false) -> void:
+	if not online_dump_on or online_dump.size() == 0:
+		return
+	var now := Time.get_ticks_msec()
+	if not force and now - _online_dump_flush_msec < 2000:
+		return
+	_online_dump_flush_msec = now
+	var file := FileAccess.open(ONLINE_DUMP_FILE, FileAccess.WRITE)
+	if file != null:
+		file.store_string(online_dump_text())
+		file.close()
+
+
+func _dump_event(kind: String, before: String, data: Dictionary) -> void:
+	var line := "#%d local=%d %s | raw %s | view %s" % [executed, local_native_player, kind, before.left(150), str(data).left(150)]
+	online_dump.append(line)
+	while online_dump.size() > ONLINE_DUMP_MAX + 1:
+		online_dump.remove_at(1)
+	online_dump_flush()
+
+
 func _emit(kind: String, data: Dictionary = {}) -> void:
+	var dump_before := str(data) if online_dump_on else ""
 	if local_native_player != 0:
 		if data.has("p"): data.p = _view_player(int(data.p))
 		if data.has("p0"): data.p0 = _view_player(int(data.p0))
@@ -574,6 +615,8 @@ func _emit(kind: String, data: Dictionary = {}) -> void:
 			data.args[2] = ((int(data.args[2]) & 255) << 8) | ((int(data.args[2]) >> 8) & 255)
 	data["kind"] = kind
 	data["cmd"] = executed
+	if online_dump_on:
+		_dump_event(kind, dump_before, data)
 	events.append(data)
 
 
