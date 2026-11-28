@@ -830,11 +830,6 @@ static func dice_roll(duel, p := 0) -> int:
 	else:
 		r = (randi() % 6) + 1
 	state(duel)["last_die"] = r
-	if has_faceup_id(duel, p, 2750): # That Six!
-		if r == 2 or r == 4 or r == 6:
-			r = 6
-		elif r == 1 or r == 3 or r == 5:
-			r = 5
 	return r
 
 

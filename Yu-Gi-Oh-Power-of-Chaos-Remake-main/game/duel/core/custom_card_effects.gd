@@ -397,12 +397,21 @@ static func on_battle_damage(duel, dmg_p: int, dmg_z: int, opp_p: int, amount: i
 		if baz < 5 and (dmg_p & 1) != bap \
 				and int(CustomDuelOps.zflags(duel, bap, baz).get("bandit_discard_turn", -1)) == CustomDuelOps.turn_number(duel):
 			CustomDuelOps.discard_random(duel, dmg_p & 1, 1)
+	# Begone, Knave! (3103): el monstruo que hace dano de batalla vuelve a la mano al terminar la batalla.
+	if amount > 0 and (CustomDuelOps.has_faceup_id(duel, 0, 3103) or CustomDuelOps.has_faceup_id(duel, 1, 3103)):
+		CustomDuelOps.state(duel)["knave_bounce"] = [dmg_p & 1, dmg_z]
 	CustomEffectsMonsters1.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 	CustomEffectsMonsters2.on_battle_damage(duel, dmg_p, dmg_z, opp_p, amount, is_direct)
 	CustomDuelOps.sync_visuals(duel)
 
 
 static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, atk_destroyed: bool, def_destroyed: bool) -> void:
+	# Begone, Knave! (3103): devuelve a la mano el monstruo que hizo dano de batalla.
+	var knave = CustomDuelOps.state(duel).get("knave_bounce", null)
+	if knave != null:
+		CustomDuelOps.state(duel).erase("knave_bounce")
+		if knave is Array and knave.size() >= 2:
+			CustomDuelOps.bounce_zone(duel, int(knave[0]), int(knave[1]))
 	var st_battle = CustomDuelOps.state(duel)
 	var battled: Array = st_battle.get("battled_this_turn", [])
 	battled.append("%d:%d" % [atk_p & 1, atk_z])

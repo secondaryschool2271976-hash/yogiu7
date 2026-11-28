@@ -102,6 +102,24 @@ upside down and proceed with the current Duel."
 Done: nothing. Why: this only changes how the Deck is displayed. Deck order and drawing are handled by
 the original engine and there is no presentation hook for it.
 
+### 2755 Smoke Grenade of the Thief
+Text: "When this card is destroyed by a card effect while equipped to a monster: Look at your opponent's
+hand and discard 1 card from their hand."
+Done: nothing. Why: the custom layer only sees destruction of monsters. A Spell or Trap leaving the
+field is not reported to it, so "destroyed while equipped" cannot be detected.
+
+### 2897 Raregold Armor
+Text: "As long as you control the monster equipped with this card, your opponent cannot attack other
+monsters other than the equipped monster."
+Done: nothing. Why: the same reason as Marshmallon Glasses - attack declaration is handled by the
+original engine, which has no hook to redirect an attack.
+
+### 3105 Spatial Collapse
+Text: "You can only activate this card if both you and your opponent each have 5 or less cards on the
+field. The maximum number of cards each player can control is 5."
+Done: nothing. Why: the game cannot refuse a card being placed on the field, so a five-card ceiling
+cannot be enforced from the custom layer.
+
 ## Fixed during this audit
 
 | Card | What was wrong |
@@ -130,12 +148,16 @@ the original engine and there is no presentation hook for it.
 | 2726 Second Coin Toss | the coin-toss code checked the wrong card id, so it never triggered |
 | 2729 Fusion Sword Murasame Blade | could be destroyed by card effects while equipped |
 | 2745 Dragon's Rage | was a no-op; Dragon monsters now get piercing while it is up |
+| 2750 Ominous Fortunetelling | a stray block biased every die roll to 5 or 6 while it was face-up |
 | 2756 Heart of Clear Water | no protection for the equipped monster, and no self-destruct at 1300 ATK |
 | 2784 Spring of Rebirth | no LP gain when a monster returned to the hand |
 | 2788 Spiritual Energy Settle Machine | Spirit monsters still returned to the hand |
 | 2880 Dark Room of Nightmare | was a no-op; the extra 300 damage now applies |
+| 2964 Demotion | the equipped monster's Level was not lowered |
 | 2993 Guardian Kay'est | was not unaffected by Spell effects |
 | 3004 Non-Spellcasting Area | Normal Monsters were still destroyed by Spell effects |
 | 3076 Morale Boost | no LP gain on equipping and no damage when the Equip Spell left |
+| 3079 Rod of the Mind's Eye | battle damage from the equipped monster was not set to 1000 |
+| 3103 Begone, Knave! | was a no-op; the monster that dealt battle damage is now returned to the hand |
 | 3119 Stumbling | was a no-op; Summoned monsters now go to Defense Position |
 | 3120 Heart of the Underdog | no extra draw for a Normal Monster drawn in the Draw Phase |
