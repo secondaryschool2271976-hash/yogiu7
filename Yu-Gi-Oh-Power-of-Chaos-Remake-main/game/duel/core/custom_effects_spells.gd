@@ -1550,9 +1550,15 @@ static func _resolve_miracle_fusion(duel, p: int) -> void:
 	gys.reverse()
 	for gi: int in gys:
 		CustomDuelOps.banish_from_pile(duel, p, CustomDuelOps.LOC_GRAVE, gi)
+	var mat_idxs: Array = []
+	for src: Array in srcs:
+		mat_idxs.append(int(src[2]))
 	var sfi: int = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_FUSION, fid)
 	if sfi >= 0:
+		CustomDuelOps.record_fusion_check(duel, p, fid, mat_idxs)
+		CustomDuelOps.state(duel)["mf_keep"] = true
 		CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, sfi, p)
+		CustomDuelOps.state(duel)["mf_keep"] = false
 
 
 static func _count_hero_materials(duel, p: int) -> int:

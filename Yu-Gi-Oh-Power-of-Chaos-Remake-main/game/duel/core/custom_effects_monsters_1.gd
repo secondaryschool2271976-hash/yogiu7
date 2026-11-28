@@ -552,14 +552,14 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 				return is_sp and bool(ctx.get("is_normal_spell", true)) and CustomDuelOps.can_pay_lp(duel, p, 1000)
 			return false
 		2560: # Flame Wingman - Infernal Rage: Tribute if Fusion w/ Normal -> SS E-HERO <= Lv7
-			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_hopt(duel, p, 2560) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_FUSION, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 7, true) >= 0
+			return loc == CustomDuelOps.LOC_FIELD_MONSTER and _fused_with_normal(duel, p, z) and CustomDuelOps.can_hopt(duel, p, 92560) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_FUSION, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 7, true) >= 0
 		2567: # E-HERO Tempest: send 1 other card you control to GY, protect 1 monster from battle
 			return loc == CustomDuelOps.LOC_FIELD_MONSTER and (CustomDuelOps.total_field_cards(duel, p) >= 2)
 		2568: # E-HERO Thunder Giant: discard 1, destroy monster < ATK
 			var my_atk = CustomDuelOps.eff_atk(duel, p, z)
-			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_opt(duel, p, 2568, z) and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0 and not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and not (pl == p and zz == z) and CustomDuelOps.base_atk(d, idx) < my_atk, true, true).is_empty()
+			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_opt(duel, p, 2568, z) and CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_HAND) > 0 and not CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and not (pl == p and zz == z) and CustomDuelOps.base_atk(d, idx) < my_atk, true, true).is_empty()
 		2569: # Voltic Thunder Tribute
-			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.can_hopt(duel, p, 2569) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true) >= 0
+			return loc == CustomDuelOps.LOC_FIELD_MONSTER and _fused_with_normal(duel, p, z) and CustomDuelOps.can_hopt(duel, p, 92569) and not CustomDuelOps.is_necrovalley_active(duel) and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true) >= 0
 		2572: # Exiled Force
 			return loc == CustomDuelOps.LOC_FIELD_MONSTER and CustomDuelOps.count_total_monsters_on_field(duel) >= 1
 		2578, 2586, 2601, 2633, 2634: # Millennium monsters: hand -> Continuous Spell, or Continuous Spell -> SS
@@ -853,26 +853,30 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 					CustomDuelOps.destroy_zone(duel, opp, int(pick["z"]))
 				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, _zz, _idx): return pl == opp, true, true, pick_run843)
 		2560: # Infernal Rage Tribute -> SS E-HERO <= Lv7
-			CustomDuelOps.mark_hopt(duel, p, 2560)
+			CustomDuelOps.mark_hopt(duel, p, 92560)
 			CustomDuelOps.tribute_zone(duel, p, z)
 			var ei = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_FUSION, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 7, true)
 			if ei >= 0:
 				CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_FUSION, ei, p, true, false)
 		2567: # Tempest send 1 other card -> battle protect
+			var tempest_idx: int = CustomDuelOps.zone_idx(duel, p, z)
+			var tempest_target_run := func(pick_tgt) -> void:
+				var tp: Dictionary = CustomDuelOps.state(duel).get_or_add("tempest_prot", {})
+				tp["%d:%d" % [p, int(pick_tgt["idx"])]] = tempest_idx
 			var pick_cost_run853 := func(pick_cost) -> void:
 				CustomDuelOps.send_zone_to_gy(duel, p, int(pick_cost["z"]))
-				CustomDuelOps.zflags(duel, p, z)["indest_battle"] = true
+				CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz < 5 and CustomDuelOps.is_face_up(_d, pl, zz), true, false, tempest_target_run)
 			CustomDuelOps.choose_zone_then(duel, p, func(_d, pl, zz, _idx): return pl == p and zz != z, false, false, pick_cost_run853)
 		2568: # Thunder Giant discard 1 destroy < ATK
 			CustomDuelOps.mark_opt(duel, p, 2568, z)
 			var my_atk = CustomDuelOps.eff_atk(duel, p, z)
 			var tg_after := func() -> void:
-				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and not (pl == p and zz == z) and CustomDuelOps.base_atk(d, idx) < my_atk, true, true)
+				var pick = CustomDuelOps.choose_zone(duel, p, func(d, pl, zz, idx): return zz < 5 and CustomDuelOps.is_face_up(d, pl, zz) and not (pl == p and zz == z) and CustomDuelOps.base_atk(d, idx) < my_atk, true, true)
 				if not pick.is_empty():
 					CustomDuelOps.destroy_zone(duel, int(pick["p"]), int(pick["z"]))
 			CustomDuelOps.discard_cost(duel, p, tg_after)
 		2569: # Voltic Thunder
-			CustomDuelOps.mark_hopt(duel, p, 2569)
+			CustomDuelOps.mark_hopt(duel, p, 92569)
 			CustomDuelOps.tribute_zone(duel, p, z)
 			var gi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true)
 			if gi >= 0:
@@ -1208,6 +1212,35 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 			CustomDuelOps.change_position(duel, p, z, 1, 0)
 
 
+## Materiales de la ultima comprobacion de fusion de `cid`: Neos Knight guarda la mitad del ATK original del Guerrero
+## usado (no Neos); Infernal Rage y Voltic Thunder guardan si se uso un Monstruo Normal. Sin materiales guardados
+## (invocada por otro medio) no hay bono ni se pueden Tributar.
+static func _note_fusion_materials(duel, p: int, z: int, cid: int) -> void:
+	var mats: Array = CustomDuelOps.take_fusion_check(duel, p, cid)
+	var key: String = str(CustomDuelOps.zone_idx(duel, p, z))
+	var st: Dictionary = CustomDuelOps.state(duel)
+	st.get_or_add("fused_normal", {})[key] = false
+	st.get_or_add("knight_bonus", {})[key] = 0
+	var normal := false
+	var bonus: int = 0
+	for mi in mats:
+		var mx: int = int(mi)
+		if mx == 0:
+			continue
+		if CustomDuelOps.is_normal_monster(duel, mx):
+			normal = true
+		var rid: int = CustomDuelOps.raw_id(duel, mx)
+		if cid == 2564 and bonus == 0 and rid != 2561 and rid != 2562 and CustomDuelOps.monster_race(duel, mx) == 15:
+			bonus = CustomDuelOps.base_atk(duel, mx) >> 1
+	st["fused_normal"][key] = normal
+	st["knight_bonus"][key] = bonus
+
+
+static func _fused_with_normal(duel, p: int, z: int) -> bool:
+	var fn: Dictionary = CustomDuelOps.state(duel).get("fused_normal", {})
+	return bool(fn.get(str(CustomDuelOps.zone_idx(duel, p, z)), false))
+
+
 static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> void:
 	p &= 1
 	var opp = 1 - p
@@ -1218,6 +1251,8 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 		var hist: Array = zf.get("ss_turn_hist", [])
 		hist.append(t)
 		zf["ss_turn_hist"] = hist
+		if cid == 2560 or cid == 2564 or cid == 2569:
+			_note_fusion_materials(duel, p, z, cid)
 	if cid in SPIRIT_MONSTERS_M1 and (kind == "normal" or kind == "tribute" or kind == "flip_summon" or kind == "flipped"):
 		zf["spirit_return_turn"] = t
 
@@ -1372,10 +1407,15 @@ static func on_summon_or_flip(duel, p: int, z: int, cid: int, kind: String) -> v
 				CustomDuelOps.optional_effect(duel, p, 2556, bub_run)
 		2560: # Flame Wingman Infernal Rage: add Favorite card
 			if kind == "special" and CustomDuelOps.can_hopt(duel, p, 2560):
-				var fi = CustomDuelOps.find_pile_index_by_id(duel, p, CustomDuelOps.LOC_DECK, 2683)
+				var fav_pred := func(d, idx, _s): return CustomDuelOps.card_name(d, CustomDuelOps.raw_id(d, idx)).to_lower().contains("favorite")
+				var fi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, fav_pred, true)
+				var floc: int = CustomDuelOps.LOC_DECK
+				if fi < 0:
+					fi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_GRAVE, fav_pred, true)
+					floc = CustomDuelOps.LOC_GRAVE
 				if fi >= 0:
 					CustomDuelOps.mark_hopt(duel, p, 2560)
-					CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, fi)
+					CustomDuelOps.add_from_pile_to_hand(duel, p, floc, fi)
 		2569: # Voltic Thunder: if opp has more cards, nuke field
 			if kind == "special" and CustomDuelOps.can_hopt(duel, p, 2569) and CustomDuelOps.total_field_cards(duel, opp) > CustomDuelOps.total_field_cards(duel, p):
 				CustomDuelOps.mark_hopt(duel, p, 2569)
@@ -1575,6 +1615,8 @@ static func on_damage_calc(duel, atk_p: int, atk_z: int, def_p: int, def_z: int)
 		CustomDuelOps.zflags(duel, def_p, def_z)["indest_battle"] = opp_attr2 in [2, 3, 4, 5, 6]
 	if acid == 2563 and def_z >= 0: # Neos Kluger pre-damage burn
 		CustomDuelOps.damage(duel, def_p, CustomDuelOps.eff_atk(duel, def_p, def_z), false)
+	if dcid == 2563 and atk_z >= 0: # Neos Kluger as the defender also battles an opponent's monster
+		CustomDuelOps.damage(duel, atk_p, CustomDuelOps.eff_atk(duel, atk_p, atk_z), false)
 	if acid == 2660 and CustomDuelOps.can_opt(duel, atk_p, 2660, atk_z): # Unstoppable Exodia
 		CustomDuelOps.mark_opt(duel, atk_p, 2660, atk_z)
 		CustomDuelOps.add_stat_mod(duel, atk_p, atk_z, CustomDuelOps.get_lp(duel, atk_p), 0, true)
@@ -1734,9 +1776,8 @@ static func on_destroyed(duel, p: int, cid: int, by_battle: bool, opp_effect: bo
 		2526, 2630: # Cerulean / Sacred Phoenix revive next Standby Phase
 			if cid == 2526 or not by_battle:
 				CustomDuelOps.schedule_delayed(duel, t + 1, CustomDuelOps.PHASE_SP, p, cid, "revive_phoenix", {})
-		2563: # Neos Kluger -> SS Neos Wiseman
-			if (by_battle or opp_effect) and CustomDuelOps.free_monster_zone(duel, p) >= 0:
-				CustomDuelOps.spawn_token(duel, p, 0, false, 2500, 2000)
+		2563: # Neos Kluger -> SS "Neos Wiseman" from hand or Deck (that card is not in the game: nothing to summon)
+			pass
 		2583: # Gandora-X Blackmetal Rampaging Dragon -> search Final Geas
 			if CustomDuelOps.can_hopt(duel, p, 2583):
 				var fi = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.name_matches(d, idx, "final geas"), true)
@@ -2147,8 +2188,9 @@ static func modify_continuous(duel, p: int, z: int, cid: int, out: Dictionary) -
 				if zz != z and CustomDuelOps.zone_idx(duel, p, zz) != 0 and CustomDuelOps.is_face_up(duel, p, zz) and CustomDuelOps.monster_race(duel, CustomDuelOps.zone_idx(duel, p, zz)) == 1:
 					dn += 1
 			out["atk_delta"] = int(out.get("atk_delta", 0)) + dn * 500
-		2564: # Neos Knight: +1250
-			out["atk_delta"] = int(out.get("atk_delta", 0)) + 1250
+		2564: # Neos Knight: half the original ATK of the Warrior Fusion Material (not Neos), saved when it was Fusion Summoned
+			var kb: Dictionary = CustomDuelOps.state(duel).get("knight_bonus", {})
+			out["atk_delta"] = int(out.get("atk_delta", 0)) + int(kb.get(str(CustomDuelOps.zone_idx(duel, p, z)), 0))
 		2565: # Shining Flare Wingman: +300 per E-HERO in GY
 			out["atk_delta"] = int(out.get("atk_delta", 0)) + _count_ids_in_gy(duel, p, CustomDuelOps.ELEMENTAL_HERO_IDS) * 300
 		2575: # Exodius: +1000 per Normal Monster in GY

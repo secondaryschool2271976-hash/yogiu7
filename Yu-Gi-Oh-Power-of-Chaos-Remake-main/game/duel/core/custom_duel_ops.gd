@@ -1229,6 +1229,32 @@ static func union_equipped_to(duel, p: int, z: int, union_id: int) -> bool:
 	return false
 
 
+## Ultima comprobacion de materiales de fusion de `fid` para p (indices de carta de cada material). Se guarda al
+## validar la fusion (la eleccion final es la ultima validacion de esa fusion) y se consume al invocarla.
+static func record_fusion_check(duel, p: int, fid: int, mat_idxs: Array) -> void:
+	state(duel).get_or_add("fusion_check", {})["%d:%d" % [p & 1, fid]] = mat_idxs
+
+
+static func take_fusion_check(duel, p: int, fid: int) -> Array:
+	var fc: Dictionary = state(duel).get("fusion_check", {})
+	var k: String = "%d:%d" % [p & 1, fid]
+	var out: Array = fc.get(k, [])
+	fc.erase(k)
+	return out
+
+
+## Elemental HERO Tempest: el monstruo elegido no puede ser destruido en batalla mientras Tempest siga boca arriba.
+static func tempest_protects(duel, p: int, idx: int) -> bool:
+	var tp: Dictionary = state(duel).get("tempest_prot", {})
+	var tidx: int = int(tp.get("%d:%d" % [p & 1, idx], 0))
+	if tidx == 0:
+		return false
+	for zz in 5:
+		if zone_idx(duel, p, zz) == tidx and is_face_up(duel, p, zz):
+			return true
+	return false
+
+
 static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 	p &= 1
 	var idx = zone_idx(duel, p, z)
@@ -1236,6 +1262,8 @@ static func destroy_zone(duel, p: int, z: int, by_battle := false) -> bool:
 		return false
 	var zf = zflags(duel, p, z)
 	if by_battle and bool(zf.get("indest_battle", false)):
+		return false
+	if by_battle and z < 5 and tempest_protects(duel, p, idx):
 		return false
 	# Armityle the Chaos Phantasm (2513, 2514): no puede ser destruido en batalla.
 	if by_battle and raw_id(duel, idx) in [2513, 2514]:
@@ -1464,6 +1492,8 @@ static func special_summon_from_pile(duel, src_p: int, loc: int, i: int, target_
 	if idx == 0:
 		return -1
 	var cid: int = raw_id(duel, idx)
+	if loc == LOC_FUSION and not bool(state(duel).get("mf_keep", false)):
+		take_fusion_check(duel, target_p, cid)  # invocacion que no es de fusion: no deja materiales
 	var tmp: int = duel.m.local(4)
 	if is_joey(duel):
 		var src: int = duel.f5700f0(src_p, loc, i)
@@ -1646,10 +1676,16 @@ static func change_position(duel, p: int, z: int, def_pos: int, face_up := -1) -
 	var was_def: bool = (cur & 1) != 0
 	var now_up: bool = (next & 2) != 0
 	var now_def: bool = (next & 1) != 0
-	duel.m.set_u16(addr + 6, next)
-	if not is_joey(duel):
-		if def_pos >= 0:
-			duel.f54e660(p, z, def_pos, 1)
+	if is_joey(duel):
+		duel.m.set_u16(addr + 6, next)
+	else:
+		# Core: el comando nativo 0x7f (f54e660) ALTERNA la posicion (bit 0) y, si su argumento no es 0 y la carta esta
+		# boca abajo, la gira boca arriba. Escribir aqui tambien el bit 0 hacia que el comando lo deshiciera (Book of
+		# Moon dejaba el monstruo otra vez boca arriba en ataque). Aqui solo se escribe el bit boca arriba/abajo y el
+		# cambio de posicion lo hace el comando nativo, que ademas no gira boca arriba una carta que debe quedar boca abajo.
+		duel.m.set_u16(addr + 6, (cur & ~2) | (next & 2))
+		if was_def != now_def:
+			duel.f54e660(p, z, 1 if now_up else 0, 1)
 	if was_up != now_up:
 		_present(duel, "flip", {"p": p, "zone": z, "b": 1 if now_up else 0, "flags": cur & 3, "native_target_flags": next & 3})
 	elif was_def != now_def and is_joey(duel):

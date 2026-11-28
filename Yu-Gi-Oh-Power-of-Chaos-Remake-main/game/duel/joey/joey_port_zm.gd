@@ -94,6 +94,10 @@ func f591d10(player: int, index: int, out: int) -> int:
 	for ref in refs:
 		substitutes += int(f568580(f591ca0(player, ref)) != 0)
 	if substitutes > 1: return 0
+	var mat_idxs: Array = []
+	for ref in refs:
+		mat_idxs.append(f591ca0(player, ref) & 0xfff)
+	CustomDuelOps.record_fusion_check(self, player, cards.id_of(index & 0xfff) & 0xffff, mat_idxs)
 	if _s32(f56a030(player)) >= 0: return 1
 	for ref in refs:
 		if ref & 0x4000 and f569e10(player, ref & 0xfff) != 0: return 1

@@ -213,6 +213,15 @@ func f563df0(p: int, code: int) -> int:
 	return code & 0xffff0000
 
 
+## Guarda los materiales (indices de carta) de una fusion personalizada comprobada: la ultima comprobacion de esa
+## fusion es la que se consume al invocarla (Neos Knight, Infernal Rage, Voltic Thunder miran los materiales usados).
+func _record_custom_fusion(p: int, index: int, out_addr: int, n: int) -> void:
+	var idxs: Array = []
+	for k in n:
+		idxs.append(f563df0(p, m.u16(out_addr + k * 2)) & 0xfff)
+	CustomDuelOps.record_fusion_check(self, p, cards.id_of(index & 0xfff) & 0xffff, idxs)
+
+
 ## FUN_00563e50: 1 si p tiene los materiales para invocar por fusion la carta `index`
 ## (tablas de 0x5aa890, dos materiales, y 0x5aa9d0, tres). Los codigos de los materiales
 ## (ver FUN_00563c20) quedan en out_addr (u16[2] o u16[3]).
@@ -230,6 +239,7 @@ func f563e50(p: int, index: int, out_addr: int) -> int:
 		if f563b40(effect_card_id(f563df0(p, er0))) != 0 \
 				and f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 2)))) != 0:
 			return 0
+		_record_custom_fusion(p, index, out_addr, 2)
 		if (m.u16(out_addr) & 0x8000) == 0 or (m.u16(out_addr + 2) & 0x8000) == 0:
 			return 1
 		return 0 if f543360(p) < 0 else 1
@@ -252,6 +262,7 @@ func f563e50(p: int, index: int, out_addr: int) -> int:
 		if f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 2)))) != 0 \
 				and f563b40(effect_card_id(f563df0(p, m.u16(out_addr + 4)))) != 0:
 			return 0
+		_record_custom_fusion(p, index, out_addr, 3)
 		if (m.u16(out_addr) & 0x8000) == 0 or (m.u16(out_addr + 2) & 0x8000) == 0 \
 				or (m.u16(out_addr + 4) & 0x8000) == 0:
 			return 1
