@@ -159,8 +159,8 @@ defect to miss. Every flag below was checked against the whole repository, not j
 | max_attackers_turn | 2666 Thunderforce Attack | limit how many monsters may attack | needs an engine hook |
 | must_attack_turn | 2955 Amazoness Archers | force the opponent's monsters to attack | needs an engine hook |
 | can_activate_set_turn | 2626 Reactor Slime | the Set card may be activated that turn | needs an engine hook |
-| maharaghi_scry_turn | 2735 Maharaghi | look at the top card in the next Standby Phase | open (the scry is a presentation-only step) |
-| blaze_cannon_turn | 2517 Blaze Cannon | the extra effect granted to Ra for the turn | open (needs the Ra effect list read) |
+| maharaghi_scry_turn | 2735 Maharaghi | look at the top card before the next draw | fixed |
+| blaze_cannon_turn | 2517 Blaze Cannon | the extra effects granted to Ra for the turn | fixed |
 | reborn_ra_turn | 2610 Millennium Revelation | Special Summon Ra with Monster Reborn that turn | open |
 | capsule_card_id | 2809 Different Dimension Capsule | the banished card returns later | redundant: the card id is already passed in the scheduled effect |
 | pharaoh_treasure_armed | 2856 Pharaoh's Treasure | recognise the drawn copy | redundant: the draw is recognised from the effect context |
@@ -199,6 +199,8 @@ every card in a hand, or that change the turn structure, cannot be enforced from
 | 2726 Second Coin Toss | the coin-toss code checked the wrong card id, so it never triggered |
 | 2729 Fusion Sword Murasame Blade | could be destroyed by card effects while equipped |
 | 2745 Dragon's Rage | was a no-op; Dragon monsters now get piercing while it is up |
+| 2517 Blaze Cannon | the Ra it buffed got no ATK gain from Tributing non-attackers, and no board wipe after damage |
+| 2735 Maharaghi | the scry flag was set and never read, so the top card was never shown |
 | 2750 Ominous Fortunetelling | a stray block biased every die roll to 5 or 6 while it was face-up |
 | 2756 Heart of Clear Water | no protection for the equipped monster, and no self-destruct at 1300 ATK |
 | 2784 Spring of Rebirth | no LP gain when a monster returned to the hand |

@@ -373,6 +373,34 @@ static func on_attack_declare(duel, atk_p: int, atk_z: int, def_p: int, def_z: i
 		return false
 	if not CustomEffectsMonsters2.on_attack_declare(duel, atk_p, atk_z, def_p, def_z):
 		return false
+	# Blaze Cannon (2517): el Ra que recibio sus efectos ese turno puede ofrendar los otros
+	# monstruos que no declararon ataque para ganar su ATK original combinado hasta el final del turno.
+	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
+		var bzf: Dictionary = CustomDuelOps.zflags(duel, atk_p & 1, atk_z)
+		if int(bzf.get("blaze_cannon_turn", -1)) == CustomDuelOps.turn_number(duel) \
+				and int(bzf.get("blaze_cannon_gain_used", -1)) != CustomDuelOps.turn_number(duel):
+			bzf["blaze_cannon_gain_used"] = CustomDuelOps.turn_number(duel)
+			var battled_now: Array = CustomDuelOps.state(duel).get("battled_this_turn", [])
+			var tribute_zs: Array = []
+			var gain_total := 0
+			for zz in 5:
+				if zz == atk_z or CustomDuelOps.zone_idx(duel, atk_p & 1, zz) == 0:
+					continue
+				if ("%d:%d" % [atk_p & 1, zz]) in battled_now:
+					continue
+				tribute_zs.append(zz)
+				gain_total += CustomDuelOps.base_atk(duel, CustomDuelOps.zone_idx(duel, atk_p & 1, zz))
+			if tribute_zs.size() > 0 and gain_total > 0:
+				var blaze_gain := func() -> void:
+					for zz in tribute_zs:
+						if CustomDuelOps.zone_idx(duel, atk_p & 1, zz) != 0:
+							CustomDuelOps.tribute_zone(duel, atk_p & 1, zz)
+					if CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
+						CustomDuelOps.add_stat_mod(duel, atk_p & 1, atk_z, gain_total, 0, false)
+				CustomDuelOps.ask_optional(duel, atk_p & 1, CustomDuelOps.lang_text(
+					"مدفع اللهب: هل تريد التضحية بباقي الوحوش التي لم تهجم لزيادة هجوم رع؟",
+					"Blaze Cannon: ¿Sacrificar los otros monstruos que no atacaron para subir el ATK de Ra?",
+					"Blaze Cannon: Tribute the other monsters that did not attack to boost Ra's ATK?"), blaze_gain)
 	# Also check opponent attack-trigger traps automatically if needed
 	return true
 
@@ -429,6 +457,22 @@ static func on_battle_end(duel, atk_p: int, atk_z: int, def_p: int, def_z: int, 
 			if int(azf.get("extra_atk_used_turn", -1)) != CustomDuelOps.turn_number(duel):
 				azf["extra_atk_used_turn"] = CustomDuelOps.turn_number(duel)
 				CustomDuelOps.clear_attacked(duel, atk_p & 1, atk_z)
+	# Blaze Cannon (2517): despues del calculo de dano, si ese Ra ataco, puede mandar al Cementerio
+	# todos los monstruos que controla el rival.
+	if atk_z >= 0 and atk_z < 5 and CustomDuelOps.zone_idx(duel, atk_p & 1, atk_z) != 0:
+		var bzf2: Dictionary = CustomDuelOps.zflags(duel, atk_p & 1, atk_z)
+		if int(bzf2.get("blaze_cannon_turn", -1)) == CustomDuelOps.turn_number(duel) \
+				and not bool(bzf2.get("blaze_cannon_wipe_used", false)):
+			bzf2["blaze_cannon_wipe_used"] = true
+			if CustomDuelOps.count_monsters(duel, 1 - (atk_p & 1), false) > 0:
+				var blaze_wipe := func() -> void:
+					for zz in 5:
+						if CustomDuelOps.zone_idx(duel, 1 - (atk_p & 1), zz) != 0:
+							CustomDuelOps.send_zone_to_gy(duel, 1 - (atk_p & 1), zz)
+				CustomDuelOps.ask_optional(duel, atk_p & 1, CustomDuelOps.lang_text(
+					"مدفع اللهب: هل تريد إرسال كل وحوش الخصم إلى المقبرة؟",
+					"Blaze Cannon: ¿Mandar al Cementerio todos los monstruos del rival?",
+					"Blaze Cannon: Send all monsters your opponent controls to the GY?"), blaze_wipe)
 	check_and_apply_win(duel)
 	CustomDuelOps.sync_visuals(duel)
 
@@ -471,6 +515,19 @@ static func _prepare_draw_phase(duel, turn_p: int, t: int) -> void:
 	var st = CustomDuelOps.state(duel)
 	var p: int = turn_p & 1
 	var pf: Dictionary = CustomDuelOps.pflags(duel, p)
+	var scry_at: int = int(pf.get("maharaghi_scry_turn", -1))
+	if scry_at >= 0 and scry_at <= t:
+		pf.erase("maharaghi_scry_turn")
+		if CustomDuelOps.pile_count(duel, p, CustomDuelOps.LOC_DECK) > 0:
+			var top_cid: int = CustomDuelOps.pile_idx(duel, p, CustomDuelOps.LOC_DECK, 0)
+			var top_name: String = CustomDuelOps.card_name(duel, CustomDuelOps.raw_id(duel, top_cid))
+			var scry_msg: String = CustomDuelOps.lang_text(
+				"مهاجي: البطاقة العليا في مجموعتك هي %s. هل تريد إعادتها إلى أسفل المجموعة؟" % top_name,
+				"Maharaghi: la carta superior de tu Deck es %s. ¿Devolverla al fondo del Deck?" % top_name,
+				"Maharaghi: the top card of your Deck is %s. Return it to the bottom of the Deck?" % top_name)
+			var to_bottom := func() -> void:
+				CustomDuelOps.move_pile_card(duel, p, CustomDuelOps.LOC_DECK, 0, p, CustomDuelOps.LOC_DECK, true)
+			CustomDuelOps.ask_optional(duel, p, scry_msg, to_bottom)
 	var skip := false
 	if int(pf.get("skip_dp_turn", -1)) == t:
 		pf.erase("skip_dp_turn")
