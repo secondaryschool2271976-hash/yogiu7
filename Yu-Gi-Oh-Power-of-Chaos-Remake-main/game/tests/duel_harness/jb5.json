@@ -1,0 +1,1 @@
+{"scenarios": [{"name": "jsig", "hand": [[2555, 3164, 2557], [5]], "jfield": [{"p": 0, "card": 2555, "zone": 0}, {"p": 1, "card": 5, "zone": 0}], "jst": [{"p": 0, "card": 3164}], "jgy": [], "act": {"p": 1, "card": 5, "loc": "field", "kind": "joey_battle", "az": 0, "dz": 0, "frames": 32, "dlg": true, "dlg_ans": 1, "resp": false, "probe": true}}]}
