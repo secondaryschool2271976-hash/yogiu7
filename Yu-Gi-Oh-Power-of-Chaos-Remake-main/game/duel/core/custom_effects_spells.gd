@@ -17,7 +17,7 @@ const IDS: Array[int] = [
 	3005, 3008, 3009, 3010, 3011, 3013, 3016, 3017, 3018, 3043,
 	3045, 3047, 3050, 3051, 3052, 3053, 3054, 3055, 3076, 3078,
 	3079, 3080, 3081, 3082, 3083, 3091, 3095, 3096, 3110, 3111,
-	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144,
+	3112, 3114, 3117, 3118, 3119, 3120, 3130, 3132, 3134, 3135, 3137, 3143, 3144, 3155, 3156,
 ]
 
 
@@ -142,6 +142,10 @@ static func can_activate(duel, p: int, cid: int, loc: int, z: int, ctx: Dictiona
 		return false
 	if int(pf.get("locked_st_until_ep", -1)) == t:
 		return false
+	if cid == 3155: # E - Emergency Call
+		return CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true) >= 0
+	if cid == 3156: # A Hero Lives
+		return CustomDuelOps.count_monsters(duel, p, true) == 0 and CustomDuelOps.free_monster_zone(duel, p) >= 0 and CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true) >= 0
 	match cid:
 		1532: # Skull Lair: banish N monsters from your GY; destroy 1 face-up monster of Level N
 			var lair_gy: int = _lair_gy_monsters(duel, p).size()
@@ -387,6 +391,19 @@ static func resolve(duel, p: int, cid: int, loc: int, z: int, ctx: Dictionary) -
 	p &= 1
 	var opp = 1 - p
 	var t = CustomDuelOps.turn_number(duel)
+	if cid == 3155: # E - Emergency Call: add 1 Elemental HERO from the Deck
+		var ec_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS, true)
+		if ec_i >= 0:
+			CustomDuelOps.add_from_pile_to_hand(duel, p, CustomDuelOps.LOC_DECK, ec_i)
+			CustomDuelOps.shuffle_deck(duel, p)
+		return true
+	if cid == 3156: # A Hero Lives: pay half LP, Special Summon a Level 4 or lower Elemental HERO from the Deck
+		var hl_i: int = CustomDuelOps.choose_pile_card(duel, p, CustomDuelOps.LOC_DECK, func(d, idx, _s): return CustomDuelOps.raw_id(d, idx) in CustomDuelOps.ELEMENTAL_HERO_IDS and CustomDuelOps.monster_level(d, idx) <= 4, true)
+		if hl_i >= 0 and CustomDuelOps.count_monsters(duel, p, true) == 0:
+			CustomDuelOps.pay_half_lp(duel, p)
+			CustomDuelOps.special_summon_from_pile(duel, p, CustomDuelOps.LOC_DECK, hl_i, p)
+			CustomDuelOps.shuffle_deck(duel, p)
+		return true
 	match cid:
 		1532: # Skull Lair: elige el monstruo a destruir; su Nivel N = monstruos a desterrar del Cementerio
 			var lair_gy: int = _lair_gy_monsters(duel, p).size()

@@ -786,7 +786,12 @@
     "1763": "ad_41436536.webp",
     "1764": "ad_59793705.webp",
     "1765": "ad_10526791.webp",
-    "1766": "ad_60493189.webp"
+    "1766": "ad_60493189.webp",
+    "1767": "ad_98266377.webp",
+    "1768": "ad_95362816.webp",
+    "1769": "ad_75434695.webp",
+    "1770": "ad_213326.webp",
+    "1771": "ad_8949584.webp"
   },
   "cards": [
     {
@@ -34058,6 +34063,205 @@
       "series": [],
       "frame_type": "fusion",
       "card_shape": "fusion",
+      "custom_effect": true
+    },
+    {
+      "index": 1767,
+      "internal_id": 3152,
+      "password": "98266377",
+      "names": {
+        "eng": "Elemental HERO Heat",
+        "ara": "الحرارة، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "This card gains 200 ATK for each \"Elemental HERO\" monster you control.",
+        "ara": "تكسب هذه البطاقة 200 نقطة هجوم مقابل كل وحش \"بطل العناصر\" تتحكم به."
+      },
+      "atk": 1600,
+      "defense": 1200,
+      "level": 4,
+      "attribute": "fire",
+      "type_id": 4,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_98266377.webp",
+      "prop": 2286239864,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1768,
+      "internal_id": 3153,
+      "password": "95362816",
+      "names": {
+        "eng": "Elemental HERO Lady Heat",
+        "ara": "السيدة الحرارة، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "During each of your End Phases: Inflict 200 damage to your opponent for each face-up \"Elemental HERO\" monster you control.",
+        "ara": "خلال كل مرحلة نهاية خاصة بك: ألحق بخصمك 200 ضرر مقابل كل وحش \"بطل العناصر\" مكشوف تتحكم به."
+      },
+      "atk": 1300,
+      "defense": 1000,
+      "level": 4,
+      "attribute": "fire",
+      "type_id": 4,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_95362816.webp",
+      "prop": 2286224484,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1769,
+      "internal_id": 3154,
+      "password": "75434695",
+      "names": {
+        "eng": "Elemental HERO Woodsman",
+        "ara": "الحطّاب، بطل العناصر"
+      },
+      "descriptions": {
+        "eng": "Once per turn, during your Standby Phase: You can add 1 \"Polymerization\" from your Deck or Graveyard to your hand.",
+        "ara": "مرة في كل دور، خلال مرحلة الاستعداد الخاصة بك: يمكنك إضافة بطاقة \"الدمج\" واحدة من الدك أو المقبرة إلى يدك."
+      },
+      "atk": 1000,
+      "defense": 2000,
+      "level": 4,
+      "attribute": "earth",
+      "type_id": 15,
+      "kind_bits": 1,
+      "category": "monster",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_75434695.webp",
+      "prop": 2834614472,
+      "monster_kind": "effect",
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [
+        "effect"
+      ],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "effect",
+      "card_shape": "effect",
+      "custom_effect": true
+    },
+    {
+      "index": 1770,
+      "internal_id": 3155,
+      "password": "213326",
+      "names": {
+        "eng": "E - Emergency Call",
+        "ara": "نداء الطوارئ"
+      },
+      "descriptions": {
+        "eng": "Add 1 \"Elemental HERO\" monster from your Deck to your hand.",
+        "ara": "أضف وحشًا واحدًا من \"بطل العناصر\" من الدك إلى يدك."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_213326.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
+      "custom_effect": true
+    },
+    {
+      "index": 1771,
+      "internal_id": 3156,
+      "password": "8949584",
+      "names": {
+        "eng": "A Hero Lives",
+        "ara": "البطل يعيش"
+      },
+      "descriptions": {
+        "eng": "If you control no face-up monsters: Pay half your LP; Special Summon 1 Level 4 or lower \"Elemental HERO\" monster from your Deck.",
+        "ara": "إذا لم تتحكم بأي وحش مكشوف: ادفع نصف نقاط حياتك؛ استدعِ بالاستدعاء الخاص وحشًا واحدًا من \"بطل العناصر\" مستواه 4 أو أقل من الدك."
+      },
+      "atk": 0,
+      "defense": 0,
+      "level": 0,
+      "attribute": "spell",
+      "type_id": 22,
+      "kind_bits": 0,
+      "category": "spell",
+      "pack": 7,
+      "games": [
+        "yugi",
+        "kaiba",
+        "joey"
+      ],
+      "image": "ad_8949584.webp",
+      "prop": 23068672,
+      "effect_alias": 0,
+      "subcategory": "normal",
+      "abilities": [],
+      "classifications": [],
+      "monster_card_types": [],
+      "divine": false,
+      "series": [],
+      "frame_type": "spell",
+      "card_shape": "spell_normal",
       "custom_effect": true
     }
   ],

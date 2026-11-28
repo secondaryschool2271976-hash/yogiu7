@@ -22,7 +22,7 @@ const IDS: Array[int] = [
 	3087, 3088, 3089, 3090, 3092, 3093, 3097, 3098, 3100, 3109,
 	3113, 3115, 3116, 3121, 3122, 3123, 3124, 3125, 3126, 3127,
 	3128, 3129, 3133, 3136, 3138, 3139, 3140, 3141, 3142, 3145,
-	3146, 3147, 3148, 3149, 3150, 3151,
+	3146, 3147, 3148, 3149, 3150, 3151, 3152, 3153, 3154,
 ]
 
 const FLIP_DOWN_CYCLE_IDS := [2811, 2812, 2814, 2833, 2835, 2839, 2841, 2864, 2874, 3089]
@@ -1280,6 +1280,19 @@ static func on_standby_tick(duel, turn_p: int) -> void:
 		if CustomDuelOps.zone_idx(duel, turn_p, z) == 0 or not CustomDuelOps.is_face_up(duel, turn_p, z):
 			continue
 		var cid = CustomDuelOps.zone_id(duel, turn_p, z)
+		if cid == 3154 and not CustomDuelOps.is_skill_drain_active(duel) and CustomDuelOps.can_opt(duel, turn_p, 3154, z): # Elemental HERO Woodsman: add "Polymerization" from Deck or GY
+			var wz: int = z
+			var woodsman_body := func() -> void:
+				var wloc: int = CustomDuelOps.LOC_DECK
+				var wi: int = CustomDuelOps.find_pile_index_by_id(duel, turn_p, wloc, 1003)
+				if wi < 0:
+					wloc = CustomDuelOps.LOC_GRAVE
+					wi = CustomDuelOps.find_pile_index_by_id(duel, turn_p, wloc, 1003)
+				if wi >= 0:
+					CustomDuelOps.mark_opt(duel, turn_p, 3154, wz)
+					CustomDuelOps.add_from_pile_to_hand(duel, turn_p, wloc, wi)
+			if CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_DECK, 1003) >= 0 or CustomDuelOps.find_pile_index_by_id(duel, turn_p, CustomDuelOps.LOC_GRAVE, 1003) >= 0:
+				CustomDuelOps.optional_effect(duel, turn_p, cid, woodsman_body)
 		if ARCHFIEND_UPKEEP.has(cid):
 			var cost := int(ARCHFIEND_UPKEEP[cid])
 			if CustomDuelOps.has_faceup_id(duel, turn_p, 3078) or CustomDuelOps.has_faceup_id(duel, opp, 3078):
@@ -1327,6 +1340,13 @@ static func on_end_phase(duel, turn_p: int) -> void:
 				continue
 			var cid = CustomDuelOps.zone_id(duel, pl, z)
 			var zf = CustomDuelOps.zflags(duel, pl, z)
+			if cid == 3153 and pl == turn_p and CustomDuelOps.is_face_up(duel, pl, z) and not CustomDuelOps.is_skill_drain_active(duel) and not bool(zf.get("negated", false)): # Elemental HERO Lady Heat
+				var lh_n: int = 0
+				for lz in 5:
+					if CustomDuelOps.zone_idx(duel, pl, lz) != 0 and CustomDuelOps.is_face_up(duel, pl, lz) and CustomDuelOps.zone_id(duel, pl, lz) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+						lh_n += 1
+				if lh_n > 0:
+					CustomDuelOps.damage(duel, 1 - pl, 200 * lh_n, false)
 			if zf.has("indest_battle") and not (zf["indest_battle"] is bool):
 				zf.erase("indest_battle")
 			if cid == 3034 and int(zf.get("mirage_banish_turn", -1)) == t:
@@ -1396,6 +1416,12 @@ static func modify_continuous(duel, p: int, z: int, cid: int, out: Dictionary) -
 		return
 	var opp = 1 - p
 	match cid:
+		3152: # Elemental HERO Heat: +200 ATK per Elemental HERO you control
+			var heat_n: int = 0
+			for hz in 5:
+				if CustomDuelOps.zone_idx(duel, p, hz) != 0 and CustomDuelOps.is_face_up(duel, p, hz) and CustomDuelOps.zone_id(duel, p, hz) in CustomDuelOps.ELEMENTAL_HERO_IDS:
+					heat_n += 1
+			out["atk_delta"] = int(out.get("atk_delta", 0)) + 200 * heat_n
 		2840: # Arsenal Bug: if no other Insect -> ATK/DEF 1000
 			var has_other = false
 			for zz in 5:
