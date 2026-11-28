@@ -199,6 +199,9 @@ static func damage(duel, p: int, amount: int, is_battle := false) -> int:
 		return heal(duel, p, amount)
 	if int(pf.get("halve_damage_turn", 0)) == turn_number(duel):
 		amount = int(amount / 2)
+	# Dark Room of Nightmare (2880): el rival del controlador recibe 300 mas por cada dano de efecto.
+	if not is_battle and has_faceup_id(duel, 1 - p, 2880):
+		amount += 300
 	if amount <= 0:
 		return 0
 	var st = state(duel)
